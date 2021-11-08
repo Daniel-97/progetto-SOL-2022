@@ -23,6 +23,7 @@ all: $(TARGETS)
 clean:
 	rm -rf build/object/server/*
 	rm -rf build/object/client/*
+	rm -rf build/exe/* #clean the exe file
 
 test1:
-	./server
+	./build/exe/server

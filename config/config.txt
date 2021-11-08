@@ -1,0 +1,4 @@
+socket-path=/tmp/SOLfilestorage.sk
+thread-workers=2
+max-mem-size=20M
+max-file=10
