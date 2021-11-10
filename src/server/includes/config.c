@@ -36,7 +36,8 @@ int readConfig(struct Config* serverConfig){
 
             //printf("key: %s, value: %s",key,value);
             if(strcmp(key,"socket-path") == 0){
-                strcpy(serverConfig->socket_path,value);
+                /* Copia il valore fino al new line (non copia il new line nel setting)*/
+                strncpy(serverConfig->socket_path,value, strcspn(value,"\n"));
 
             }else if(strcmp(key,"thread-workers") == 0){
                 serverConfig->tread_workers = strtol(value, NULL,10);
