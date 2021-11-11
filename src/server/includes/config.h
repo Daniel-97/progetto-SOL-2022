@@ -13,7 +13,7 @@ FILE *fp;
 
 typedef struct Config{
     char socket_path[100];
-    unsigned tread_workers;
+    unsigned thread_workers;
     unsigned max_mem_size; /* Size in MB */
     unsigned max_file;
 }Config;

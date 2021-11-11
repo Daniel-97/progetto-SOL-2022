@@ -16,8 +16,8 @@ int readConfig(struct Config* serverConfig){
     char value[50];
     char *token;
     int i;
-//    serverConfig = malloc(sizeof(Config));
-    printf("serverConfig: %lu",sizeof(serverConfig));
+    //serverConfig = malloc(sizeof(Config));
+    //printf("serverConfig: %lu",sizeof(serverConfig));
 
     if( (fp = fopen("./config/config.txt","r")) != NULL ){
         while( !feof(fp) ){
@@ -40,7 +40,7 @@ int readConfig(struct Config* serverConfig){
                 strncpy(serverConfig->socket_path,value, strcspn(value,"\n"));
 
             }else if(strcmp(key,"thread-workers") == 0){
-                serverConfig->tread_workers = strtol(value, NULL,10);
+                serverConfig->thread_workers = strtol(value, NULL,10);
 
             }else if(strcmp(key,"max-mem-size") == 0){
                 serverConfig->max_mem_size = strtol(value, NULL,10);
@@ -65,7 +65,7 @@ int readConfig(struct Config* serverConfig){
 void printConfig(Config* config){
     printf("****** SERVER CONFIG *****\n");
     printf("- socket-path: %s\n",config->socket_path);
-    printf("- thread-workers: %d\n",config->tread_workers);
+    printf("- thread-workers: %d\n",config->thread_workers);
     printf("- max-mem-size: %d\n",config->max_mem_size);
     printf("- max-file: %d\n",config->max_file);
 }

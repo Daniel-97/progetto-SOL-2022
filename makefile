@@ -1,26 +1,37 @@
 
 CC = gcc
 CFLAGS = -std=c99 -Wall
-LIBS = -pthread
+LIBS = -lpthread
+
+SERVER_INCLUDE = src/server/includes
 
 TARGETS = 	bin/server	\
 			bin/client
 
 .PHONY: all clean test1 test2 test3
+.SUFFIXES: .c .h #Necessario per notazione %.c
 
-bin/server: build/server/server.o build/server/configlib.so
-		$(CC) build/server/server.o -Wl,-rpath=${PWD}/build/server/ build/server/configlib.so -o bin/server
+bin/server: build/server/server.o build/server/configlib.so build/server/connectionQueuelib.so
+		$(CC) build/server/server.o -Wl,-rpath=${PWD}/build/server/ build/server/configlib.so build/server/connectionQueuelib.so -o bin/server $(LIBS)
 
 build/server/server.o: src/server/server.c
-		$(CC) $(CFLAGS) src/server/server.c -c -I src/server/includes -o build/server/server.o
+		$(CC) $(CFLAGS) src/server/server.c -c -I $(SERVER_INCLUDE) -o build/server/server.o
 
-#CREAZIONE LIBRERIA DINAMICA
+#CREAZIONE LIBRERIA DINAMICA CONFIG
 build/server/configlib.so: build/server/configlib.o src/server/includes/config.h
 		$(CC) -shared build/server/configlib.o -o build/server/configlib.so
 
-# COMPILAZIONE LIBRERIA config. Il parametro -I indica al compilatore dove cercare gli headers
-build/server/configlib.o: src/server/includes/config.c src/server/includes/config.h
-		$(CC) $(CFLAGS) src/server/includes/config.c -c -fPIC -I src/server/includes -o build/server/configlib.o
+#CREAZIONE LIBRERIA DINAMICA connectionQueue
+build/server/connectionQueuelib.so: build/server/connectionQueuelib.o src/server/includes/connectionQueue.h
+		$(CC) -shared build/server/connectionQueuelib.o -o build/server/connectionQueuelib.so
+
+# COMPILAZIONE LIBRERIA config
+build/server/configlib.o: src/server/includes/config.c
+		$(CC) $(CFLAGS) $(SERVER_INCLUDE)/config.c -c -fPIC -I $(SERVER_INCLUDE) -o build/server/configlib.o
+
+# COMPILAZIONE LIBRERIA connectionQueue
+build/server/connectionQueuelib.o: src/server/includes/connectionQueue.c
+		$(CC) $(CFLAGS) $(SERVER_INCLUDE)/connectionQueue.c -c -fPIC -I $(SERVER_INCLUDE) -o build/server/connectionQueuelib.o
 
 # per adesso non usato
 #server.o: src/server/server.c
