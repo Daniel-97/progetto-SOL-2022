@@ -6,8 +6,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#include <config.h>
-#include <connectionQueue.h>
+#include "config.h"
+#include "connectionQueue.h"
 
 static Config* serverConfig;
 static ConnectionQueue *queue;
