@@ -52,28 +52,32 @@ int main(int argc, char *argv[]){
 
     //Creazione socket
     if ( (fd_server_skt = socket(AF_UNIX, SOCK_STREAM, 0)) == -1 ){
-        printf("Errore creazione socket, errno: %d\n",errno);
+        printf("Errore creazione socket, errno: %d, %s\n",errno, strerror(errno));
         exit(-1);
     }
+    // Unlink vecchio socket se esistente
+    unlink(serverConfig->socket_path);
+
     //Bind socket con address
     if ( (bind(fd_server_skt, (struct sockaddr*) &socketAddress, sizeof(socketAddress)) ) == -1 ){
-        printf("Errore bind socket, errno: %d\n",errno);
+        printf("Errore bind socket, errno: %d, %s\n",errno, strerror(errno));
         exit(-1);
     }
 
     if ( listen(fd_server_skt,SOMAXCONN) == -1){
-        printf("Errore listen socket, errno: %d\n",errno);
+        printf("Errore listen socket, errno: %d, %s\n",errno, strerror(errno));
         exit(-1);
     }
     /****** MAIN SERVER LOOP *****/
     printf("\n***** ATTENDO NUOVE CONNESSIONI *****\n");
 
     if ( (fd_client_skt = accept(fd_server_skt,NULL,0)) == -1 ){
-        printf("Errore accept socket, errno: %d\n",errno);
+        printf("Errore accept socket, errno: %d, %s\n",errno, strerror(errno));
     }else{
         printf("NUOVA CONNESSIONE RICEVUTA!\n");
     }
 
+    close(fd_server_skt);
     return 0;
 }
 
