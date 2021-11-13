@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <getopt.h>
+#include "includes/utils.h"
 
-void help();
 
 int main(int argc, char *argv[]){
 
