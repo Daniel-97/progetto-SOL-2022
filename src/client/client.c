@@ -18,14 +18,8 @@ int main(int argc, char *argv[]){
     int opt;
     int cont = 0;
     int fd_socket;
+    char read_buf[100];
     struct sockaddr_un socketAddress;
-//    while( (opt = getopt(argc, argv, "h")) != -1 ){
-//        switch (opt) {
-//            case 'h':
-//                help();
-//                exit(0);
-//        }
-//    }
 
     strncpy(socketAddress.sun_path, SOCKET_NAME,100);
     socketAddress.sun_family = AF_UNIX;
@@ -48,6 +42,9 @@ int main(int argc, char *argv[]){
     }
 
     printf("CONNESSO CON SERVER!\n");
+    read(fd_socket,read_buf,100);
+    printf("Messaggio ricevuto da server: %s\n",read_buf);
+
     close(fd_socket);
     return 0;
 }

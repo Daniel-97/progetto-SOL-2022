@@ -71,12 +71,26 @@ int main(int argc, char *argv[]){
     /****** MAIN SERVER LOOP *****/
     printf("\n***** ATTENDO NUOVE CONNESSIONI *****\n");
 
-    if ( (fd_client_skt = accept(fd_server_skt,NULL,0)) == -1 ){
-        printf("Errore accept socket, errno: %d, %s\n",errno, strerror(errno));
-    }else{
-        printf("NUOVA CONNESSIONE RICEVUTA!\n");
-    }
+    while(1) {
 
+        if ((fd_client_skt = accept(fd_server_skt, NULL, 0)) == -1) {
+
+            printf("Errore accept socket, errno: %d, %s\n", errno, strerror(errno));
+            break;
+
+        } else {
+
+            printf("Nuova connessione ricevuta, fd_skt:%d\n",fd_client_skt);
+            write(fd_client_skt, "Hello client!",14);
+            if( push(queue,fd_client_skt) != -1){
+                printf("File descriptor client socket inserito nella coda\n");
+
+            }else{
+                printf("Errore inserimento file descriptor client socket nella coda\n");
+
+            }
+        }
+    }
     close(fd_server_skt);
     return 0;
 }
