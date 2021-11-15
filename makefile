@@ -33,4 +33,4 @@ test_server:
 	./bin/server
 
 test_client:
-	./bin/client -h
+	./bin/client

@@ -6,13 +6,12 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include "includes/globals.h"
 #include "includes/config.h"
 #include "includes/connectionQueue.h"
 
-static Config* serverConfig;
-static ConnectionQueue *queue;
+static void *worker(void *arg);
 
-static void* worker();
 
 int main(int argc, char *argv[]){
 
@@ -26,17 +25,21 @@ int main(int argc, char *argv[]){
 
     /***** CONNECTION QUEUE INIT *****/
     queue = initQueue();
+    if (queue == NULL){
+        printf("Errore init queue, aborting...");
+        exit(-1);
+    }
 
     /******* THREAD INIT *****/
     pthread_t *threadPool;
-    int *threadPoolStatus;
+//    int *threadPoolStatus;
     // Alloco un array per i descrittori di processo
     threadPool = (pthread_t*)malloc(serverConfig->thread_workers * sizeof(pthread_t) );
-    threadPoolStatus = (int*) malloc(serverConfig->thread_workers * sizeof(int));
+//    threadPoolStatus = (int*) malloc(serverConfig->thread_workers * sizeof(int));
 
-//    for(int i = 0; i<serverConfig->thread_workers; i++) {
-//        pthread_create(&threadPool[i], NULL, &worker, NULL);
-//    }
+    for(int i = 0; i<serverConfig->thread_workers; i++) {
+        pthread_create(&threadPool[i], NULL, &worker, NULL);
+    }
 
 //    for(int i = 0; i<serverConfig->thread_workers; i++) {
 //        pthread_join(threadPool[i], (void *) &threadPoolStatus[i]);
@@ -52,7 +55,7 @@ int main(int argc, char *argv[]){
 
     //Creazione socket
     if ( (fd_server_skt = socket(AF_UNIX, SOCK_STREAM, 0)) == -1 ){
-        printf("Errore creazione socket, errno: %d, %s\n",errno, strerror(errno));
+        printf("[MASTER] Errore creazione socket, errno: %d, %s\n",errno, strerror(errno));
         exit(-1);
     }
     // Unlink vecchio socket se esistente
@@ -60,12 +63,12 @@ int main(int argc, char *argv[]){
 
     //Bind socket con address
     if ( (bind(fd_server_skt, (struct sockaddr*) &socketAddress, sizeof(socketAddress)) ) == -1 ){
-        printf("Errore bind socket, errno: %d, %s\n",errno, strerror(errno));
+        printf("[MASTER] Errore bind socket, errno: %d, %s\n",errno, strerror(errno));
         exit(-1);
     }
 
     if ( listen(fd_server_skt,SOMAXCONN) == -1){
-        printf("Errore listen socket, errno: %d, %s\n",errno, strerror(errno));
+        printf("[MASTER] Errore listen socket, errno: %d, %s\n",errno, strerror(errno));
         exit(-1);
     }
     /****** MAIN SERVER LOOP *****/
@@ -75,18 +78,17 @@ int main(int argc, char *argv[]){
 
         if ((fd_client_skt = accept(fd_server_skt, NULL, 0)) == -1) {
 
-            printf("Errore accept socket, errno: %d, %s\n", errno, strerror(errno));
+            printf("[MASTER] Errore accept socket, errno: %d, %s\n", errno, strerror(errno));
             break;
 
         } else {
 
-            printf("Nuova connessione ricevuta, fd_skt:%d\n",fd_client_skt);
-            write(fd_client_skt, "Hello client!",14);
+            printf("[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",fd_client_skt);
             if( push(queue,fd_client_skt) != -1){
-                printf("File descriptor client socket inserito nella coda\n");
+                printf("[MASTER] File descriptor client socket inserito nella coda\n");
 
             }else{
-                printf("Errore inserimento file descriptor client socket nella coda\n");
+                printf("[MASTER] Errore inserimento file descriptor client socket nella coda\n");
 
             }
         }
@@ -95,10 +97,28 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-static void* worker(void *arg){
+static void *worker(void *arg){
 
-    printf("Ciao a tutti sono un worker con tid: %d\n", getpid());
-    sleep(2);
+    pthread_t self;
+    self = pthread_self();
+
+    printf("[%lu] Thread start\n", self);
+
+    while(1){
+        printf("[%lu] Tentativo pop...\n",self);
+        int fd_client_skt = pop(queue);
+
+        if (fd_client_skt != -1){
+
+            printf("[%lu] Servo la richiesta del client con socket: %d!\n",self,fd_client_skt);
+            write(fd_client_skt, "Hello client!",14);
+
+        }else{
+            printf("[%lu] Errore pop coda: %d\n",self,fd_client_skt);
+            break;
+        }
+
+    }
     return 0;
 
 }

@@ -10,6 +10,7 @@
 #include <sys/un.h>
 
 #include "includes/utils.h"
+#include "includes/globals.h"
 
 #define SOCKET_NAME "./connection.sk"
 

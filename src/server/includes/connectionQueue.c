@@ -6,7 +6,7 @@
 
 ConnectionQueue* initQueue(){
 
-    ConnectionQueue *q = malloc(sizeof(ConnectionQueue)); //Alloco spazio per cosa
+    ConnectionQueue *q = malloc(sizeof(ConnectionQueue)); //Alloco spazio per coda
 
     if(!q) return NULL;
 
@@ -35,6 +35,8 @@ int push(ConnectionQueue *q, int sfd){
     q->tail->next = n;
     q->tail = n;
     q->len++;
+    //Segnalo l inserimento di un nuovo elemento nella coda agli altri thread
+    pthread_cond_signal(&q->qcond);
     pthread_mutex_unlock(&q->qlock);
     /* Qui finisce la sezione critica */
 
@@ -46,7 +48,10 @@ int pop(ConnectionQueue *q){
 
     int data;
 
-    if(q == NULL) return -1;
+    if(q == NULL){
+        printf("[POP] queue pointer is null!\n");
+        return -1;
+    }
 
     //Inizio sezione critica
     pthread_mutex_lock(&q->qlock);
@@ -56,7 +61,7 @@ int pop(ConnectionQueue *q){
         pthread_cond_wait(&q->qcond, &q->qlock);
 
     Node *n = q->head;
-    data = n->sfd;
+    data = q->head->next->sfd;
     q->head = n->next;
     q->len--;
 
