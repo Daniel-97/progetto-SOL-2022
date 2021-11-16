@@ -43,8 +43,19 @@ int main(int argc, char *argv[]){
     }
 
     printf("CONNESSO CON SERVER!\n");
-    read(fd_socket,read_buf,100);
-    printf("Messaggio ricevuto da server: %s\n",read_buf);
+
+    Request request = {.operation = 0, .filepath="tmp"};
+    Response *response = malloc(sizeof(Response));
+
+    printf("Invio richiesta al server...\n");
+
+    /* Invio richiesta al server */
+    write(fd_socket,&request,sizeof(request));
+
+    /* Attendo risposta dal server*/
+    read(fd_socket,response,sizeof(Response));
+
+    printf("Server response:\n-statusCode: %d\n-message: %s\n",response->statusCode, response->message);
 
     close(fd_socket);
     return 0;

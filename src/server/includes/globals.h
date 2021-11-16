@@ -8,19 +8,22 @@
 #include "config.h"
 #include "queue.h"
 
-static Config *serverConfig;
-static Queue *connectionQueue; /* Coda per le connessioni in arrivo */
-static Queue *fileQueue; /* Coda per i file dei client */
+Config *serverConfig;
+Queue *connectionQueue; /* Coda per le connessioni in arrivo */
+Queue *fileQueue; /* Coda per i file dei client */
 
 typedef struct Request{
 
     int operation;
+    char filepath[100];
 
 }Request;
 
 typedef struct Response{
 
     int statusCode;
+    int success;
+    char message[100];
 
 }Response;
 

@@ -14,7 +14,7 @@ TARGETS = 	bin/server	\
 
 #### SERVER ####
 
-bin/server: src/server/server.c src/server/includes/config.c src/server/includes/queue.c
+bin/server: src/server/server.c src/server/includes/config.c src/server/includes/queue.c src/server/includes/fileQueue.c
 		$(CC) $(CFLAGS) src/server/server.c src/server/includes/*.c -o bin/server $(LIBS)
 
 #### CLIENT ####

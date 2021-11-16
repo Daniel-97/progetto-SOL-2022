@@ -9,6 +9,7 @@
 #include "includes/globals.h"
 #include "includes/config.h"
 #include "includes/queue.h"
+#include "includes/fileQueue.h"
 
 static void *worker(void *arg);
 
@@ -22,6 +23,23 @@ int main(int argc, char *argv[]){
     }
     printConfig(serverConfig);
 
+    /***** FILE QUEUE INIT ******/
+    fileQueue = initQueue();
+    //        CODICE DI TEST CODA FILE
+//    FileNode fn1 = {.pathname = "tmp1", .fd = NULL};
+//    FileNode fn2 = {.pathname = "tmp2", .fd = NULL};
+//    FileNode fn3 = {.pathname = "tmp3", .fd = NULL};
+//    FileNode *removedFile = NULL;
+//    insertFile(fileQueue,&fn1,&removedFile);
+//    insertFile(fileQueue,&fn2,&removedFile);
+//    insertFile(fileQueue,&fn3,&removedFile);
+//    if (removedFile)
+//        printf("File rimosso: %s\n", removedFile->pathname);
+//
+//    FileNode *f4 = findFile(fileQueue, "tmp3");
+//    if (f4)
+//        printf("File trovato: %s\n", f4->pathname);
+//    exit(0);
     /***** CONNECTION QUEUE INIT *****/
     connectionQueue = initQueue();
     if (connectionQueue == NULL){
@@ -101,7 +119,9 @@ int main(int argc, char *argv[]){
 static void *worker(void *arg){
 
     pthread_t self = pthread_self();
-    int *fd_client_skt = malloc(sizeof(int));
+    int *fd_client_skt = NULL;
+    Request *request = malloc(sizeof(Request));
+    Response *response = malloc(sizeof(Response));
 
     printf("[%lu] Worker start\n", self);
 
@@ -111,8 +131,17 @@ static void *worker(void *arg){
 
         if (*fd_client_skt != -1){
 
-            printf("[%lu] Servo la richiesta del client con socket: %d!\n",self,*fd_client_skt);
-            write(*fd_client_skt, "Hello client!",14);
+            /* Leggo la richiesta del clint */
+            printf("[%lu] Leggo richiesta del client con socket: %d!\n",self,*fd_client_skt);
+            read(*fd_client_skt, request,sizeof(Request));
+            printf("[%lu]Client Request:\n-operation: %d,\n-filepath: %s\n",self,request->operation, request->filepath);
+
+            /* Preparo la risposta per il client */
+            response->statusCode = 200;
+            response->success = 1;
+            strcpy(response->message, "All ok!");
+            printf("[%lu] Sending response to client...\n",self);
+            write(*fd_client_skt,response,sizeof(Response));
 
         }else{
             printf("[%lu] Errore pop coda: %d\n",self,*fd_client_skt);

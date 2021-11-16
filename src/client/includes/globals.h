@@ -8,12 +8,15 @@
 typedef struct Request{
 
     int operation;
+    char filepath[100];
 
 }Request;
 
 typedef struct Response{
 
     int statusCode;
+    int success;
+    char message[100];
 
 }Response;
 
