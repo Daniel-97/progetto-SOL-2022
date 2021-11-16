@@ -2,8 +2,8 @@
 // Created by daniele on 11/11/21.
 //
 
-#ifndef PROGETTO_SOL_2022_CONNECTIONQUEUE_H
-#define PROGETTO_SOL_2022_CONNECTIONQUEUE_H
+#ifndef PROGETTO_SOL_2022_QUEUE_H
+#define PROGETTO_SOL_2022_QUEUE_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,11 +11,11 @@
 #include <errno.h>
 
 typedef struct Node{
-    int sfd; //Socket file descriptor
+    void *data; //Socket file descriptor
     struct Node *next;
 }Node;
 
-typedef struct ConnectionQueue {
+typedef struct Queue {
 
     Node *head;
     Node *tail;
@@ -23,15 +23,15 @@ typedef struct ConnectionQueue {
     pthread_mutex_t qlock; //Mutex per la coda
     pthread_cond_t qcond; // Conditional variable per la coda
 
-}ConnectionQueue;
+}Queue;
 
 /* Funzione che inizializza la coda delle connessioni */
-ConnectionQueue* initQueue();
+Queue* initQueue();
 
 /* Funzione che inserisce i file descriptor nella coda */
-int push(ConnectionQueue *q, int sfd);
+int push(Queue *q,void *data);
 
 /* Funzione che toglie un elemento dalla coda */
-int pop(ConnectionQueue *q);
+void *pop(Queue *q);
 
-#endif //PROGETTO_SOL_2022_CONNECTIONQUEUE_H
+#endif //PROGETTO_SOL_2022_QUEUE_H

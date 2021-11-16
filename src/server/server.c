@@ -8,10 +8,9 @@
 
 #include "includes/globals.h"
 #include "includes/config.h"
-#include "includes/connectionQueue.h"
+#include "includes/queue.h"
 
 static void *worker(void *arg);
-
 
 int main(int argc, char *argv[]){
 
@@ -24,8 +23,8 @@ int main(int argc, char *argv[]){
     printConfig(serverConfig);
 
     /***** CONNECTION QUEUE INIT *****/
-    queue = initQueue();
-    if (queue == NULL){
+    connectionQueue = initQueue();
+    if (connectionQueue == NULL){
         printf("Errore init queue, aborting...");
         exit(-1);
     }
@@ -47,7 +46,7 @@ int main(int argc, char *argv[]){
 
     /***** SOCKET INIT *****/
     int fd_server_skt;
-    int fd_client_skt; //File descriptor per connessioni client
+    int *fd_client_skt; //File descriptor per connessioni client
     struct sockaddr_un socketAddress;
 
     strncpy(socketAddress.sun_path, serverConfig->socket_path,100);
@@ -76,15 +75,17 @@ int main(int argc, char *argv[]){
 
     while(1) {
 
-        if ((fd_client_skt = accept(fd_server_skt, NULL, 0)) == -1) {
+        fd_client_skt = malloc(sizeof(int)); //Alloco puntatore per nuovo id file descriptor
+
+        if ((*fd_client_skt = accept(fd_server_skt, NULL, 0)) == -1) {
 
             printf("[MASTER] Errore accept socket, errno: %d, %s\n", errno, strerror(errno));
             break;
 
         } else {
 
-            printf("[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",fd_client_skt);
-            if( push(queue,fd_client_skt) != -1){
+            printf("[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",*fd_client_skt);
+            if( push(connectionQueue,fd_client_skt) != -1){
                 printf("[MASTER] File descriptor client socket inserito nella coda\n");
 
             }else{
@@ -99,22 +100,22 @@ int main(int argc, char *argv[]){
 
 static void *worker(void *arg){
 
-    pthread_t self;
-    self = pthread_self();
+    pthread_t self = pthread_self();
+    int *fd_client_skt = malloc(sizeof(int));
 
-    printf("[%lu] Thread start\n", self);
+    printf("[%lu] Worker start\n", self);
 
     while(1){
-        printf("[%lu] Tentativo pop...\n",self);
-        int fd_client_skt = pop(queue);
+        printf("[%lu] In attesa di nuova richiesta...\n",self);
+        fd_client_skt = pop(connectionQueue);
 
-        if (fd_client_skt != -1){
+        if (*fd_client_skt != -1){
 
-            printf("[%lu] Servo la richiesta del client con socket: %d!\n",self,fd_client_skt);
-            write(fd_client_skt, "Hello client!",14);
+            printf("[%lu] Servo la richiesta del client con socket: %d!\n",self,*fd_client_skt);
+            write(*fd_client_skt, "Hello client!",14);
 
         }else{
-            printf("[%lu] Errore pop coda: %d\n",self,fd_client_skt);
+            printf("[%lu] Errore pop coda: %d\n",self,*fd_client_skt);
             break;
         }
 

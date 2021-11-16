@@ -6,10 +6,11 @@
 #define PROGETTO_SOL_2022_GLOBALS_H
 
 #include "config.h"
-#include "connectionQueue.h"
+#include "queue.h"
 
 static Config *serverConfig;
-static ConnectionQueue *queue;
+static Queue *connectionQueue; /* Coda per le connessioni in arrivo */
+static Queue *fileQueue; /* Coda per i file dei client */
 
 typedef struct Request{
 

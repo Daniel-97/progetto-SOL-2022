@@ -2,16 +2,16 @@
 // Created by daniele on 11/11/21.
 //
 
-#include "connectionQueue.h"
+#include "queue.h"
 
-ConnectionQueue* initQueue(){
+Queue* initQueue(){
 
-    ConnectionQueue *q = malloc(sizeof(ConnectionQueue)); //Alloco spazio per coda
+    Queue *q = malloc(sizeof(Queue)); //Alloco spazio per coda
 
     if(!q) return NULL;
 
     q->head = malloc(sizeof(Node));
-    q->head->sfd = -1;
+    q->head->data = NULL;
     q->head->next = NULL;
 
     q->tail = q->head;
@@ -20,14 +20,14 @@ ConnectionQueue* initQueue(){
     return q;
 }
 
-int push(ConnectionQueue *q, int sfd){
+int push(Queue *q, void *data){
 
-    if( (q == NULL) || (sfd == -1))
+    if( (q == NULL) || (data == NULL))
         return -1;
 
     Node *n = malloc(sizeof(Node));
     if(!n) return -1;
-    n->sfd = sfd;
+    n->data = data;
     n->next = NULL;
 
     /* Qui inizia la sezione critica */
@@ -44,13 +44,13 @@ int push(ConnectionQueue *q, int sfd){
 
 }
 
-int pop(ConnectionQueue *q){
+void *pop(Queue *q){
 
-    int data;
+    void *data;
 
     if(q == NULL){
         printf("[POP] queue pointer is null!\n");
-        return -1;
+        return NULL;
     }
 
     //Inizio sezione critica
@@ -61,7 +61,7 @@ int pop(ConnectionQueue *q){
         pthread_cond_wait(&q->qcond, &q->qlock);
 
     Node *n = q->head;
-    data = q->head->next->sfd;
+    data = q->head->next->data;
     q->head = n->next;
     q->len--;
 
