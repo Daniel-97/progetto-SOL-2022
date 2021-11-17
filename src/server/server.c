@@ -7,6 +7,7 @@
 #include <sys/un.h>
 
 #include "includes/globals.h"
+#include "../common/common.h"
 #include "includes/config.h"
 #include "includes/queue.h"
 #include "includes/fileQueue.h"
@@ -136,6 +137,26 @@ static void *worker(void *arg){
             read(*fd_client_skt, request,sizeof(Request));
             printf("[%lu]Client Request:\n-operation: %d,\n-filepath: %s\n",self,request->operation, request->filepath);
 
+            switch (request->operation) {
+
+                case OP_OPEN_FILE:
+                    break;
+                case OP_WRITE_FILE:
+                    break;
+                case OP_READ_FILE:
+                    break;
+                case OP_DELETE_FILE:
+                    break;
+                case OP_CLOSE_FILE:
+                    break;
+                case OP_LOCK_FILE:
+                    break;
+                case OP_UNLOCK_FILE:
+                    break;
+                default:
+                    printf("Received unknown operation: %d\n",request->operation);
+
+            }
             /* Preparo la risposta per il client */
             response->statusCode = 200;
             response->success = 1;

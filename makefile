@@ -14,13 +14,14 @@ TARGETS = 	bin/server	\
 
 #### SERVER ####
 
-bin/server: src/server/server.c src/server/includes/config.c src/server/includes/queue.c src/server/includes/fileQueue.c
+bin/server: src/server/server.c src/server/includes/*.c
 		$(CC) $(CFLAGS) src/server/server.c src/server/includes/*.c -o bin/server $(LIBS)
 
 #### CLIENT ####
 
-bin/client: src/client/client.c src/client/includes/utils.c
-		$(CC) $(CFLAGS) src/client/client.c	src/client/includes/utils.c -o bin/client
+#D_POSIX_C_SOURCE server per timespec, -lm per linkare math.h
+bin/client: src/client/client.c src/client/includes/*.c
+		$(CC) $(CFLAGS) src/client/client.c	src/client/includes/*.c -o bin/client -D_POSIX_C_SOURCE=199309L -lm
 
 all: $(TARGETS)
 
