@@ -22,7 +22,7 @@ int main(int argc, char *argv[]){
     opt += 0;
     struct timespec time;
 
-    time.tv_sec = 2;
+    time.tv_sec = 3;
     time.tv_nsec = 0;
 
     if(openConnection(SOCKET_NAME,1000, time) == 0){

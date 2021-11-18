@@ -6,10 +6,10 @@
 
 int openConnection(const char* sockname, int msec, const struct timespec abstime){
 
-    struct timespec start;
+    struct timespec start_time;
     struct timespec current_time;
 
-    clock_gettime(CLOCK_REALTIME,&start); //Get current time
+    clock_gettime(CLOCK_REALTIME,&start_time); //Get current time
 
     //TODO DA AGGIUNGERE GESTIONE TIMER
     struct sockaddr_un socketAddress;
@@ -26,8 +26,9 @@ int openConnection(const char* sockname, int msec, const struct timespec abstime
     while(connect(fd_socket, (struct sockaddr*)&socketAddress, sizeof(socketAddress)) == -1) {
 
         clock_gettime(CLOCK_REALTIME,&current_time); //Get the current time
+        //printf("current_time: %ld, start_time: %ld\n",current_time.tv_sec,abstime.tv_sec);
 
-        if( (round(start.tv_nsec/1.0e6) + abstime.tv_sec*1000) > round(current_time.tv_nsec/1.0e6) ){
+        if( current_time.tv_sec > (start_time.tv_sec+abstime.tv_sec) ){
             printf("Tempo massimo raggiunto per i tentativi di connessione, exiting\n");
             return -1;
         }
