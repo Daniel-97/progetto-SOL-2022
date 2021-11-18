@@ -31,19 +31,9 @@ int main(int argc, char *argv[]){
         exit(-1);
     }
 
-    Request request = {.operation = OP_OPEN_FILE, .filepath="tmp"};
-    Response *response = malloc(sizeof(Response));
+    openFile("/tmp/prova.txt",O_CREAT);
 
-    printf("Invio richiesta al server...\n");
+    closeConnection(SOCKET_NAME);
 
-    /* Invio richiesta al server */
-    write(fd_socket,&request,sizeof(request));
-
-    /* Attendo risposta dal server*/
-    read(fd_socket,response,sizeof(Response));
-
-    printf("Server response:\n-statusCode: %d\n-message: %s\n",response->statusCode, response->message);
-
-    close(fd_socket);
     return 0;
 }

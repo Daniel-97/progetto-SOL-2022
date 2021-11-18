@@ -52,3 +52,34 @@ int closeConnection(const char* sockname){
     return close(fd_socket);
 
 }
+
+int openFile(const char* pathname, int flags){
+
+    Request *request = malloc(sizeof(Request));
+    Response *response = malloc(sizeof(Response));
+    request->operation = OP_OPEN_FILE;
+    request->flags = flags;
+    strncpy(request->filepath,pathname,MAX_PATH_SIZE);
+
+    printf("Invio filepath: %s, dimensione:%lu\n",request->filepath,sizeof(pathname));
+
+    /* Invio richiesta al server */
+    if ( write(fd_socket,request,sizeof(Request)) != -1 ){
+
+        /* Attendo risposta dal server */
+        if ( read(fd_socket,response,sizeof(Response)) != -1 ){
+
+            printServerResponse(response);
+            return 0;
+
+        }else{
+            printf("Errore write socket, errno: %d\n",errno);
+            return -1;
+        }
+
+    }else{
+        printf("Errore write socket, errno: %d\n",errno);
+        return -1;
+    }
+
+}

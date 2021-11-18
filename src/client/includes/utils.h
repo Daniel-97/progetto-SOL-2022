@@ -6,7 +6,10 @@
 #define PROGETTO_SOL_2022_UTILS_H
 
 #include <stdio.h>
+#include "../../common/common.h"
 
 void help();
+
+void printServerResponse(Response *response);
 
 #endif //PROGETTO_SOL_2022_UTILS_H

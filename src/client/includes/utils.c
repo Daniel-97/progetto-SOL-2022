@@ -20,3 +20,9 @@ void help(){
     printf("-c file1[,file2]\n");
     printf("-p\n");
 }
+
+void printServerResponse(Response *response){
+
+    printf("Server response:\n-statusCode: %d\n-message: %s\n",response->statusCode, response->message);
+
+}

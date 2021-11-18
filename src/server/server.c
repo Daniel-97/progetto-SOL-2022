@@ -135,7 +135,7 @@ static void *worker(void *arg){
             /* Leggo la richiesta del clint */
             printf("[%lu] Leggo richiesta del client con socket: %d!\n",self,*fd_client_skt);
             read(*fd_client_skt, request,sizeof(Request));
-            printf("[%lu]Client Request:\n-operation: %d,\n-filepath: %s\n",self,request->operation, request->filepath);
+            printf("[%lu] Client Request:{ OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n",self,request->operation, request->filepath,request->flags);
 
             switch (request->operation) {
 
@@ -158,7 +158,7 @@ static void *worker(void *arg){
 
             }
             /* Preparo la risposta per il client */
-            response->statusCode = 200;
+            response->statusCode = 0;
             response->success = 1;
             strcpy(response->message, "All ok!");
             printf("[%lu] Sending response to client...\n",self);

@@ -15,11 +15,17 @@
 #include <string.h>
 #include <errno.h>
 #include <math.h>
+#include <fcntl.h>
+
+#include "../../common/common.h"
+#include "utils.h"
 
 int fd_socket;  // Variabile per socket
 
 int openConnection(const char* sockname, int msec,const struct timespec abstime);
 
 int closeConnection(const char* sockname);
+
+int openFile(const char* pathname, int flags);
 
 #endif //PROGETTO_SOL_2022_SERVERAPI_H
