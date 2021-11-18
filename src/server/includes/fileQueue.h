@@ -7,12 +7,15 @@
 
 #include "queue.h"
 #include "globals.h"
+#include "../../common/common.h"
 #include <string.h>
 
 typedef struct FileNode{
 
-    char pathname[100];
-    FILE *fd;
+    char    pathname[MAX_PATH_SIZE];
+    FILE   *file;   /* Puntatore al file */
+    int     size;   /* Dimensione in byte del file memorizzato */
+    int     lock;   /* Se il file e' in lock da un client vale true */
 
 }FileNode;
 
@@ -22,7 +25,7 @@ typedef struct FileNode{
 int insertFile(Queue *fileQueue, FileNode *fileNode, FileNode **removedFile);
 
 /* Cerca il file all interno della coda dei file (senza eliminarlo) */
-FileNode *findFile(Queue *fileQueue,char *pathname);
+FileNode *findFile(Queue *fileQueue,const char *pathname);
 
 /* Elimina il file dalla coda (liberando lo spazio in memoria) */
 //int deleteFile(Queue *fileQueue, FileNode *fileNode);

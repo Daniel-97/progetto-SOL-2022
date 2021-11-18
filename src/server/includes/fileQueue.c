@@ -4,23 +4,31 @@
 
 #include "fileQueue.h"
 
-FileNode *findFile(Queue *fileQueue,char *pathname){
+FileNode *findFile(Queue *fileQueue,const char *pathname){
 
     Node *node;
     FileNode *fileNode;
+    FileNode *data = NULL;
 
     if( fileQueue == NULL || pathname == NULL ) return NULL;
+
+    pthread_mutex_lock(&fileQueue->qlock);
 
     node = fileQueue->head;
 
     while( (node = node->next) != NULL){
         fileNode = node->data;
         if(strcmp(fileNode->pathname, pathname) == 0){
-            return fileNode;
+            data = fileNode;
+            break;
         }
     }
 
-    return NULL;
+    pthread_cond_signal(&fileQueue->qcond);
+    pthread_mutex_unlock(&fileQueue->qlock);
+
+    return data;
+
 }
 
 int insertFile(Queue *fileQueue, FileNode *fileNode, FileNode **removedFile){
