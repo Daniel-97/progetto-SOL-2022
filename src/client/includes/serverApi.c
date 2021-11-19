@@ -57,6 +57,8 @@ int openFile(const char* pathname, int flags){
 
     Request *request = malloc(sizeof(Request));
     Response *response = malloc(sizeof(Response));
+
+    request->clientId = getpid();
     request->operation = OP_OPEN_FILE;
     request->flags = flags;
     strncpy(request->filepath,pathname,MAX_PATH_SIZE);

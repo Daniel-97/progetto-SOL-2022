@@ -31,7 +31,9 @@ int main(int argc, char *argv[]){
         exit(-1);
     }
 
-    openFile("/tmp/prova.txt",O_CREAT);
+    openFile("/tmp/prova.txt",O_LOCK);
+
+//    openFile("/tmp/prova.txt",O_CREATE);
 
     closeConnection(SOCKET_NAME);
 

@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+/* CODICI PER COMUNICARE TIPO DI OPERAZIONE AL SERVER */
 #define OP_OPEN_FILE    0
 #define OP_WRITE_FILE   1
 #define OP_READ_FILE    2
@@ -16,14 +17,19 @@
 #define OP_LOCK_FILE    6
 #define OP_UNLOCK_FILE  7
 
+/* CODICI FLAGS FILE */
+#define O_CREATE    0b01
+#define O_LOCK      0b10
+
 #define MAX_PATH_SIZE       100
 #define MAX_MESSAGE_SIZE    100
 
 typedef struct Request{
 
-    uint32_t    operation;                  /* Tipo di operazione: crea, elimina, scrivi, leggi, lock,... */
-    char        filepath[MAX_PATH_SIZE];    /* Path del file su cui eseguire l'operazione */
-    uint32_t    flags;                      /* Eventuali flags: O_CREAT, O_LOCK */
+    int     clientId;                   /* Id del client che effettua la richiesta */
+    int     operation;                  /* Tipo di operazione: crea, elimina, scrivi, leggi, lock,... */
+    char    filepath[MAX_PATH_SIZE];    /* Path del file su cui eseguire l'operazione */
+    int     flags;                      /* Eventuali flags: O_CREAT, O_LOCK */
 }Request;
 
 typedef struct Response{

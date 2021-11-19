@@ -11,6 +11,7 @@
 #include "includes/config.h"
 #include "includes/queue.h"
 #include "includes/fileQueue.h"
+#include "includes/fileStorage.h"
 
 static void *worker(void *arg);
 
@@ -135,17 +136,20 @@ static void *worker(void *arg){
             /* Leggo la richiesta del clint */
             printf("[%lu] Leggo richiesta del client con socket: %d!\n",self,*fd_client_skt);
             read(*fd_client_skt, request,sizeof(Request));
-            printf("[%lu] Client Request:{ OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n",self,request->operation, request->filepath,request->flags);
+            printf("[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n",self,request->clientId,request->operation, request->filepath,request->flags);
 
             switch (request->operation) {
 
                 case OP_OPEN_FILE:
+                    openVirtualFile(request->filepath, request->flags, request->clientId);
                     break;
                 case OP_WRITE_FILE:
                     break;
                 case OP_READ_FILE:
                     break;
                 case OP_DELETE_FILE:
+                    break;
+                case OP_APPEND_FILE:
                     break;
                 case OP_CLOSE_FILE:
                     break;
@@ -161,7 +165,7 @@ static void *worker(void *arg){
             response->statusCode = 0;
             response->success = 1;
             strcpy(response->message, "All ok!");
-            printf("[%lu] Sending response to client...\n",self);
+            printf("[%lu] Invio risposta al client...\n",self);
             write(*fd_client_skt,response,sizeof(Response));
 
         }else{
