@@ -9,7 +9,8 @@
 #include "queue.h"
 
 Config *serverConfig;
-Queue *connectionQueue; /* Coda per le connessioni in arrivo */
+//int epoll_descriptor; /* File descriptor epoll */
 Queue *fileQueue; /* Coda per i file dei client */
+Queue *connectionQueue; /* Coda per le connessioni in arrivo */
 
 #endif //PROGETTO_SOL_2022_GLOBALS_H

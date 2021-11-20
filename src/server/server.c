@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/epoll.h>
 
 #include "includes/globals.h"
 #include "../common/common.h"
@@ -15,7 +16,11 @@
 
 static void *worker(void *arg);
 
+static int *epoll_descriptors;
+
 int main(int argc, char *argv[]){
+
+    int cont = 0;
 
     /****** CONFIG INIT *******/
     serverConfig = malloc(sizeof(Config));
@@ -25,34 +30,42 @@ int main(int argc, char *argv[]){
     }
     printConfig(serverConfig);
 
+    /***** EPOOL INIT *****/
+    //Puntatori a strutture dati necessarie per ogni elemento della epoll.
+    union epoll_data *epollData;
+    struct epoll_event *epollEvent;
+    //Inizializzo spazio per descrittori epoll workers
+    epoll_descriptors = malloc(serverConfig->thread_workers * sizeof(int));
+
+    for(int i = 0; i < serverConfig->thread_workers; i++){
+        if ( (epoll_descriptors[i] = epoll_create(100) ) == -1 ){
+            printf("[MASTER] Errore nella creazione epoll worker n.%d, errno: %d, %s\n",i,errno, strerror(errno));
+            exit(-1);
+        }
+    }
+
     /***** FILE QUEUE INIT ******/
     fileQueue = initQueue();
 
     /***** CONNECTION QUEUE INIT *****/
     connectionQueue = initQueue();
     if (connectionQueue == NULL){
-        printf("Errore init queue, aborting...");
+        printf("[MASTER] Errore init queue, aborting...");
         exit(-1);
     }
 
     /******* THREAD INIT *****/
     pthread_t *threadPool;
-//    int *threadPoolStatus;
     // Alloco un array per i descrittori di processo
     threadPool = (pthread_t*)malloc(serverConfig->thread_workers * sizeof(pthread_t) );
-//    threadPoolStatus = (int*) malloc(serverConfig->thread_workers * sizeof(int));
 
     for(int i = 0; i<serverConfig->thread_workers; i++) {
-        pthread_create(&threadPool[i], NULL, &worker, NULL);
+        pthread_create(&threadPool[i], NULL, &worker, &epoll_descriptors[i]);
     }
 
-//    for(int i = 0; i<serverConfig->thread_workers; i++) {
-//        pthread_join(threadPool[i], (void *) &threadPoolStatus[i]);
-//    }
-
     /***** SOCKET INIT *****/
-    int fd_server_skt;
-    int *fd_client_skt; //File descriptor per connessioni client
+    int fd_server_skt;  //File descriptor server socket
+    int *fd_client_skt; //File descriptor client socket
     struct sockaddr_un socketAddress;
 
     strncpy(socketAddress.sun_path, serverConfig->socket_path,100);
@@ -76,6 +89,7 @@ int main(int argc, char *argv[]){
         printf("[MASTER] Errore listen socket, errno: %d, %s\n",errno, strerror(errno));
         exit(-1);
     }
+
     /****** MAIN SERVER LOOP *****/
     printf("\n***** ATTENDO NUOVE CONNESSIONI *****\n");
 
@@ -91,13 +105,26 @@ int main(int argc, char *argv[]){
         } else {
 
             printf("[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",*fd_client_skt);
-            if( push(connectionQueue,fd_client_skt) != -1){
-                printf("[MASTER] File descriptor client socket inserito nella coda\n");
+
+            /* Alloco lo spazio per le strutture dati necessarie all elemento della epoll e inizializzo*/
+            epollEvent = malloc(sizeof(struct epoll_event));
+            epollData = malloc(sizeof(union epoll_data));
+
+            epollData->fd = *fd_client_skt;
+
+            epollEvent->events = EPOLLIN | EPOLLONESHOT;
+            epollEvent->data = *epollData;
+
+            /* Aggiungo il nuovo file descriptor del client alla epoll del prossimo worker (load balancing) */
+            unsigned index = cont++ % serverConfig->thread_workers;
+            if ( epoll_ctl(epoll_descriptors[index], EPOLL_CTL_ADD, *fd_client_skt, epollEvent) == -1){
+
+                printf("[MASTER] Errore inserimento client file descriptor in epoll. errno; %d, %s\n",errno, strerror(errno));
 
             }else{
-                printf("[MASTER] Errore inserimento file descriptor client socket nella coda\n");
-
+                printf("[MASTER] File descriptor %d inserito correttamente in epoll con fd %d\n",*fd_client_skt,epoll_descriptors[index]);
             }
+
         }
     }
     close(fd_server_skt);
@@ -107,57 +134,82 @@ int main(int argc, char *argv[]){
 static void *worker(void *arg){
 
     pthread_t self = pthread_self();
-    int *fd_client_skt = NULL;
+    int *epoll_fd = (int*)arg;
+    struct epoll_event *client_epoll_event = malloc(sizeof(struct epoll_event));
+
     Request *request = malloc(sizeof(Request));
     Response *response = malloc(sizeof(Response));
 
-    printf("[%lu] Worker start\n", self);
+    printf("[%lu] Worker start with epoll file descriptor: %d\n", self,*epoll_fd);
 
     while(1){
-        printf("[%lu] In attesa di nuova richiesta...\n",self);
-        fd_client_skt = pop(connectionQueue);
+        printf("[%lu] In attesa di nuovo evento su epoll...\n",self);
+        if ( epoll_pwait(*epoll_fd, client_epoll_event, 1, -1, NULL) != -1){
 
-        if (*fd_client_skt != -1){
-
-            /* Leggo la richiesta del clint */
-            printf("[%lu] Leggo richiesta del client con socket: %d!\n",self,*fd_client_skt);
-            read(*fd_client_skt, request,sizeof(Request));
+            printf("[%lu] Nuovo evento da epoll ricevuto. fd: %d. Eseguo read()\n",self, client_epoll_event->data.fd);
+            read(client_epoll_event->data.fd, request,sizeof(Request));
             printf("[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n",self,request->clientId,request->operation, request->filepath,request->flags);
 
-            switch (request->operation) {
-
-                case OP_OPEN_FILE:
-                    openVirtualFile(request->filepath, request->flags, request->clientId);
-                    break;
-                case OP_WRITE_FILE:
-                    break;
-                case OP_READ_FILE:
-                    break;
-                case OP_DELETE_FILE:
-                    break;
-                case OP_APPEND_FILE:
-                    break;
-                case OP_CLOSE_FILE:
-                    break;
-                case OP_LOCK_FILE:
-                    break;
-                case OP_UNLOCK_FILE:
-                    break;
-                default:
-                    printf("Received unknown operation: %d\n",request->operation);
-
-            }
             /* Preparo la risposta per il client */
             response->statusCode = 0;
             response->success = 1;
             strcpy(response->message, "All ok!");
             printf("[%lu] Invio risposta al client...\n",self);
-            write(*fd_client_skt,response,sizeof(Response));
+            write(client_epoll_event->data.fd,response,sizeof(Response));
+
+            struct epoll_event event;
+            event.events = EPOLLIN | EPOLLONESHOT;
+            event.data.fd = client_epoll_event->data.fd;
+            epoll_ctl(*epoll_fd,EPOLL_CTL_MOD,client_epoll_event->data.fd,&event);
 
         }else{
-            printf("[%lu] Errore pop coda: %d\n",self,*fd_client_skt);
+
+            printf("[%lu] Errore attesa nuovo evento su epool\n", self);
             break;
         }
+
+//        if (*fd_client_skt != -1){
+//
+//            /* Leggo la richiesta del clint */
+//            printf("[%lu] Leggo richiesta del client con socket: %d!\n",self,*fd_client_skt);
+//            read(*fd_client_skt, request,sizeof(Request));
+//            printf("[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n",self,request->clientId,request->operation, request->filepath,request->flags);
+//
+//            switch (request->operation) {
+//
+//                case OP_OPEN_FILE:
+//                    openVirtualFile(request->filepath, request->flags, request->clientId);
+//                    break;
+//                case OP_WRITE_FILE:
+//                    break;
+//                case OP_READ_FILE:
+//                    break;
+//                case OP_DELETE_FILE:
+//                    break;
+//                case OP_APPEND_FILE:
+//                    break;
+//                case OP_CLOSE_FILE:
+//                    break;
+//                case OP_LOCK_FILE:
+//                    break;
+//                case OP_UNLOCK_FILE:
+//                    break;
+//                default:
+//                    printf("Received unknown operation: %d\n",request->operation);
+//
+//            }
+//            /* Preparo la risposta per il client */
+//            response->statusCode = 0;
+//            response->success = 1;
+//            strcpy(response->message, "All ok!");
+//            printf("[%lu] Invio risposta al client...\n",self);
+//            write(*fd_client_skt,response,sizeof(Response));
+//
+//        }else{
+//            printf("[%lu] Errore pop coda: %d\n",self,*fd_client_skt);
+//            break;
+//        }
+
 
     }
     return 0;
