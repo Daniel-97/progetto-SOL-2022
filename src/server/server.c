@@ -16,11 +16,12 @@
 
 static void *worker(void *arg);
 
-static int *epoll_descriptors;
+//static int *epoll_descriptors;
+static int epoll_descriptor;
 
 int main(int argc, char *argv[]){
 
-    int cont = 0;
+//    int cont = 0;
 
     /****** CONFIG INIT *******/
     serverConfig = malloc(sizeof(Config));
@@ -31,17 +32,18 @@ int main(int argc, char *argv[]){
     printConfig(serverConfig);
 
     /***** EPOOL INIT *****/
-    //Puntatori a strutture dati necessarie per ogni elemento della epoll.
-    union epoll_data *epollData;
-    struct epoll_event *epollEvent;
     //Inizializzo spazio per descrittori epoll workers
-    epoll_descriptors = malloc(serverConfig->thread_workers * sizeof(int));
-
-    for(int i = 0; i < serverConfig->thread_workers; i++){
-        if ( (epoll_descriptors[i] = epoll_create(100) ) == -1 ){
-            printf("[MASTER] Errore nella creazione epoll worker n.%d, errno: %d, %s\n",i,errno, strerror(errno));
-            exit(-1);
-        }
+//    epoll_descriptors = malloc(serverConfig->thread_workers * sizeof(int));
+//
+//    for(int i = 0; i < serverConfig->thread_workers; i++){
+//        if ( (epoll_descriptors[i] = epoll_create(100) ) == -1 ){
+//            printf("[MASTER] Errore nella creazione epoll worker n.%d, errno: %d, %s\n",i,errno, strerror(errno));
+//            exit(-1);
+//        }
+//    }
+    if ( (epoll_descriptor = epoll_create(100) ) == -1 ){
+        printf("[MASTER] Errore nella creazione epoll, errno: %d, %s\n",errno, strerror(errno));
+        exit(-1);
     }
 
     /***** FILE QUEUE INIT ******/
@@ -60,7 +62,7 @@ int main(int argc, char *argv[]){
     threadPool = (pthread_t*)malloc(serverConfig->thread_workers * sizeof(pthread_t) );
 
     for(int i = 0; i<serverConfig->thread_workers; i++) {
-        pthread_create(&threadPool[i], NULL, &worker, &epoll_descriptors[i]);
+        pthread_create(&threadPool[i], NULL, &worker, NULL);
     }
 
     /***** SOCKET INIT *****/
@@ -107,22 +109,16 @@ int main(int argc, char *argv[]){
             printf("[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",*fd_client_skt);
 
             /* Alloco lo spazio per le strutture dati necessarie all elemento della epoll e inizializzo*/
-            epollEvent = malloc(sizeof(struct epoll_event));
-            epollData = malloc(sizeof(union epoll_data));
+            struct epoll_event ev;
+            ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+            ev.data.fd = *fd_client_skt;
 
-            epollData->fd = *fd_client_skt;
-
-            epollEvent->events = EPOLLIN | EPOLLONESHOT;
-            epollEvent->data = *epollData;
-
-            /* Aggiungo il nuovo file descriptor del client alla epoll del prossimo worker (load balancing) */
-            unsigned index = cont++ % serverConfig->thread_workers;
-            if ( epoll_ctl(epoll_descriptors[index], EPOLL_CTL_ADD, *fd_client_skt, epollEvent) == -1){
+            if ( epoll_ctl(epoll_descriptor, EPOLL_CTL_ADD, *fd_client_skt, &ev) == -1){
 
                 printf("[MASTER] Errore inserimento client file descriptor in epoll. errno; %d, %s\n",errno, strerror(errno));
 
             }else{
-                printf("[MASTER] File descriptor %d inserito correttamente in epoll con fd %d\n",*fd_client_skt,epoll_descriptors[index]);
+                printf("[MASTER] File descriptor %d inserito correttamente in epoll con fd %d\n",*fd_client_skt,epoll_descriptor);
             }
 
         }
@@ -131,20 +127,23 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
+
+/****** WORKER ******/
 static void *worker(void *arg){
 
     pthread_t self = pthread_self();
-    int *epoll_fd = (int*)arg;
+//    int *epoll_fd = (int*)arg;
     struct epoll_event *client_epoll_event = malloc(sizeof(struct epoll_event));
 
     Request *request = malloc(sizeof(Request));
     Response *response = malloc(sizeof(Response));
 
-    printf("[%lu] Worker start with epoll file descriptor: %d\n", self,*epoll_fd);
+    printf("[%lu] Worker start with epoll file descriptor: %d\n", self,epoll_descriptor);
 
     while(1){
+
         printf("[%lu] In attesa di nuovo evento su epoll...\n",self);
-        if ( epoll_pwait(*epoll_fd, client_epoll_event, 1, -1, NULL) != -1){
+        if ( epoll_wait(epoll_descriptor, client_epoll_event, 1, -1) != -1){
 
             printf("[%lu] Nuovo evento da epoll ricevuto. fd: %d. Eseguo read()\n",self, client_epoll_event->data.fd);
             read(client_epoll_event->data.fd, request,sizeof(Request));
@@ -157,10 +156,7 @@ static void *worker(void *arg){
             printf("[%lu] Invio risposta al client...\n",self);
             write(client_epoll_event->data.fd,response,sizeof(Response));
 
-            struct epoll_event event;
-            event.events = EPOLLIN | EPOLLONESHOT;
-            event.data.fd = client_epoll_event->data.fd;
-            epoll_ctl(*epoll_fd,EPOLL_CTL_MOD,client_epoll_event->data.fd,&event);
+            epoll_ctl(epoll_descriptor, EPOLL_CTL_MOD,client_epoll_event->data.fd,client_epoll_event);
 
         }else{
 
