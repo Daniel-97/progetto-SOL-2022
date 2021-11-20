@@ -27,21 +27,7 @@ int main(int argc, char *argv[]){
 
     /***** FILE QUEUE INIT ******/
     fileQueue = initQueue();
-    //        CODICE DI TEST CODA FILE
-//    FileNode fn1 = {.pathname = "tmp1", .fd = NULL};
-//    FileNode fn2 = {.pathname = "tmp2", .fd = NULL};
-//    FileNode fn3 = {.pathname = "tmp3", .fd = NULL};
-//    FileNode *removedFile = NULL;
-//    insertFile(fileQueue,&fn1,&removedFile);
-//    insertFile(fileQueue,&fn2,&removedFile);
-//    insertFile(fileQueue,&fn3,&removedFile);
-//    if (removedFile)
-//        printf("File rimosso: %s\n", removedFile->pathname);
-//
-//    FileNode *f4 = findFile(fileQueue, "tmp3");
-//    if (f4)
-//        printf("File trovato: %s\n", f4->pathname);
-//    exit(0);
+
     /***** CONNECTION QUEUE INIT *****/
     connectionQueue = initQueue();
     if (connectionQueue == NULL){

@@ -25,10 +25,10 @@ typedef struct FileNode{
 int insertFile(Queue *queue, FileNode *fileNode, FileNode **removedFile);
 
 /* Cerca il file all interno della coda dei file (senza eliminarlo) */
-FileNode *findFile(Queue *queue, const char *pathname);
+int findFile(Queue *queue, const char *pathname);
 
 /* Modifica un nodo della coda */
-int editFile(Queue *queue, FileNode *newNode);
+int editFile(Queue *queue, const char *pathname, FILE *file,int size, int clientId);
 
 /* Elimina il file dalla coda (liberando lo spazio in memoria) */
 //int deleteFile(Queue *fileQueue, FileNode *fileNode);

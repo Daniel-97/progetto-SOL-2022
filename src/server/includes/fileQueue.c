@@ -5,13 +5,13 @@
 #include "fileQueue.h"
 
 //Attenzione non dovrebbe ritornare un puntatore perchè la modifica non è thread safe
-FileNode *findFile(Queue *queue,const char *pathname){
+int findFile(Queue *queue,const char *pathname){
 
     Node *node;
     FileNode *fileNode;
     FileNode *data = NULL;
 
-    if( queue == NULL || pathname == NULL ) return NULL;
+    if( queue == NULL || pathname == NULL ) return -1;
 
     pthread_mutex_lock(&queue->qlock);
 
@@ -28,8 +28,10 @@ FileNode *findFile(Queue *queue,const char *pathname){
     pthread_cond_signal(&queue->qcond);
     pthread_mutex_unlock(&queue->qlock);
 
-    return data;
-
+    if(data)
+        return 0;
+    else
+        return -1;
 }
 
 int insertFile(Queue *queue, FileNode *fileNode, FileNode **removedFile){
@@ -51,13 +53,13 @@ int insertFile(Queue *queue, FileNode *fileNode, FileNode **removedFile){
     return result;
 }
 
-int editFile(Queue *queue, FileNode *newNode){
+int editFile(Queue *queue, const char *pathname, FILE *file,int size, int clientId){
 
-    Node *node;
+    Node *node = NULL;
     FileNode *fileNode;
     int status;
 
-    if (queue == NULL || newNode == NULL) return -1;
+    if (queue == NULL) return -1;
 
     pthread_mutex_lock(&queue->qlock);
 
@@ -65,15 +67,21 @@ int editFile(Queue *queue, FileNode *newNode){
 
     while( (node = node->next) != NULL){
         fileNode = node->data;
-        if(strcmp(fileNode->pathname, newNode->pathname) == 0){
+        if(strcmp(fileNode->pathname, pathname) == 0){
             break;
         }
     }
 
     if(node){
         /* ATTENZIONE DEVO LIBERARE LA MEMORIA */
-        node->data = newNode;
+        if(file) {
+            fileNode->file = file;
+            fileNode->size = size;
+        }
+        if(clientId != 0)
+            fileNode->client_id = clientId;
         status = 0;
+
     }else{
         status = -1;
     }

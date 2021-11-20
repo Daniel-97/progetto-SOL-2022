@@ -7,33 +7,34 @@
 int openVirtualFile(const char* pathname, int flags, int clientId){
 
     pthread_t self = pthread_self();
-    FileNode *file;
+    int found;
     FILE *newFile;
 
-    file = findFile(fileQueue, pathname);
+    found = findFile(fileQueue, pathname);
 
     /* Esiste il file ed è stato passato il flag O_CREATE */
-    if ( file && ( (flags & O_CREATE) == O_CREATE) ){
+    if ( (found !=  -1 ) && ( (flags & O_CREATE) == O_CREATE) ){
         printf("[%lu] Il file %s esiste gia, impossibile crearne uno nuovo con lo stesso nome\n",self, pathname);
         return -1;
     }
 
-    if( !file && ( (flags & O_LOCK) == O_LOCK ) ){
+    if( (found == -1) && ( (flags & O_LOCK) == O_LOCK ) ){
         printf("[%lu] Il file %s non esiste, impossibile acquisire il lock\n",self, pathname);
         return -1;
     }
 
-    if (file){
+    if (found == 0){
 
         printf("[%lu] Il file %s esiste gia!\n",self, pathname);
 
         /* Se il client ha passato il flag di lock devo prendere il lock sul file */
-        if ( (flags & O_LOCK) == O_LOCK ){
+        if ( (flags & O_LOCK) == O_LOCK ) {
 
-        }else{
-
+            if (editFile(fileQueue, pathname, NULL, 0, clientId) == 0) {
+                printf("[%lu] Lock acquisito sul file!\n", self);
+                return 0;
+            }
         }
-
 
     }else{
 
@@ -88,11 +89,11 @@ int openVirtualFile(const char* pathname, int flags, int clientId){
 
 int writeVirtualFile(const char* pathname){
 
-    FileNode *file = NULL;
+    int found;
 
-    file = findFile(fileQueue,pathname);
+    found = findFile(fileQueue,pathname);
 
-    if (file == NULL){
+    if (found == -1){
         return -1;
     }
     else{
