@@ -110,7 +110,7 @@ int main(int argc, char *argv[]){
 
             /* Alloco lo spazio per le strutture dati necessarie all elemento della epoll e inizializzo*/
             struct epoll_event ev;
-            ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+            ev.events = EPOLLIN | EPOLLET;
             ev.data.fd = *fd_client_skt;
 
             if ( epoll_ctl(epoll_descriptor, EPOLL_CTL_ADD, *fd_client_skt, &ev) == -1){
@@ -146,17 +146,24 @@ static void *worker(void *arg){
         if ( epoll_wait(epoll_descriptor, client_epoll_event, 1, -1) != -1){
 
             printf("[%lu] Nuovo evento da epoll ricevuto. fd: %d. Eseguo read()\n",self, client_epoll_event->data.fd);
-            read(client_epoll_event->data.fd, request,sizeof(Request));
-            printf("[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n",self,request->clientId,request->operation, request->filepath,request->flags);
 
-            /* Preparo la risposta per il client */
-            response->statusCode = 0;
-            response->success = 1;
-            strcpy(response->message, "All ok!");
-            printf("[%lu] Invio risposta al client...\n",self);
-            write(client_epoll_event->data.fd,response,sizeof(Response));
+            if (read(client_epoll_event->data.fd, request,sizeof(Request)) != -1) {
+                printf("[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n", self,
+                       request->clientId, request->operation, request->filepath, request->flags);
 
-            epoll_ctl(epoll_descriptor, EPOLL_CTL_MOD,client_epoll_event->data.fd,client_epoll_event);
+
+                /* Preparo la risposta per il client */
+                response->statusCode = 0;
+                response->success = 1;
+                strcpy(response->message, "All ok!");
+                printf("[%lu] Invio risposta al client...\n", self);
+
+                if ( write(client_epoll_event->data.fd, response, sizeof(Response)) != -1){
+                    printf("[%lu] Risposta inviata al client!\n",self);
+                }
+
+//                epoll_ctl(epoll_descriptor, EPOLL_CTL_MOD, client_epoll_event->data.fd, client_epoll_event);
+            }
 
         }else{
 
