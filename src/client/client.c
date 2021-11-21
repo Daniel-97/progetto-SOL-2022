@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
     }
 
     openFile("/tmp/prova.txt",O_CREATE);
-//    openFile("/tmp/prova.txt",O_LOCK);
+    openFile("/tmp/provaaaa2.txt",O_LOCK);
 
     closeConnection(SOCKET_NAME);
 

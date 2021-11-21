@@ -108,7 +108,7 @@ static void *worker(void *arg){
 
     pthread_t self = pthread_self();
     int *fd_client_skt = NULL;
-    Request *request = malloc(sizeof(Request));
+    Request *request =  malloc(sizeof(Request));
     Response *response = malloc(sizeof(Response));
 
     printf("[%lu] Worker start\n", self);
@@ -119,40 +119,46 @@ static void *worker(void *arg){
 
         if (*fd_client_skt != -1){
 
-            /* Leggo la richiesta del clint */
-            printf("[%lu] Leggo richiesta del client con socket: %d!\n",self,*fd_client_skt);
-            read(*fd_client_skt, request,sizeof(Request));
-            printf("[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n",self,request->clientId,request->operation, request->filepath,request->flags);
+            /* Continuo a leggere dal socket del client fintanto che ci sono dati */
+            while( read(*fd_client_skt, request,sizeof(Request)) > 0 ) {
 
-            switch (request->operation) {
+                /* Leggo la richiesta del client */
+                printf("[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n", self,
+                       request->clientId, request->operation, request->filepath, request->flags);
 
-                case OP_OPEN_FILE:
-                    openVirtualFile(request->filepath, request->flags, request->clientId);
-                    break;
-                case OP_WRITE_FILE:
-                    break;
-                case OP_READ_FILE:
-                    break;
-                case OP_DELETE_FILE:
-                    break;
-                case OP_APPEND_FILE:
-                    break;
-                case OP_CLOSE_FILE:
-                    break;
-                case OP_LOCK_FILE:
-                    break;
-                case OP_UNLOCK_FILE:
-                    break;
-                default:
-                    printf("Received unknown operation: %d\n",request->operation);
+                switch (request->operation) {
 
+                    case OP_OPEN_FILE:
+                        openVirtualFile(request->filepath, request->flags, request->clientId);
+                        break;
+                    case OP_WRITE_FILE:
+                        break;
+                    case OP_READ_FILE:
+                        break;
+                    case OP_DELETE_FILE:
+                        break;
+                    case OP_APPEND_FILE:
+                        break;
+                    case OP_CLOSE_FILE:
+                        break;
+                    case OP_LOCK_FILE:
+                        break;
+                    case OP_UNLOCK_FILE:
+                        break;
+                    default:
+                        printf("Received unknown operation: %d\n", request->operation);
+
+                }
+                /* Preparo la risposta per il client */
+                response->statusCode = 0;
+                response->success = 1;
+                strcpy(response->message, "All ok!");
+                printf("[%lu] Invio risposta al client...\n", self);
+
+                if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+                    printf("[%lu] Risposta inviata al client!\n",self);
+                }
             }
-            /* Preparo la risposta per il client */
-            response->statusCode = 0;
-            response->success = 1;
-            strcpy(response->message, "All ok!");
-            printf("[%lu] Invio risposta al client...\n",self);
-            write(*fd_client_skt,response,sizeof(Response));
 
         }else{
             printf("[%lu] Errore pop coda: %d\n",self,*fd_client_skt);
