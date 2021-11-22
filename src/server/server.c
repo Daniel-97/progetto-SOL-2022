@@ -109,7 +109,7 @@ static void *worker(void *arg){
     int *fd_client_skt = NULL;
     Request *request =  malloc(sizeof(Request));
     Response *response = malloc(sizeof(Response));
-    void **buf;
+    void *buf;
     size_t size;
 
     printf("[%lu] Worker start\n", self);
@@ -136,8 +136,8 @@ static void *worker(void *arg){
 //                        writeVirtualFile(request->filepath,"ciao",5);
                         break;
                     case OP_READ_FILE:
-                        writeVirtualFile(fileQueue,request->filepath,"ciao",4);
-                        readVirtualFile(fileQueue,request->filepath,buf,&size);
+                        writeVirtualFile(fileQueue,request->filepath,"ciao",sizeof("ciao"));
+                        readVirtualFile(fileQueue,request->filepath,&buf,&size);
                         break;
                     case OP_DELETE_FILE:
                         break;

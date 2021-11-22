@@ -186,6 +186,7 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
     FileNode *file;
     int cont;
     int status;
+    char test[100];
 
     pthread_mutex_lock(&queue->qlock);
 
@@ -197,17 +198,18 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
        status = -1;
 
     }else{
-        printf("[%lu] Tento di leggere file %s dim: %d byte\n",self,pathname,file->size);
-       *buf = malloc(file->size); //Alloco spazio buffer file da leggere
-       cont = fread(*buf,file->size,1,file->file); //Ritorna elementi letti
 
+//        printf("[%lu] Tento di leggere file %s dim: %d byte\n",self,pathname,file->size);
+        *buf = malloc(file->size); //Alloco spazio buffer file da leggere
+        rewind(file->file); //Mi posiziono all inizio del file per la lettura
+        cont = fread(&test,file->size,1,file->file); //Ritorna elementi letti
         if(cont == 1){
             printf("[%lu] Letti %d byte da file %s\n", self, file->size, pathname);
             *size = file->size;
             status = 0;
         }else{
-           printf("[%lu] Errore lettura file %s. %s\n", self, pathname, strerror(errno));
-           status = -1;
+            printf("[%lu] Errore lettura file %s. %s\n", self, pathname, strerror(errno));
+            status = -1;
         }
 
     }
