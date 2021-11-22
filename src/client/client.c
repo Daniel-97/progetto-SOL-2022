@@ -21,6 +21,8 @@ int main(int argc, char *argv[]){
     int opt = 0;
     opt += 0;
     struct timespec time;
+    void **buff;
+    size_t size;
 
     time.tv_sec = 3;
     time.tv_nsec = 0;
@@ -32,8 +34,7 @@ int main(int argc, char *argv[]){
     }
 
     openFile("/tmp/prova.txt",O_CREATE);
-    openFile("/tmp/provaaaa2.txt",O_LOCK);
-
+    readFile("/tmp/prova.txt", buff,&size);
     closeConnection(SOCKET_NAME);
 
     return 0;

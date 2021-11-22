@@ -9,12 +9,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "fileQueue.h"
+#include "queue.h"
 #include "config.h"
+#include "../../common/common.h"
 
-int openVirtualFile(const char* pathname, int flags, int clientId);
+#define READ_CHUNK_SIZE 100
 
-int writeVirtualFile(const char* pathname);
+typedef struct FileNode{
+
+    char    pathname[MAX_PATH_SIZE];
+    FILE   *file;   /* Puntatore al file */
+    int     size;   /* Dimensione in byte del file memorizzato */
+    int     client_id; /* Se il file e' in lock da un client contiene l'identificatore del client */
+
+}FileNode;
+
+/***** FUNZIONI SU CODA *****/
+
+/* Cerca il file all interno della coda dei file */
+int findFileNode(Queue *queue, const char *pathname);
+
+int editFileNode(Queue *queue, const char *pathname, FILE *file,int size, int clientId);
+
+FileNode *getFileNode(Queue *queue, const char *pathname);
+
+
+/***** FUNZIONI SU FILE ******/
+int openVirtualFile(Queue *queue,const char* pathname, int flags, int clientId);
+
+int readVirtualFile(Queue *queue,const char* pathname, void **buf, size_t *size);
+
+int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size);
 
 
 #endif //PROGETTO_SOL_2022_FILESTORAGE_H

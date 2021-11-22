@@ -4,13 +4,114 @@
 
 #include "fileStorage.h"
 
-int openVirtualFile(const char* pathname, int flags, int clientId){
+int findFileNode(Queue *queue,const char *pathname){
+
+    Node *node;
+    FileNode *fileNode;
+    FileNode *data = NULL;
+
+    if( queue == NULL || pathname == NULL ) return -1;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    node = queue->head;
+
+    while( (node = node->next) != NULL){
+        fileNode = node->data;
+        if(strcmp(fileNode->pathname, pathname) == 0){
+            data = fileNode;
+            break;
+        }
+    }
+
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    if(data)
+        return 0;
+    else
+        return -1;
+}
+
+//ATTENZIONE MUTEX DA ESEGUIRE FUORI DA FUNZIONE
+int editFileNode(Queue *queue, const char *pathname, FILE *file,int size, int clientId){
+
+    Node *node = NULL;
+    FileNode *fileNode;
+    int status;
+
+    if (queue == NULL) return -1;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    node = queue->head;
+
+    while( (node = node->next) != NULL){
+        fileNode = node->data;
+        if(strcmp(fileNode->pathname, pathname) == 0){
+            break;
+        }
+    }
+
+    if(node){
+
+        /* ATTENZIONE DEVO LIBERARE LA MEMORIA */
+        if (file) {
+            fileNode->file = file;
+            fileNode->size = size;
+        }
+        if (clientId != 0)
+            fileNode->client_id = clientId;
+        status = 0;
+
+    }else{
+        status = -1;
+    }
+
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    return status;
+
+}
+
+//ATTENZIONE MUTEX DA ESEGUIRE FUORI DA FUNZIONE
+FileNode *getFileNode(Queue *queue, const char *pathname){
+
+    Node *node;
+    FileNode *fileNode;
+    FileNode *data = NULL;
+
+    if( queue == NULL || pathname == NULL ) return NULL;
+
+//    pthread_mutex_lock(&queue->qlock);
+
+    node = queue->head;
+
+    while( (node = node->next) != NULL){
+        fileNode = node->data;
+        if(strcmp(fileNode->pathname, pathname) == 0){
+            data = fileNode;
+            break;
+        }
+    }
+
+//    pthread_cond_signal(&queue->qcond);
+//    pthread_mutex_unlock(&queue->qlock);
+
+    if(data)
+        return data;
+    else
+        return NULL;
+}
+
+int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId){
 
     pthread_t self = pthread_self();
     int found;
     FILE *newFile;
 
-    found = findFile(fileQueue, pathname);
+    found = findFileNode(queue, pathname);
 
     /* Esiste il file ed è stato passato il flag O_CREATE */
     if ( (found !=  -1 ) && ( (flags & O_CREATE) == O_CREATE) ){
@@ -30,7 +131,7 @@ int openVirtualFile(const char* pathname, int flags, int clientId){
         /* Se il client ha passato il flag di lock devo prendere il lock sul file */
         if ( (flags & O_LOCK) == O_LOCK ) {
 
-            if (editFile(fileQueue, pathname, NULL, 0, clientId) == 0) {
+            if (editFileNode(queue, pathname, NULL, 0, clientId) == 0) {
                 printf("[%lu] Lock acquisito sul file!\n", self);
                 return 0;
             }
@@ -60,7 +161,7 @@ int openVirtualFile(const char* pathname, int flags, int clientId){
                 newNode->client_id = 0;
 
             /* Inserisco il nuovo file creato nella coda */
-            if( push(fileQueue, newNode) ){
+            if( push(queue, newNode) ){
 
                 printf("[%lu] Nuovo file inserito nella coda!\n",self);
                 return 0;
@@ -75,29 +176,77 @@ int openVirtualFile(const char* pathname, int flags, int clientId){
 
     }
 
-
-    /* Il file non esiste, lo creo */
-//    if (file == NULL){
-//
-//    }else{
-//
-//    }
-
     return 0;
 
 }
 
-int writeVirtualFile(const char* pathname){
+int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size){
 
-    int found;
+    pthread_t self = pthread_self();
+    FileNode *file;
+    int cont;
+    int status;
 
-    found = findFile(fileQueue,pathname);
+    pthread_mutex_lock(&queue->qlock);
 
-    if (found == -1){
-        return -1;
+    file = getFileNode(queue, pathname);
+
+    if( file == NULL ){
+
+       printf("[%lu] Il file %s non esiste, impossibile leggere\n",self,pathname);
+       status = -1;
+
+    }else{
+        printf("[%lu] Tento di leggere file %s dim: %d byte\n",self,pathname,file->size);
+       *buf = malloc(file->size); //Alloco spazio buffer file da leggere
+       cont = fread(*buf,file->size,1,file->file); //Ritorna elementi letti
+
+        if(cont == 1){
+            printf("[%lu] Letti %d byte da file %s\n", self, file->size, pathname);
+            *size = file->size;
+            status = 0;
+        }else{
+           printf("[%lu] Errore lettura file %s. %s\n", self, pathname, strerror(errno));
+           status = -1;
+        }
+
     }
-    else{
-        return 0;
+
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    return status;
+
+}
+
+int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size){
+
+    pthread_t self = pthread_self();
+    FileNode *file;
+    int status;
+    int cont;
+
+    pthread_mutex_lock(&queue->qlock);
+    file = getFileNode(queue, pathname);
+
+    if(file == NULL){
+        printf("[%lu] Il file %s non esiste, impossibile scrivere\n",self,pathname);
+        status = -1;
+    }else{
+        //Inserire qui codice per scrivere su file
+        cont = fwrite(buf,size,1,file->file);
+        if (cont == 1){
+            printf("[%lu] Scritti %zu byte su file %s\n",self,size,pathname);
+            file->size = size;
+            status = 0;
+        }else{
+            printf("[%lu] Errore scrittura dati su file %s", self, pathname);
+            status = -1;
+        }
     }
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    return status;
 
 }

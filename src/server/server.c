@@ -10,7 +10,6 @@
 #include "../common/common.h"
 #include "includes/config.h"
 #include "includes/queue.h"
-#include "includes/fileQueue.h"
 #include "includes/fileStorage.h"
 
 static void *worker(void *arg);
@@ -110,6 +109,8 @@ static void *worker(void *arg){
     int *fd_client_skt = NULL;
     Request *request =  malloc(sizeof(Request));
     Response *response = malloc(sizeof(Response));
+    void **buf;
+    size_t size;
 
     printf("[%lu] Worker start\n", self);
 
@@ -129,11 +130,14 @@ static void *worker(void *arg){
                 switch (request->operation) {
 
                     case OP_OPEN_FILE:
-                        openVirtualFile(request->filepath, request->flags, request->clientId);
+                        openVirtualFile(fileQueue,request->filepath, request->flags, request->clientId);
                         break;
                     case OP_WRITE_FILE:
+//                        writeVirtualFile(request->filepath,"ciao",5);
                         break;
                     case OP_READ_FILE:
+                        writeVirtualFile(fileQueue,request->filepath,"ciao",4);
+                        readVirtualFile(fileQueue,request->filepath,buf,&size);
                         break;
                     case OP_DELETE_FILE:
                         break;
