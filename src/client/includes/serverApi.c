@@ -116,3 +116,34 @@ int readFile(const char* pathname, void** buf, size_t* size){
     }
 
 }
+
+int lockFile(const char* pathname){
+
+    Request request;
+
+    if(pathname == NULL) return -1;
+
+    request.operation = OP_LOCK_FILE;
+    strcpy(request.filepath, pathname);
+    request.clientId = getpid();
+
+    /* Invio richiesta al server */
+    if ( write(fd_socket,&request,sizeof(Request)) != -1 ){
+
+        /* Attendo risposta dal server */
+        if ( read(fd_socket,&response,sizeof(Response)) != -1 ){
+
+            printServerResponse(&response);
+            return 0;
+
+        }else{
+            printf("Errore write socket, errno: %d\n",errno);
+            return -1;
+        }
+
+    }else{
+        printf("Errore write socket, errno: %d\n",errno);
+        return -1;
+    }
+
+}
