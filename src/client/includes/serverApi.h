@@ -30,6 +30,8 @@ int openFile(const char* pathname, int flags);
 
 int readFile(const char* pathname, void** buf, size_t* size);
 
+int writeFile(const char* pathname, const char* dirname);
+
 int lockFile(const char* pathname);
 
 #endif //PROGETTO_SOL_2022_SERVERAPI_H

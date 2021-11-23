@@ -119,8 +119,8 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
         return -1;
     }
 
-    if( (found == -1) && ( (flags & O_LOCK) == O_LOCK ) ){
-        printf("[%lu] Il file %s non esiste, impossibile acquisire il lock\n",self, pathname);
+    if( (found == -1) && ( (flags & O_LOCK) != O_LOCK ) ){
+        printf("[%lu] Il file %s non esiste, parametro O_LOCK mancante\n",self, pathname);
         return -1;
     }
 
@@ -246,6 +246,37 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
             status = -1;
         }
     }
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    return status;
+
+}
+
+int hasFileLock(Queue *queue, const char *pathname, int clientId){
+
+    pthread_t self = pthread_self();
+    FileNode *fileNode;
+    int status;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    fileNode = getFileNode(queue,pathname);
+
+    if (fileNode == NULL){
+        printf("[%lu] File %s non esistente, lock non acquisito\n",self,pathname);
+        status = -1;
+    }else{
+
+        if(fileNode->client_id == clientId){
+            printf("[%lu] Il client %d ha il lock sul file %s\n", self, clientId, pathname);
+            status = 0;
+        }else{
+            printf("[%lu] Il client %d NON ha il lock sul file %s\n", self, clientId, pathname);
+            status = -1;
+        }
+    }
+
     pthread_cond_signal(&queue->qcond);
     pthread_mutex_unlock(&queue->qlock);
 

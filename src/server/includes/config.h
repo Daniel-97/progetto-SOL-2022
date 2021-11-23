@@ -18,8 +18,6 @@ typedef struct Config{
     unsigned max_file;
 }Config;
 
-void print();
-
 int readConfig(struct Config* serverConfig);
 
 void printConfig(Config* config);

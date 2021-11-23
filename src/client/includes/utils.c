@@ -23,6 +23,28 @@ void help(){
 
 void printServerResponse(Response *response){
 
-    printf("Server response:\n-statusCode: %d\n-message: %s\n",response->statusCode, response->message);
+    printf("Server response: {STATUS_CODE: %d, MESSAGE: %s, FILE_SIZE: %zu }\n",response->statusCode, response->message,response->fileSize);
 
+}
+
+
+int saveFile(const char* pathname, void *buf, size_t size){
+
+    FILE *file = fopen(pathname, "w");
+
+    if (file == NULL) return -1;
+
+    if ( fwrite(buf,size,1,file) > 0 ){
+        printf("File %s salvato correttamente su disco\n",pathname);
+        return 0;
+    }
+    else{
+        printf("Errore salvataggio file %s su disco\n",pathname);
+        return -1;
+    }
+
+}
+
+int saveFileDir(void *buf, size_t size, const char* dirname){
+    return 0;
 }

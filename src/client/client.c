@@ -21,7 +21,7 @@ int main(int argc, char *argv[]){
     int opt = 0;
     opt += 0;
     struct timespec time;
-    void **buff;
+    void *buff;
     size_t size;
 
     time.tv_sec = 3;
@@ -33,8 +33,14 @@ int main(int argc, char *argv[]){
         exit(-1);
     }
 
-    openFile("/tmp/prova.txt",O_CREATE);
-    readFile("/tmp/prova.txt", buff,&size);
+    openFile("./prova.txt",O_CREATE | O_LOCK);
+//    writeFile("./prova.txt","/tmp");
+    if (readFile("./prova.txt", &buff,&size) == 0 ) {
+//        for(int i = 0; i < size; i++)
+//            printf("%s\n",(char*)buff);
+        saveFile("./prova.txt", buff, size);
+    }
+
     closeConnection(SOCKET_NAME);
 
     return 0;

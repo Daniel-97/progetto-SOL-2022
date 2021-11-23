@@ -72,7 +72,7 @@ int openFile(const char* pathname, int flags){
         if ( read(fd_socket,response,sizeof(Response)) != -1 ){
 
             printServerResponse(response);
-            return 0;
+            return response->statusCode;
 
         }else{
             printf("Errore write socket, errno: %d\n",errno);
@@ -87,39 +87,121 @@ int openFile(const char* pathname, int flags){
 }
 
 int readFile(const char* pathname, void** buf, size_t* size){
+
     Request request;
     Response response;
 
     request.operation = OP_READ_FILE;
-    strcpy(request.filepath, pathname);
+    strncpy(request.filepath, pathname,MAX_PATH_SIZE);
     request.clientId = getpid();
+    request.flags = 0;
+
 
     printf("Invio richiesta lettura per filepath: %s\n",request.filepath);
 
     /* Invio richiesta al server */
     if ( write(fd_socket,&request,sizeof(Request)) != -1 ){
 
-        /* Attendo risposta dal server */
+//        printf("Attendo dimensione del file dal server...\n");
+        /* Attendo risposta dal server con dimensione del file che sto per ricevere */
         if ( read(fd_socket,&response,sizeof(Response)) != -1 ){
 
             printServerResponse(&response);
-            return 0;
+
+            if(response.statusCode == -1)
+                return -1;
+
+            /* Mi salvo la dimensione del file */
+            *size = response.fileSize;
+            buf = malloc(response.fileSize); //Alloco il buffer per la lettura del file
+            // Leggo effettivamente il file dal server
+            if (read(fd_socket,buf,*size) != -1){
+
+                printf("File ricevuto correttamente!\n");
+                printf("%s\n",(char*)buf);
+                return 0;
+
+            }else{
+
+                printf("Errore ricezione file. errno: %d. %s", errno, strerror(errno));
+                return -1;
+
+            }
+
 
         }else{
-            printf("Errore write socket, errno: %d\n",errno);
+            printf("Errore read socket, errno: %d, %s\n",errno, strerror(errno));
             return -1;
         }
 
     }else{
-        printf("Errore write socket, errno: %d\n",errno);
+        printf("Errore write socket, errno: %d, %s\n",errno, strerror(errno));
         return -1;
     }
+
+}
+
+int writeFile(const char* pathname, const char* dirname){
+
+    Request request;
+    Response response;
+
+    if (pathname == NULL) return -1;
+
+    request.operation = OP_WRITE_FILE;
+    strncpy(request.filepath, pathname, MAX_PATH_SIZE);
+    request.clientId = getpid();
+    request.fileSize = sizeof("contenuto del file"); //Hardcoded for now
+
+    printf("Invio richiesta scrittura per filepath: %s\n",request.filepath);
+
+    /* Invio richiesta al server */
+    if ( write(fd_socket, &request, sizeof(Request)) != -1){
+
+        /* Attendo risposta dal server */
+        if ( read(fd_socket, &response, sizeof(Response)) != -1){
+
+            printServerResponse(&response);
+
+            if(response.statusCode == -1) return -1;
+
+            printf("Invio il file %s al server\n",pathname);
+            /* Invio al server il file! */
+            if ( write(fd_socket,"contenuto del file",sizeof("contenuto del file")) != -1){
+
+                printf("File inviato correttamente al server!\n");
+
+                /* Attendo risposta dal server con messaggio di successo */
+                if( read(fd_socket, &response, sizeof(Response)) ){
+
+                    printServerResponse(&response);
+                    return response.statusCode;
+
+                }
+
+            }else{
+
+                printf("Errore invio file al server\n");
+                return -1;
+            }
+
+        }else{
+            printf("Errore ricezione risposta dal server. errno %d,%s",errno, strerror(errno));
+            return -1;
+        }
+
+    }else{
+        printf("Errore invio richiesta di scrittura al server. errno %d,%s",errno, strerror(errno));
+        return -1;
+    }
+
 
 }
 
 int lockFile(const char* pathname){
 
     Request request;
+    Response response;
 
     if(pathname == NULL) return -1;
 

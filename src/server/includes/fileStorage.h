@@ -41,5 +41,7 @@ int readVirtualFile(Queue *queue,const char* pathname, void **buf, size_t *size)
 
 int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size);
 
+int hasFileLock(Queue *queue, const char *pathname, int clientId);
+
 
 #endif //PROGETTO_SOL_2022_FILESTORAGE_H

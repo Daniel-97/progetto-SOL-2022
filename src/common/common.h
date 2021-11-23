@@ -30,12 +30,14 @@ typedef struct Request{
     int     operation;                  /* Tipo di operazione: crea, elimina, scrivi, leggi, lock,... */
     char    filepath[MAX_PATH_SIZE];    /* Path del file su cui eseguire l'operazione */
     int     flags;                      /* Eventuali flags: O_CREAT, O_LOCK */
+    size_t fileSize;                    /* Eventuale dimensione del file che il client sta inviando al server */
+
 }Request;
 
 typedef struct Response{
 
     int     statusCode; /* 0 -> ok, -1 -> error */
-    int     success;
+    size_t  fileSize; /* Dimensione del file, usata quando il server deve inviare dati al client */
     char    message[MAX_MESSAGE_SIZE];
 
 }Response;

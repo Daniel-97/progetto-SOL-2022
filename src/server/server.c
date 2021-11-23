@@ -130,14 +130,97 @@ static void *worker(void *arg){
                 switch (request->operation) {
 
                     case OP_OPEN_FILE:
-                        openVirtualFile(fileQueue,request->filepath, request->flags, request->clientId);
+                        if (openVirtualFile(fileQueue,request->filepath, request->flags, request->clientId) == 0) {
+                            /* Preparo la risposta per il client */
+                            response->statusCode = 0;
+                            strcpy(response->message, "File opened!");
+
+                        }else{
+                            response->statusCode = -1;
+                            strcpy(response->message, "Impossibile aprire il file!");
+                        }
+
+                        printf("[%lu] Invio risposta al client...\n", self);
+                        if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
+                            printf("[%lu] Risposta inviata al client!\n", self);
+                        }
                         break;
                     case OP_WRITE_FILE:
+
+                        /* Controllo prima che il client abbia il lock sul file */
+                        if (hasFileLock(fileQueue,request->filepath,request->clientId) == 0){
+                            strcpy(response->message, "Ready to receive file, client has lock");
+                            response->statusCode = 0;
+
+                            if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
+
+                                size = request->fileSize;
+                                printf("[%lu] Il client sta per inviare un file di %zu byte\n",self,request->fileSize);
+                                buf = malloc(size); //Alloco il buffer per la ricezione del file
+
+                                if( read(*fd_client_skt,buf, size) != -1 ){
+
+                                    printf("[%lu] File %s ricevuto correttamente!\n",self,request->filepath);
+
+                                    if ( writeVirtualFile(fileQueue,request->filepath,buf,size) != -1){
+                                        response->statusCode = 0;
+                                        strcpy(response->message, "File scritto correttamente!");
+                                    }else{
+                                        response->statusCode = -1;
+                                        strcpy(response->message, "Errore scrittura file");
+                                    }
+
+                                    printf("[%lu] Invio risposta al client...\n", self);
+                                    if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
+                                        printf("[%lu] Risposta inviata al client!\n", self);
+                                    }
+
+                                }else{
+                                    printf("[%lu] Errore ricezione file %s da client\n",self,request->filepath);
+                                }
+                            }
+
+                        }else{
+
+                            strcpy(response->message, "The client doesnt have lock, aborting");
+                            response->statusCode = -1;
+
+                            if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
+                                printf("[%lu] Risposta inviata al client!\n", self);
+                            }
+
+                        }
 //                        writeVirtualFile(request->filepath,"ciao",5);
                         break;
                     case OP_READ_FILE:
-                        writeVirtualFile(fileQueue,request->filepath,"ciao",sizeof("ciao"));
-                        readVirtualFile(fileQueue,request->filepath,&buf,&size);
+                        writeVirtualFile(fileQueue,request->filepath,"123",sizeof("ciao")); //test da togliere
+
+                        /* Leggo il file */
+                        if ( readVirtualFile(fileQueue,request->filepath,&buf,&size) == 0) {
+                            response->statusCode = 0;
+                            response->fileSize = size;
+                            strcpy(response->message, "Ready to send file");
+
+                            /* Invio al client la dimensione del file che sta per leggere */
+                            if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+                                printf("[%lu] Risposta inviata al client con dimensione file!\n",self);
+
+                                /* Invio al client il file effettivo */
+                                if (write(*fd_client_skt, buf, size) != -1){
+                                    printf("[%lu] File %s inviato correttamente!\n",self, request->filepath);
+                                }
+
+                            }
+                        }else{ /* In caso di errore invio il messaggio di errore al client */
+
+                            response->statusCode = -1;
+                            strcpy(response->message,"Errore, impossibile leggere il file");
+
+                            if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+                                printf("[%lu] Risposta inviata al client!\n",self);
+                            }
+                        }
+
                         break;
                     case OP_DELETE_FILE:
                         break;
@@ -153,15 +236,15 @@ static void *worker(void *arg){
                         printf("Received unknown operation: %d\n", request->operation);
 
                 }
-                /* Preparo la risposta per il client */
-                response->statusCode = 0;
-                response->success = 1;
-                strcpy(response->message, "All ok!");
-                printf("[%lu] Invio risposta al client...\n", self);
 
-                if (write(*fd_client_skt, response, sizeof(Response)) != -1){
-                    printf("[%lu] Risposta inviata al client!\n",self);
-                }
+                /* Preparo la risposta per il client */
+//                response->statusCode = 0;
+//                strcpy(response->message, "All ok!");
+//                printf("[%lu] Invio risposta al client...\n", self);
+//
+//                if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+//                    printf("[%lu] Risposta inviata al client!\n",self);
+//                }
             }
 
         }else{

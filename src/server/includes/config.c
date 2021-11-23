@@ -4,10 +4,6 @@
 
 #include "config.h"
 
-void print(){
-    printf("Ciao sono la funzione di una libreria");
-}
-
 /* TODO convert to strtok_r(), convert to int function (return err) */
 int readConfig(struct Config* serverConfig){
 
