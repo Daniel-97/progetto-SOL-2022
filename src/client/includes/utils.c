@@ -36,10 +36,12 @@ int saveFile(const char* pathname, void *buf, size_t size){
 
     if ( fwrite(buf,size,1,file) > 0 ){
         printf("File %s salvato correttamente su disco\n",pathname);
+        fclose(file);
         return 0;
     }
     else{
         printf("Errore salvataggio file %s su disco\n",pathname);
+        fclose(file);
         return -1;
     }
 

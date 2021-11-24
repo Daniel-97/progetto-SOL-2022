@@ -113,12 +113,11 @@ int readFile(const char* pathname, void** buf, size_t* size){
 
             /* Mi salvo la dimensione del file */
             *size = response.fileSize;
-            buf = malloc(response.fileSize); //Alloco il buffer per la lettura del file
+            *buf = malloc(response.fileSize); //Alloco il buffer per la lettura del file
             // Leggo effettivamente il file dal server
-            if (read(fd_socket,buf,*size) != -1){
+            if (read(fd_socket,*buf,*size) != -1){
 
                 printf("File ricevuto correttamente!\n");
-                printf("%s\n",(char*)buf);
                 return 0;
 
             }else{
@@ -145,15 +144,21 @@ int writeFile(const char* pathname, const char* dirname){
 
     Request request;
     Response response;
+    FILE *file;
+    void *buf;
 
     if (pathname == NULL) return -1;
+
+    /* Apro il file locale che devo inviare al server */
+    file = fopen(pathname, "r");
+    fseek(file,0L, SEEK_END); /* Mi posiziono all inizio del file */
 
     request.operation = OP_WRITE_FILE;
     strncpy(request.filepath, pathname, MAX_PATH_SIZE);
     request.clientId = getpid();
-    request.fileSize = sizeof("contenuto del file"); //Hardcoded for now
+    request.fileSize = ftell(file);
 
-    printf("Invio richiesta scrittura per filepath: %s\n",request.filepath);
+    printf("Invio richiesta scrittura per file: %s con dimensione %zu\n",request.filepath,request.fileSize);
 
     /* Invio richiesta al server */
     if ( write(fd_socket, &request, sizeof(Request)) != -1){
@@ -165,9 +170,14 @@ int writeFile(const char* pathname, const char* dirname){
 
             if(response.statusCode == -1) return -1;
 
+            /* Leggo il contenuto del nuovo file */
+            buf = malloc(request.fileSize); //Alloco buffer per lettura file
+            rewind(file); //Mi riposiziono all inizio del file
+            int cont = fread(buf,request.fileSize,1,file);
+
             printf("Invio il file %s al server\n",pathname);
             /* Invio al server il file! */
-            if ( write(fd_socket,"contenuto del file",sizeof("contenuto del file")) != -1){
+            if ( write(fd_socket,buf,request.fileSize) != -1){
 
                 printf("File inviato correttamente al server!\n");
 

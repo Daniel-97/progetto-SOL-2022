@@ -140,8 +140,8 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
     }else{
 
         printf("[%lu] Il file NON ESISTE, tento di crearlo...\n",self);
-
-        newFile = fmemopen(NULL,10,"a+");
+        //TODO ATTENZIONE IN CASO DI SUPERAMENTO SOGLIA SI HA UN ERRORE; BISOGNA RIALLOCARE IL BUFFER
+        newFile = fmemopen(NULL,1000,"w+");
 
         if(newFile == NULL){
 
@@ -186,7 +186,6 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
     FileNode *file;
     int cont;
     int status;
-    char test[100];
 
     pthread_mutex_lock(&queue->qlock);
 
@@ -199,11 +198,12 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
 
     }else{
 
-//        printf("[%lu] Tento di leggere file %s dim: %d byte\n",self,pathname,file->size);
+        printf("[%lu] Tento di leggere file %s dim: %d byte\n",self,pathname,file->size);
         *buf = malloc(file->size); //Alloco spazio buffer file da leggere
         rewind(file->file); //Mi posiziono all inizio del file per la lettura
-        cont = fread(&test,file->size,1,file->file); //Ritorna elementi letti
-        if(cont == 1){
+        cont = fread(*buf,file->size,1,file->file); //Ritorna elementi letti
+//        printf("cont: %d\n", cont);
+        if(cont > 0){
             printf("[%lu] Letti %d byte da file %s\n", self, file->size, pathname);
             *size = file->size;
             status = 0;
@@ -236,6 +236,7 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
         status = -1;
     }else{
         //Inserire qui codice per scrivere su file
+        rewind(file->file); //Mi posiziono all inizio del file
         cont = fwrite(buf,size,1,file->file);
         if (cont == 1){
             printf("[%lu] Scritti %zu byte su file %s\n",self,size,pathname);

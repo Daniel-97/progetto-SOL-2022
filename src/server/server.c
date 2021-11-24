@@ -159,8 +159,8 @@ static void *worker(void *arg){
                                 buf = malloc(size); //Alloco il buffer per la ricezione del file
 
                                 if( read(*fd_client_skt,buf, size) != -1 ){
-
                                     printf("[%lu] File %s ricevuto correttamente!\n",self,request->filepath);
+//                                    printf("buffer ricevuto: %s, dim: %zu\n",(char*)buf,size);
 
                                     if ( writeVirtualFile(fileQueue,request->filepath,buf,size) != -1){
                                         response->statusCode = 0;
@@ -193,14 +193,14 @@ static void *worker(void *arg){
 //                        writeVirtualFile(request->filepath,"ciao",5);
                         break;
                     case OP_READ_FILE:
-                        writeVirtualFile(fileQueue,request->filepath,"123",sizeof("ciao")); //test da togliere
+//                        writeVirtualFile(fileQueue,request->filepath,"ciao",sizeof("ciao")); //test da togliere
 
                         /* Leggo il file */
                         if ( readVirtualFile(fileQueue,request->filepath,&buf,&size) == 0) {
                             response->statusCode = 0;
                             response->fileSize = size;
                             strcpy(response->message, "Ready to send file");
-
+//                            printf("buffer letto: %s\n",(char*)buf);
                             /* Invio al client la dimensione del file che sta per leggere */
                             if (write(*fd_client_skt, response, sizeof(Response)) != -1){
                                 printf("[%lu] Risposta inviata al client con dimensione file!\n",self);
