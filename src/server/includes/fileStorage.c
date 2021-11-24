@@ -141,7 +141,7 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
 
         printf("[%lu] Il file NON ESISTE, tento di crearlo...\n",self);
         //TODO ATTENZIONE IN CASO DI SUPERAMENTO SOGLIA SI HA UN ERRORE; BISOGNA RIALLOCARE IL BUFFER
-        newFile = fmemopen(NULL,1000,"w+");
+        newFile = fmemopen(NULL,1000,"a+");
 
         if(newFile == NULL){
 
