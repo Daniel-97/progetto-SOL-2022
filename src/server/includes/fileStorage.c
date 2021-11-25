@@ -3,6 +3,7 @@
 //
 
 #include "fileStorage.h"
+#include "globals.h"
 
 int findFileNode(Queue *queue,const char *pathname){
 
@@ -127,6 +128,7 @@ int removeNode(Queue *queue, FileNode *node){
             prec->next = tmp->next;
             free(tmp2);
             free(node);
+            queue->len--;
             return 0;
         }
         prec = tmp;
@@ -171,6 +173,12 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
     }else{
 
         printf("[%lu] Il file NON ESISTE, tento di crearlo...\n",self);
+
+        if(queue->len == serverConfig->max_file ){
+            printf("[%lu] Raggiunta capacità massima storage, impossibile aggiungere nuovi file\n",self);
+            return -1;
+        }
+
         //TODO ATTENZIONE IN CASO DI SUPERAMENTO SOGLIA SI HA UN ERRORE; BISOGNA RIALLOCARE IL BUFFER
         newFile = fmemopen(NULL,1000,"w+");
 
