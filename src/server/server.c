@@ -145,7 +145,8 @@ static void *worker(void *arg){
                             printf("[%lu] Risposta inviata al client!\n", self);
                         }
                         break;
-                    case OP_WRITE_FILE:
+
+                    case OP_APPEND_FILE:
 
                         /* Controllo prima che il client abbia il lock sul file */
                         if (hasFileLock(fileQueue,request->filepath,request->clientId) == 0){
@@ -162,7 +163,7 @@ static void *worker(void *arg){
                                     printf("[%lu] File %s ricevuto correttamente!\n",self,request->filepath);
 //                                    printf("buffer ricevuto: %s, dim: %zu\n",(char*)buf,size);
 
-                                    if ( writeVirtualFile(fileQueue,request->filepath,buf,size) != -1){
+                                    if ( appendVirtualFile(fileQueue,request->filepath,buf,size) != -1){
                                         response->statusCode = 0;
                                         strcpy(response->message, "File scritto correttamente!");
                                     }else{
@@ -192,6 +193,7 @@ static void *worker(void *arg){
                         }
 //                        writeVirtualFile(request->filepath,"ciao",5);
                         break;
+
                     case OP_READ_FILE:
 //                        writeVirtualFile(fileQueue,request->filepath,"ciao",sizeof("ciao")); //test da togliere
 
@@ -241,7 +243,7 @@ static void *worker(void *arg){
                         }
                         break;
 
-                    case OP_APPEND_FILE:
+                    case OP_WRITE_FILE:
                         break;
 
                     case OP_CLOSE_FILE:

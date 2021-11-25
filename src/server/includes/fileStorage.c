@@ -253,7 +253,12 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
 
 }
 
+//todo da implementare questa funzione
 int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size){
+
+}
+
+int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size){
 
     pthread_t self = pthread_self();
     FileNode *file;

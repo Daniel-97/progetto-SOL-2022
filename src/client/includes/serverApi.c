@@ -208,6 +208,63 @@ int writeFile(const char* pathname, const char* dirname){
 
 }
 
+//Todo implementare questa funzione
+int appendToFile(const char* pathname, void *buf, size_t size, const char* dirname){
+
+    Request request;
+    Response response;
+
+    if (pathname == NULL || buf == NULL) return -1;
+
+    request.operation = OP_APPEND_FILE;
+    strncpy(request.filepath, pathname, MAX_PATH_SIZE);
+    request.clientId = getpid();
+    request.fileSize = size;
+
+    printf("Invio richiesta scrittura in append per file: %s con dimensione %zu\n",request.filepath,request.fileSize);
+
+    /* Invio richiesta al server */
+    if ( write(fd_socket, &request, sizeof(Request)) != -1){
+
+        /* Attendo risposta dal server */
+        if ( read(fd_socket, &response, sizeof(Response)) != -1){
+
+            printServerResponse(&response);
+
+            if(response.statusCode == -1) return -1;
+
+            printf("Invio i dati per append file %s al server\n",pathname);
+            /* Invio al server il file! */
+            if ( write(fd_socket,buf,request.fileSize) != -1){
+
+                printf("File inviato correttamente al server!\n");
+
+                /* Attendo risposta dal server con messaggio di successo */
+                if( read(fd_socket, &response, sizeof(Response)) ){
+
+                    printServerResponse(&response);
+                    return response.statusCode;
+
+                }
+
+            }else{
+
+                printf("Errore invio file al server\n");
+                return -1;
+            }
+
+        }else{
+            printf("Errore ricezione risposta dal server. errno %d,%s",errno, strerror(errno));
+            return -1;
+        }
+
+    }else{
+        printf("Errore invio richiesta di scrittura append al server. errno %d,%s",errno, strerror(errno));
+        return -1;
+    }
+
+}
+
 int lockFile(const char* pathname){
 
     Request request;

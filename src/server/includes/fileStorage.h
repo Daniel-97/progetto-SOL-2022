@@ -43,6 +43,8 @@ int readVirtualFile(Queue *queue,const char* pathname, void **buf, size_t *size)
 
 int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size);
 
+int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size);
+
 int lockVirtualFile(Queue *queue, const char* pathname, int clientId);
 
 int unlockVirtualFile(Queue *queue, const char* pathname, int clientId);
