@@ -34,4 +34,10 @@ int writeFile(const char* pathname, const char* dirname);
 
 int lockFile(const char* pathname);
 
+int unlockFile(const char* pathname);
+
+int removeFile(const char* pathname);
+
+int sendRequest(Request *request, Response *response);
+
 #endif //PROGETTO_SOL_2022_SERVERAPI_H

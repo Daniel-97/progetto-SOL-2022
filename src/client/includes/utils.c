@@ -27,7 +27,6 @@ void printServerResponse(Response *response){
 
 }
 
-
 int saveFile(const char* pathname, void *buf, size_t size){
 
     FILE *file = fopen(pathname, "w");

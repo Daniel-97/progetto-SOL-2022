@@ -219,13 +219,53 @@ int lockFile(const char* pathname){
     strcpy(request.filepath, pathname);
     request.clientId = getpid();
 
+    printf("Invio richiesta di lock per file %s\n", pathname);
+
+    return sendRequest(&request,&response);
+
+}
+
+int unlockFile(const char* pathname){
+
+    Request request;
+    Response response;
+
+    if(pathname == NULL) return -1;
+
+    request.operation = OP_UNLOCK_FILE;
+    strcpy(request.filepath, pathname);
+    request.clientId = getpid();
+
+    printf("Invio richiesta di unlock per file %s\n", pathname);
+
+    return sendRequest(&request,&response);
+}
+
+int removeFile(const char* pathname){
+
+    Request request;
+    Response response;
+
+    if(pathname == NULL) return -1;
+
+    request.operation = OP_DELETE_FILE;
+    strcpy(request.filepath, pathname);
+    request.clientId = getpid();
+
+    printf("Invio richiesta di cancellazione per file %s\n", pathname);
+
+    return sendRequest(&request, &response);
+}
+
+int sendRequest(Request *request, Response *response){
+
     /* Invio richiesta al server */
-    if ( write(fd_socket,&request,sizeof(Request)) != -1 ){
+    if ( write(fd_socket,request,sizeof(Request)) != -1 ){
 
         /* Attendo risposta dal server */
-        if ( read(fd_socket,&response,sizeof(Response)) != -1 ){
+        if ( read(fd_socket,response,sizeof(Response)) != -1 ){
 
-            printServerResponse(&response);
+            printServerResponse(response);
             return 0;
 
         }else{
@@ -239,3 +279,4 @@ int lockFile(const char* pathname){
     }
 
 }
+

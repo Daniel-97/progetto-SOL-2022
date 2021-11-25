@@ -105,6 +105,37 @@ FileNode *getFileNode(Queue *queue, const char *pathname){
         return NULL;
 }
 
+int removeNode(Queue *queue, FileNode *node){
+
+    Node *tmp;
+    Node *tmp2;
+    Node *prec;
+
+    if (queue == NULL || node == NULL) return -1;
+
+    tmp = queue->head;
+    prec = queue->head;
+
+    while( (tmp = tmp->next) != NULL){
+
+        if(tmp->data == node){
+            /* Se è l ultimo elemento aggiorno il puntatore di coda*/
+            if(queue->tail == tmp)
+                queue->tail = prec;
+
+            tmp2 = prec->next;
+            prec->next = tmp->next;
+            free(tmp2);
+            free(node);
+            return 0;
+        }
+        prec = tmp;
+    }
+
+    return -1;
+
+}
+
 int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId){
 
     pthread_t self = pthread_self();
@@ -141,7 +172,7 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
 
         printf("[%lu] Il file NON ESISTE, tento di crearlo...\n",self);
         //TODO ATTENZIONE IN CASO DI SUPERAMENTO SOGLIA SI HA UN ERRORE; BISOGNA RIALLOCARE IL BUFFER
-        newFile = fmemopen(NULL,1000,"a+");
+        newFile = fmemopen(NULL,1000,"w+");
 
         if(newFile == NULL){
 
@@ -252,6 +283,134 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
 
     return status;
 
+}
+
+int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
+
+    pthread_t self = pthread_self();
+    FileNode *file;
+    int status;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    file = getFileNode(queue,pathname);
+
+    if (file == NULL){
+        printf("[%lu] File %s non esistente, impossibile acquisire il lock\n",self,pathname);
+        status = -1;
+    }else{
+
+        if(file->client_id == clientId){
+
+            printf("[%lu] Lock già acquisito sul file %s\n",self,pathname);
+            status = 0;
+
+        }else if (file->client_id == 0){
+
+            file->client_id = clientId; //Acquisisco il lock sul file
+            printf("[%lu] Lock acquisito sul file %s\n",self,pathname);
+            status = 0;
+
+        }else{
+
+            printf("[%lu] File %s in lock da un altro client\n",self,pathname);
+            status = -1;
+
+        }
+
+    }
+
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    return status;
+}
+
+int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
+
+    pthread_t self = pthread_self();
+    FileNode *file;
+    int status;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    file = getFileNode(queue,pathname);
+
+    if (file == NULL){
+        printf("[%lu] File %s non esistente, unlock impossibile\n",self,pathname);
+        status = -1;
+    }else{
+
+        if(file->client_id == clientId){
+
+            file->client_id = 0; //Tolgo il lock sul file
+            printf("[%lu] Unlock sul file eseguito corretamente %s\n",self,pathname);
+            status = 0;
+
+        }else if (file->client_id == 0){
+
+            printf("[%lu] Il file %s non è in lock\n",self,pathname);
+            status = 0;
+
+        }else{
+
+            printf("[%lu] File %s in lock da un altro client, impossibile togliere lock\n",self,pathname);
+            status = -1;
+
+        }
+
+    }
+
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    return status;
+}
+
+int deleteVirtualFile(Queue *queue, const char* pathname, int clientId){
+
+    pthread_t self = pthread_self();
+    FileNode *file;
+    int status;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    file = getFileNode(queue,pathname);
+
+    if (file == NULL){
+        printf("[%lu] File %s non esistente, impossibile eliminare\n",self,pathname);
+        status = -1;
+    }else{
+
+        if(file->client_id == clientId){
+            fclose(file->file); //Chiudo il file
+            if ( removeNode(queue,file) == 0 ){
+                printf("[%lu] File eliminato correttamente %s\n",self,pathname);
+                status = 0;
+            }else{
+                printf("[%lu] Errore eliminazione file %s\n",self,pathname);
+                status = -1;
+            }
+
+
+        }else if (file->client_id == 0){
+
+            printf("[%lu] Il file %s non è in lock, impossbile eliminare\n",self,pathname);
+            status = 0;
+
+        }else{
+
+            printf("[%lu] File %s in lock da un altro client, impossibile eliminare\n",self,pathname);
+            status = -1;
+
+        }
+
+    }
+
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    return status;
 }
 
 int hasFileLock(Queue *queue, const char *pathname, int clientId){

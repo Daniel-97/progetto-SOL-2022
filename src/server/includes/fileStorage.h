@@ -31,6 +31,8 @@ int findFileNode(Queue *queue, const char *pathname);
 
 int editFileNode(Queue *queue, const char *pathname, FILE *file,int size, int clientId);
 
+int removeNode(Queue *queue, FileNode *node);
+
 FileNode *getFileNode(Queue *queue, const char *pathname);
 
 
@@ -41,7 +43,15 @@ int readVirtualFile(Queue *queue,const char* pathname, void **buf, size_t *size)
 
 int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size);
 
+int lockVirtualFile(Queue *queue, const char* pathname, int clientId);
+
+int unlockVirtualFile(Queue *queue, const char* pathname, int clientId);
+
+int deleteVirtualFile(Queue *queue, const char* pathname, int clientId);
+
 int hasFileLock(Queue *queue, const char *pathname, int clientId);
+
+
 
 
 #endif //PROGETTO_SOL_2022_FILESTORAGE_H

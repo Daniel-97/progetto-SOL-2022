@@ -222,16 +222,59 @@ static void *worker(void *arg){
                         }
 
                         break;
+
                     case OP_DELETE_FILE:
+
+                        if(deleteVirtualFile(fileQueue,request->filepath, request->clientId) == 0){
+                            response->statusCode = 0;
+                            strcpy(response->message, "File eliminato correttamente!");
+                        }else{
+                            response->statusCode = 0;
+                            strcpy(response->message, "Errore eliminazione file");
+                        }
+
+                        if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+                            printf("[%lu] Risposta inviata al client!\n",self);
+                        }
                         break;
+
                     case OP_APPEND_FILE:
                         break;
+
                     case OP_CLOSE_FILE:
                         break;
+
                     case OP_LOCK_FILE:
+
+                        /* Tento di acquisire il lock sul file */
+                        if(lockVirtualFile(fileQueue,request->filepath,request->clientId) == 0){
+                            response->statusCode = 0;
+                            strcpy(response->message, "Lock correttamente acquisito sul file!");
+                        }else{
+                            response->statusCode = -1;
+                            strcpy(response->message,"Impossible acquisire il lock sul file");
+                        }
+                        if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+                            printf("[%lu] Risposta inviata al client!\n",self);
+                        }
+
                         break;
+
                     case OP_UNLOCK_FILE:
+
+                        /* Tentativo di unlock sul file */
+                        if(unlockVirtualFile(fileQueue,request->filepath,request->clientId) == 0){
+                            response->statusCode = 0;
+                            strcpy(response->message, "Unlock eseguito con successo!");
+                        }else{
+                            response->statusCode = -1;
+                            strcpy(response->message,"Impossible effettuare unlock");
+                        }
+                        if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+                            printf("[%lu] Risposta inviata al client!\n",self);
+                        }
                         break;
+
                     default:
                         printf("Received unknown operation: %d\n", request->operation);
 
