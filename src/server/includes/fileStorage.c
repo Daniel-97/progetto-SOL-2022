@@ -227,13 +227,14 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
 
     }else{
 
-        printf("[%lu] Tento di leggere file %s dim: %d byte\n",self,pathname,file->size);
+        printf("[%lu] Tento di leggere file %s dim: %zu byte\n",self,pathname,file->size);
         *buf = malloc(file->size); //Alloco spazio buffer file da leggere
 
         if(*buf) {
 
             memcpy(*buf, file->file, file->size);
-            printf("[%lu] Letti %d byte da file %s\n", self, file->size, pathname);
+            *size = file->size;
+            printf("[%lu] Letti %zu byte da file %s\n", self, file->size, pathname);
             status = 0;
 
         }else{
@@ -293,6 +294,9 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
 
                 memcpy(tmp, file->file, file->size); //Copio il vecchio contenuto del file nel buffer
                 memcpy((tmp + size), buf, size); //Copio in append il nuovo contenuto del file
+                file->size += size;
+                free(file->file);
+                file->file = tmp;
                 printf("[%lu] File scritto correttamente in buffer!\n",self);
                 status = 0;
 

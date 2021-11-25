@@ -38,6 +38,8 @@ int main(int argc, char *argv[]){
 //    removeFile("./prova.txt");
 //    unlockFile("./prova.txt");
     writeFile("./prova.txt","/tmp");
+    writeFile("./prova.txt","/tmp");
+
     if (readFile("./prova.txt", &buff,&size) == 0 ) {
         printf("%s\n",(char*)buff);
 //        for(int i = 0; i < size; i++)

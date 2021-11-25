@@ -19,7 +19,7 @@ typedef struct FileNode{
 
     char    pathname[MAX_PATH_SIZE];
     char   *file;   /* Puntatore al file */
-    int     size;   /* Dimensione in byte del file memorizzato */
+    size_t     size;   /* Dimensione in byte del file memorizzato */
     int     client_id; /* Se il file e' in lock da un client contiene l'identificatore del client */
 
 }FileNode;
