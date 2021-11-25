@@ -35,7 +35,7 @@ int findFileNode(Queue *queue,const char *pathname){
 }
 
 //ATTENZIONE MUTEX DA ESEGUIRE FUORI DA FUNZIONE
-int editFileNode(Queue *queue, const char *pathname, FILE *file,int size, int clientId){
+int editFileNode(Queue *queue, const char *pathname, char *file,int size, int clientId){
 
     Node *node = NULL;
     FileNode *fileNode;
@@ -127,6 +127,7 @@ int removeNode(Queue *queue, FileNode *node){
             tmp2 = prec->next;
             prec->next = tmp->next;
             free(tmp2);
+            free(node->file);
             free(node);
             queue->len--;
             return 0;
@@ -142,7 +143,6 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
 
     pthread_t self = pthread_self();
     int found;
-    FILE *newFile;
 
     found = findFileNode(queue, pathname);
 
@@ -179,38 +179,29 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
             return -1;
         }
 
-        //TODO ATTENZIONE IN CASO DI SUPERAMENTO SOGLIA SI HA UN ERRORE; BISOGNA RIALLOCARE IL BUFFER
-        newFile = fmemopen(NULL,1000,"w+");
+        //TODO inserire controllo qui
+        FileNode *newNode = malloc(sizeof(FileNode));
 
-        if(newFile == NULL){
+        printf("[%lu] File %s creato correttamente!\n",self,pathname);
+        strcpy(newNode->pathname, pathname);
+        newNode->file = NULL;
+        newNode->size = 0;
+        if ( (flags & O_LOCK) == O_LOCK)
+            newNode->client_id = clientId;
+        else
+            newNode->client_id = 0;
 
-            printf("[%lu] Errore nella creazione del file\n",self);
-            return -1;
+        /* Inserisco il nuovo file creato nella coda */
+        if( push(queue, newNode) ){
+
+            printf("[%lu] Nuovo file inserito nella coda!\n",self);
+            return 0;
 
         }else{
 
-            printf("[%lu] File %s creato correttamente!\n",self,pathname);
-            FileNode *newNode = malloc(sizeof(FileNode));
-            strcpy(newNode->pathname, pathname);
-            newNode->file = newFile;
-            newNode->size = 0;
-            if ( (flags & O_LOCK) == O_LOCK)
-                newNode->client_id = clientId;
-            else
-                newNode->client_id = 0;
+            printf("[%lu] Errore inserimento file sulla coda\n",self);
+            return -1;
 
-            /* Inserisco il nuovo file creato nella coda */
-            if( push(queue, newNode) ){
-
-                printf("[%lu] Nuovo file inserito nella coda!\n",self);
-                return 0;
-
-            }else{
-
-                printf("[%lu] Errore inserimento file sulla coda\n",self);
-                return -1;
-
-            }
         }
 
     }
@@ -223,7 +214,6 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
 
     pthread_t self = pthread_self();
     FileNode *file;
-    int cont;
     int status;
 
     pthread_mutex_lock(&queue->qlock);
@@ -239,16 +229,18 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
 
         printf("[%lu] Tento di leggere file %s dim: %d byte\n",self,pathname,file->size);
         *buf = malloc(file->size); //Alloco spazio buffer file da leggere
-        rewind(file->file); //Mi posiziono all inizio del file per la lettura
-        cont = fread(*buf,file->size,1,file->file); //Ritorna elementi letti
-//        printf("cont: %d\n", cont);
-        if(cont > 0){
+
+        if(*buf) {
+
+            memcpy(*buf, file->file, file->size);
             printf("[%lu] Letti %d byte da file %s\n", self, file->size, pathname);
-            *size = file->size;
             status = 0;
+
         }else{
-            printf("[%lu] Errore lettura file %s. %s\n", self, pathname, strerror(errno));
+
+            printf("[%lu] Impossibile allocare buffer per lettura file %s\n", self, pathname);
             status = -1;
+
         }
 
     }
@@ -265,7 +257,6 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
     pthread_t self = pthread_self();
     FileNode *file;
     int status;
-    int cont;
 
     pthread_mutex_lock(&queue->qlock);
     file = getFileNode(queue, pathname);
@@ -274,17 +265,44 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
         printf("[%lu] Il file %s non esiste, impossibile scrivere\n",self,pathname);
         status = -1;
     }else{
-        //Inserire qui codice per scrivere su file
-        rewind(file->file); //Mi posiziono all inizio del file
-        cont = fwrite(buf,size,1,file->file);
-        if (cont == 1){
-            printf("[%lu] Scritti %zu byte su file %s\n",self,size,pathname);
-            file->size = size;
-            status = 0;
-        }else{
-            printf("[%lu] Errore scrittura dati su file %s", self, pathname);
-            status = -1;
+        /* LA WRITE LAVORA SEMPRE IN APPEND */
+
+        if(file->file == NULL) { //Prima scrittura
+
+            file->file = malloc(size);
+
+            if (file->file) {
+
+                memcpy(file->file, buf, size); //Copio il contenuto del file nel buffer
+                file->size = size;
+                printf("[%lu] File scritto correttamente in buffer!\n",self);
+                status = 0;
+
+            }else{
+
+                printf("[%lu] Errore malloc buffer per file!\n",self);
+                status = -1;
+
+            }
+
+        }else{ //Il buffer contiene già dei dati
+
+            char *tmp = malloc(file->size+size); //Alloco un buffer con la nuova dimensione
+
+            if (tmp) {
+
+                memcpy(tmp, file->file, file->size); //Copio il vecchio contenuto del file nel buffer
+                memcpy((tmp + size), buf, size); //Copio in append il nuovo contenuto del file
+                printf("[%lu] File scritto correttamente in buffer!\n",self);
+                status = 0;
+
+            }else{
+                printf("[%lu] Errore malloc buffer per file!\n",self);
+                status = -1;
+            }
+
         }
+
     }
     pthread_cond_signal(&queue->qcond);
     pthread_mutex_unlock(&queue->qlock);
@@ -391,7 +409,7 @@ int deleteVirtualFile(Queue *queue, const char* pathname, int clientId){
     }else{
 
         if(file->client_id == clientId){
-            fclose(file->file); //Chiudo il file
+//            fclose(file->file); //Chiudo il file
             if ( removeNode(queue,file) == 0 ){
                 printf("[%lu] File eliminato correttamente %s\n",self,pathname);
                 status = 0;

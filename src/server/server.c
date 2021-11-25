@@ -208,6 +208,9 @@ static void *worker(void *arg){
                                 /* Invio al client il file effettivo */
                                 if (write(*fd_client_skt, buf, size) != -1){
                                     printf("[%lu] File %s inviato correttamente!\n",self, request->filepath);
+                                }else{
+                                    printf("[%lu] Errore invio file %s,%s \n",self, request->filepath, strerror(errno));
+
                                 }
 
                             }

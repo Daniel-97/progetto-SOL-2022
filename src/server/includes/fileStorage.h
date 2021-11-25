@@ -18,7 +18,7 @@
 typedef struct FileNode{
 
     char    pathname[MAX_PATH_SIZE];
-    FILE   *file;   /* Puntatore al file */
+    char   *file;   /* Puntatore al file */
     int     size;   /* Dimensione in byte del file memorizzato */
     int     client_id; /* Se il file e' in lock da un client contiene l'identificatore del client */
 
@@ -29,7 +29,7 @@ typedef struct FileNode{
 /* Cerca il file all interno della coda dei file */
 int findFileNode(Queue *queue, const char *pathname);
 
-int editFileNode(Queue *queue, const char *pathname, FILE *file,int size, int clientId);
+int editFileNode(Queue *queue, const char *pathname, char *file,int size, int clientId);
 
 int removeNode(Queue *queue, FileNode *node);
 
