@@ -244,6 +244,51 @@ static void *worker(void *arg){
                         break;
 
                     case OP_WRITE_FILE:
+
+                        /* Controllo prima che il client abbia il lock sul file */
+                        if (hasFileLock(fileQueue,request->filepath,request->clientId) == 0){
+                            strcpy(response->message, "Ready to receive file, client has lock");
+                            response->statusCode = 0;
+
+                            if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
+
+                                size = request->fileSize;
+                                printf("[%lu] Il client sta per inviare un file di %zu byte\n",self,request->fileSize);
+                                buf = malloc(size); //Alloco il buffer per la ricezione del file
+
+                                if( read(*fd_client_skt,buf, size) != -1 ){
+                                    printf("[%lu] File %s ricevuto correttamente!\n",self,request->filepath);
+//                                    printf("buffer ricevuto: %s, dim: %zu\n",(char*)buf,size);
+
+                                    if ( writeVirtualFile(fileQueue,request->filepath,buf,size) != -1){
+                                        response->statusCode = 0;
+                                        strcpy(response->message, "File scritto correttamente!");
+                                    }else{
+                                        response->statusCode = -1;
+                                        strcpy(response->message, "Errore scrittura file");
+                                    }
+
+                                    printf("[%lu] Invio risposta al client...\n", self);
+                                    if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
+                                        printf("[%lu] Risposta inviata al client!\n", self);
+                                    }
+
+                                }else{
+                                    printf("[%lu] Errore ricezione file %s da client\n",self,request->filepath);
+                                }
+                            }
+
+                        }else{
+
+                            strcpy(response->message, "The client doesnt have lock, aborting");
+                            response->statusCode = -1;
+
+                            if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
+                                printf("[%lu] Risposta inviata al client!\n", self);
+                            }
+
+                        }
+
                         break;
 
                     case OP_CLOSE_FILE:

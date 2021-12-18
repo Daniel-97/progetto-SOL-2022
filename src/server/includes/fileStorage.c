@@ -252,9 +252,50 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
     return status;
 
 }
-
-//todo da implementare questa funzione
+// todo: Attenzione da testare! (non sono sicuro che funzioni bene
 int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size){
+
+    pthread_t self = pthread_self();
+    FileNode *file;
+    int status;
+
+    pthread_mutex_lock(&queue->qlock);
+    file = getFileNode(queue, pathname);
+
+    if(file == NULL){
+
+        printf("[%lu] Il file %s non esiste, impossibile scrivere\n",self,pathname);
+        status = -1;
+
+    }else{
+
+        /* Devo liberare la memoria */
+        if (file->file != NULL){
+
+            free(file->file);
+        }
+
+        file->file = malloc(size);
+
+        if (file->file) {
+
+            memcpy(file->file, buf, size); //Copio il contenuto del file nel buffer
+            file->size = size;
+            printf("[%lu] File scritto correttamente in buffer!\n",self);
+            status = 0;
+
+        }else{
+
+            printf("[%lu] Errore malloc buffer per file!\n",self);
+            status = -1;
+
+        }
+
+    }
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    return status;
 
 }
 

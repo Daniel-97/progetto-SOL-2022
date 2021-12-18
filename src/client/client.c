@@ -34,8 +34,10 @@ int main(int argc, char *argv[]){
     }
 
     openFile("./prova.txt",O_CREATE | O_LOCK);
-    lockFile("./prova.txt");
-//    appendToFile("./prova.txt","ciao",sizeof("ciao"),"./tmp");
+//    lockFile("./prova.txt");
+//    writeFile("./prova.txt", "./tmp");
+
+//    appendToFile("./prova.txt","ciao\n",sizeof("ciao\n"),"./tmp");
 //    appendToFile("./prova.txt","123",sizeof("123"),"./tmp");
 
 //    removeFile("./prova.txt");
@@ -50,6 +52,7 @@ int main(int argc, char *argv[]){
         saveFile("./prova.txt", buff, size);
     }
 
+//    unlockFile("./prova.txt");
     closeConnection(SOCKET_NAME);
 
     return 0;
