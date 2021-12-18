@@ -616,3 +616,36 @@ int hasFileLock(Queue *queue, const char *pathname, int clientId){
     return status;
 
 }
+
+int getFileList(Queue *queue, char ***files, int *size){
+
+    pthread_t self = pthread_self();
+    FileNode *fileNode;
+    Node *node;
+    int cont = 0;
+
+    if (queue == NULL) return -1;
+
+    pthread_mutex_lock(&queue->qlock);
+    printf("FILE LIST\n");
+    // Alloco un array con la stessa dimensione della mia coda
+    *files = malloc(queue->len * sizeof(char *));
+    *size = queue->len;
+
+    node = queue->head;
+
+    while( (node = node->next) != NULL){
+
+        fileNode = node->data;
+        //Alloco lo spazio per il nomde del file dentro l array
+        *files[cont] = malloc(( strlen(fileNode->pathname)) * sizeof(char) );
+        strcpy(*files[cont], fileNode->pathname); //Copio il nome del file nell array
+        printf("- %s\n", *files[cont]);
+        cont++;
+    }
+
+    signalQueue(queue);
+
+    return 0;
+
+}

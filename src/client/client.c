@@ -34,8 +34,9 @@ int main(int argc, char *argv[]){
     }
 
     openFile("./prova.txt",O_CREATE | O_LOCK);
-    closeFile("./prova.txt");
-    lockFile("./prova.txt");
+//    closeFile("./prova.txt");
+//    lockFile("./prova.txt");
+    readNFiles(10, "./tmp");
 //    writeFile("./prova.txt", "./tmp");
 
 //    appendToFile("./prova.txt","ciao\n",sizeof("ciao\n"),"./tmp");

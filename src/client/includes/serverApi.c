@@ -331,6 +331,55 @@ int closeFile(const char* pathname){
 
 }
 
+int readNFiles(int N, const char *pathname){
+
+    Request request;
+    Response response;
+
+    request.operation = OP_READ_N_FILES;
+    strncpy(request.filepath, pathname,MAX_PATH_SIZE);
+    request.clientId = getpid();
+    request.flags = N; /* Uso il campo flag per comunicare al server quanti file voglio */
+
+    printf("Invio richiesta lettura di %d files\n",N);
+
+    if ( write(fd_socket,&request,sizeof(Request)) != -1 ){
+
+        if ( read(fd_socket,&response,sizeof(Response)) != -1 ){
+
+            printServerResponse(&response);
+            if(response.statusCode == -1)
+                return -1;
+
+            /* Nella variabile statusCode ci sono il numero di file che il server effettivamente sta per inviare */
+            int comingFiles = response.statusCode;
+            printf("Il server sta per inviare %d files\n", comingFiles);
+
+            /* Adesso devo leggere e memorizzare gli n file che il server mi sta per inviare */
+            for(int i = 0; i < comingFiles; i++){
+
+                printf("Attendo che il server invii num.%d file...\n",i+1);
+
+            }
+
+        }else{
+
+            printf("Errore read socket, errno: %d, %s\n",errno, strerror(errno));
+            return -1;
+        }
+
+
+        }else{
+
+        printf("Errore write socket, errno: %d, %s\n",errno, strerror(errno));
+        return -1;
+
+    }
+
+    return 0;
+
+    }
+
 int sendRequest(Request *request, Response *response){
 
     /* Invio richiesta al server */

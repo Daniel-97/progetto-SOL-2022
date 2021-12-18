@@ -42,6 +42,8 @@ int removeFile(const char* pathname);
 
 int closeFile(const char* pathname);
 
+int readNFiles(int N, const char *pathname);
+
 int sendRequest(Request *request, Response *response);
 
 #endif //PROGETTO_SOL_2022_SERVERAPI_H

@@ -339,6 +339,21 @@ static void *worker(void *arg){
                         }
                         break;
 
+                    case OP_READ_N_FILES:
+                        //todo da terminare questa parte
+                        response->statusCode = request->flags;
+                        strcpy(response->message, "Pronto per inviare files");
+
+                        if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+                            printf("[%lu] Risposta inviata al client!\n",self);
+                        }
+
+                        char **arr = NULL;
+                        int size;
+                        getFileList(fileQueue, &arr, &size);
+
+                        break;
+
                     default:
                         printf("Received unknown operation: %d\n", request->operation);
 

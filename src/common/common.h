@@ -16,6 +16,7 @@
 #define OP_CLOSE_FILE   5
 #define OP_LOCK_FILE    6
 #define OP_UNLOCK_FILE  7
+#define OP_READ_N_FILES 8
 
 /* CODICI FLAGS FILE */
 #define O_CREATE    0b01
