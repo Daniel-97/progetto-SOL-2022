@@ -17,10 +17,11 @@
 
 typedef struct FileNode{
 
-    char    pathname[MAX_PATH_SIZE];
-    char   *file;   /* Puntatore al file */
-    size_t     size;   /* Dimensione in byte del file memorizzato */
-    int     client_id; /* Se il file e' in lock da un client contiene l'identificatore del client */
+    char        pathname[MAX_PATH_SIZE];
+    char        *file;   /* Puntatore al file */
+    size_t      size;   /* Dimensione in byte del file memorizzato */
+    int         client_id; /* Se il file e' in lock da un client contiene l'identificatore del client */
+    int         isOpen; /* Variabile che specifica se il file è aperto o meno */
 
 }FileNode;
 
@@ -51,9 +52,9 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId);
 
 int deleteVirtualFile(Queue *queue, const char* pathname, int clientId);
 
+int closeVirtualFile(Queue *queue, const char* pathname, int clientId);
+
 int hasFileLock(Queue *queue, const char *pathname, int clientId);
-
-
 
 
 #endif //PROGETTO_SOL_2022_FILESTORAGE_H

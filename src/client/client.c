@@ -34,7 +34,8 @@ int main(int argc, char *argv[]){
     }
 
     openFile("./prova.txt",O_CREATE | O_LOCK);
-//    lockFile("./prova.txt");
+    closeFile("./prova.txt");
+    lockFile("./prova.txt");
 //    writeFile("./prova.txt", "./tmp");
 
 //    appendToFile("./prova.txt","ciao\n",sizeof("ciao\n"),"./tmp");
@@ -45,12 +46,12 @@ int main(int argc, char *argv[]){
 //    writeFile("./prova.txt","/tmp");
 //    writeFile("./prova.txt","/tmp");
 
-    if (readFile("./prova.txt", &buff,&size) == 0 ) {
-        printf("%s\n",(char*)buff);
-//        for(int i = 0; i < size; i++)
-//            printf("%s\n",(char*)buff);
-        saveFile("./prova.txt", buff, size);
-    }
+//    if (readFile("./prova.txt", &buff,&size) == 0 ) {
+//        printf("%s\n",(char*)buff);
+////        for(int i = 0; i < size; i++)
+////            printf("%s\n",(char*)buff);
+//        saveFile("./prova.txt", buff, size);
+//    }
 
 //    unlockFile("./prova.txt");
     closeConnection(SOCKET_NAME);

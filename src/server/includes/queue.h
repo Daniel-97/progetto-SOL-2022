@@ -34,4 +34,6 @@ int push(Queue *q,void *data);
 /* Funzione che toglie un elemento dalla coda */
 void *pop(Queue *q);
 
+void signalQueue(Queue *queue);
+
 #endif //PROGETTO_SOL_2022_QUEUE_H

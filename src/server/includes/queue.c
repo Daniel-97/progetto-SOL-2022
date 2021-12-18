@@ -73,3 +73,10 @@ void *pop(Queue *q){
 
     return data;
 }
+
+void signalQueue(Queue *queue){
+
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+}

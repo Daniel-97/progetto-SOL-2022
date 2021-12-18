@@ -292,6 +292,20 @@ static void *worker(void *arg){
                         break;
 
                     case OP_CLOSE_FILE:
+
+                        if(closeVirtualFile(fileQueue,request->filepath, request->clientId) == 0){
+                            response->statusCode = 0;
+                            strcpy(response->message, "File chiuso correttamente!");
+                        }else{
+
+                            response->statusCode = 0;
+                            strcpy(response->message, "Errore chiusura file");
+
+                        }
+
+                        if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+                            printf("[%lu] Risposta inviata al client!\n",self);
+                        }
                         break;
 
                     case OP_LOCK_FILE:

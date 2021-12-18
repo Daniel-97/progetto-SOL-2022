@@ -148,13 +148,17 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
 
     /* Esiste il file ed è stato passato il flag O_CREATE */
     if ( (found !=  -1 ) && ( (flags & O_CREATE) == O_CREATE) ){
+
         printf("[%lu] Il file %s esiste gia, impossibile crearne uno nuovo con lo stesso nome\n",self, pathname);
         return -1;
+
     }
 
     if( (found == -1) && ( (flags & O_LOCK) != O_LOCK ) ){
+
         printf("[%lu] Il file %s non esiste, parametro O_LOCK mancante\n",self, pathname);
         return -1;
+
     }
 
     if (found == 0){
@@ -190,6 +194,7 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
             newNode->client_id = clientId;
         else
             newNode->client_id = 0;
+        newNode->isOpen = 1;
 
         /* Inserisco il nuovo file creato nella coda */
         if( push(queue, newNode) ){
@@ -227,6 +232,12 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
 
     }else{
 
+        if (!file->isOpen){
+            printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
+            signalQueue(queue);
+            return -1;
+        }
+
         printf("[%lu] Tento di leggere file %s dim: %zu byte\n",self,pathname,file->size);
         *buf = malloc(file->size); //Alloco spazio buffer file da leggere
 
@@ -252,6 +263,7 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
     return status;
 
 }
+
 // todo: Attenzione da testare! (non sono sicuro che funzioni bene
 int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size){
 
@@ -268,6 +280,12 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
         status = -1;
 
     }else{
+
+        if (!file->isOpen){
+            printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
+            signalQueue(queue);
+            return -1;
+        }
 
         /* Devo liberare la memoria */
         if (file->file != NULL){
@@ -292,13 +310,14 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
         }
 
     }
-    pthread_cond_signal(&queue->qcond);
-    pthread_mutex_unlock(&queue->qlock);
+
+    signalQueue(queue);
 
     return status;
 
 }
 
+//todo aggiungere ritorno di file elimianto se coda piena
 int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size){
 
     pthread_t self = pthread_self();
@@ -309,9 +328,18 @@ int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size
     file = getFileNode(queue, pathname);
 
     if(file == NULL){
+
         printf("[%lu] Il file %s non esiste, impossibile scrivere\n",self,pathname);
         status = -1;
+
     }else{
+
+        if (!file->isOpen){
+            printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
+            signalQueue(queue);
+            return -1;
+        }
+
         /* LA WRITE LAVORA SEMPRE IN APPEND */
 
         if(file->file == NULL) { //Prima scrittura
@@ -354,8 +382,7 @@ int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size
         }
 
     }
-    pthread_cond_signal(&queue->qcond);
-    pthread_mutex_unlock(&queue->qlock);
+    signalQueue(queue);
 
     return status;
 
@@ -372,9 +399,17 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
     file = getFileNode(queue,pathname);
 
     if (file == NULL){
+
         printf("[%lu] File %s non esistente, impossibile acquisire il lock\n",self,pathname);
         status = -1;
+
     }else{
+
+        if (!file->isOpen){
+            printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
+            signalQueue(queue);
+            return -1;
+        }
 
         if(file->client_id == clientId){
 
@@ -396,8 +431,7 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
     }
 
-    pthread_cond_signal(&queue->qcond);
-    pthread_mutex_unlock(&queue->qlock);
+    signalQueue(queue);
 
     return status;
 }
@@ -413,9 +447,17 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
     file = getFileNode(queue,pathname);
 
     if (file == NULL){
+
         printf("[%lu] File %s non esistente, unlock impossibile\n",self,pathname);
         status = -1;
+
     }else{
+
+        if (!file->isOpen){
+            printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
+            signalQueue(queue);
+            return -1;
+        }
 
         if(file->client_id == clientId){
 
@@ -437,8 +479,7 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
     }
 
-    pthread_cond_signal(&queue->qcond);
-    pthread_mutex_unlock(&queue->qlock);
+    signalQueue(queue);
 
     return status;
 }
@@ -454,9 +495,17 @@ int deleteVirtualFile(Queue *queue, const char* pathname, int clientId){
     file = getFileNode(queue,pathname);
 
     if (file == NULL){
+
         printf("[%lu] File %s non esistente, impossibile eliminare\n",self,pathname);
         status = -1;
+
     }else{
+
+        if (!file->isOpen){
+            printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
+            signalQueue(queue);
+            return -1;
+        }
 
         if(file->client_id == clientId){
 //            fclose(file->file); //Chiudo il file
@@ -472,7 +521,7 @@ int deleteVirtualFile(Queue *queue, const char* pathname, int clientId){
         }else if (file->client_id == 0){
 
             printf("[%lu] Il file %s non è in lock, impossbile eliminare\n",self,pathname);
-            status = 0;
+            status = -1;
 
         }else{
 
@@ -483,11 +532,60 @@ int deleteVirtualFile(Queue *queue, const char* pathname, int clientId){
 
     }
 
-    pthread_cond_signal(&queue->qcond);
-    pthread_mutex_unlock(&queue->qlock);
+    signalQueue(queue);
 
     return status;
 }
+
+int closeVirtualFile(Queue *queue, const char* pathname, int clientId){
+
+
+    pthread_t self = pthread_self();
+    FileNode *file;
+    int status;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    file = getFileNode(queue,pathname);
+
+    if (file == NULL){
+
+        printf("[%lu] File %s non esistente, impossibile chiudere\n",self,pathname);
+        status = -1;
+
+    }else{
+
+        if (!file->isOpen){
+            printf("[%lu] Il file %s è già chiuso\n",self,pathname);
+            signalQueue(queue);
+            return 0;
+        }
+
+        if(file->client_id == clientId){
+
+            file->isOpen = 0;
+            printf("[%lu] File %s chiuso\n",self,pathname);
+
+        }else if (file->client_id == 0){
+
+            printf("[%lu] Il file %s non è in lock, impossbile chiudere\n",self,pathname);
+            status = -1;
+
+        }else{
+
+            printf("[%lu] File %s in lock da un altro client, impossibile chiudere\n",self,pathname);
+            status = -1;
+
+        }
+
+    }
+
+    signalQueue(queue);
+
+    return status;
+
+}
+
 
 int hasFileLock(Queue *queue, const char *pathname, int clientId){
 
@@ -513,8 +611,7 @@ int hasFileLock(Queue *queue, const char *pathname, int clientId){
         }
     }
 
-    pthread_cond_signal(&queue->qcond);
-    pthread_mutex_unlock(&queue->qlock);
+    signalQueue(queue);
 
     return status;
 

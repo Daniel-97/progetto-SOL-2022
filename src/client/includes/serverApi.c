@@ -314,6 +314,23 @@ int removeFile(const char* pathname){
     return sendRequest(&request, &response);
 }
 
+int closeFile(const char* pathname){
+
+    Request request;
+    Response response;
+
+    if(pathname == NULL) return -1;
+
+    request.operation = OP_CLOSE_FILE;
+    strcpy(request.filepath, pathname);
+    request.clientId = getpid();
+
+    printf("Invio richiesta di chiusura per file %s\n", pathname);
+
+    return sendRequest(&request, &response);
+
+}
+
 int sendRequest(Request *request, Response *response){
 
     /* Invio richiesta al server */
