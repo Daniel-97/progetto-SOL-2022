@@ -11,6 +11,7 @@
 #include "includes/config.h"
 #include "includes/queue.h"
 #include "includes/fileStorage.h"
+#include "includes/utils.h"
 
 static void *worker(void *arg);
 
@@ -112,6 +113,9 @@ static void *worker(void *arg){
     void *buf;
     size_t size;
 
+    char **arr = NULL;
+    char *fileList;
+
     printf("[%lu] Worker start\n", self);
 
     while(1){
@@ -195,37 +199,8 @@ static void *worker(void *arg){
                         break;
 
                     case OP_READ_FILE:
-//                        writeVirtualFile(fileQueue,request->filepath,"ciao",sizeof("ciao")); //test da togliere
 
-                        /* Leggo il file */
-                        if ( readVirtualFile(fileQueue,request->filepath,&buf,&size) == 0) {
-                            response->statusCode = 0;
-                            response->fileSize = size;
-                            strcpy(response->message, "Ready to send file");
-//                            printf("buffer letto: %s\n",(char*)buf);
-                            /* Invio al client la dimensione del file che sta per leggere */
-                            if (write(*fd_client_skt, response, sizeof(Response)) != -1){
-                                printf("[%lu] Risposta inviata al client con dimensione file!\n",self);
-
-                                /* Invio al client il file effettivo */
-                                if (write(*fd_client_skt, buf, size) != -1){
-                                    printf("[%lu] File %s inviato correttamente!\n",self, request->filepath);
-                                }else{
-                                    printf("[%lu] Errore invio file %s,%s \n",self, request->filepath, strerror(errno));
-
-                                }
-
-                            }
-                        }else{ /* In caso di errore invio il messaggio di errore al client */
-
-                            response->statusCode = -1;
-                            strcpy(response->message,"Errore, impossibile leggere il file");
-
-                            if (write(*fd_client_skt, response, sizeof(Response)) != -1){
-                                printf("[%lu] Risposta inviata al client!\n",self);
-                            }
-                        }
-
+                        sendFileToClient(*fd_client_skt, request->filepath);
                         break;
 
                     case OP_DELETE_FILE:
@@ -340,17 +315,30 @@ static void *worker(void *arg){
                         break;
 
                     case OP_READ_N_FILES:
-                        //todo da terminare questa parte
-                        response->statusCode = request->flags;
+
+                        fileList = getFileList(fileQueue, &arr, &size);
+                        printf("File size %ld\n", size);
+                        response->statusCode = size;
                         strcpy(response->message, "Pronto per inviare files");
+
+                        if(size == 0)
+                            if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+                                printf("[%lu] Risposta inviata al client!\n",self);
+                                break;
+                            }
+
+                        strcpy(response->message, fileList);
 
                         if (write(*fd_client_skt, response, sizeof(Response)) != -1){
                             printf("[%lu] Risposta inviata al client!\n",self);
                         }
+                        //todo capire se far inviare i file qui oppure tramite la readFIle
 
-                        char **arr = NULL;
-                        int size;
-                        getFileList(fileQueue, &arr, &size);
+                        /* Send files */
+//                        for(int i = 0; i < size; i++){
+//                            printf("Sending file %s to client\n", arr[i]);
+//                            sendFileToClient(*fd_client_skt, arr[i]);
+//                        }
 
                         break;
 

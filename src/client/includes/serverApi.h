@@ -42,7 +42,7 @@ int removeFile(const char* pathname);
 
 int closeFile(const char* pathname);
 
-int readNFiles(int N, const char *pathname);
+int readNFiles(int N, const char *dirname);
 
 int sendRequest(Request *request, Response *response);
 

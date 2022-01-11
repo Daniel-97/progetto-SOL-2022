@@ -331,13 +331,17 @@ int closeFile(const char* pathname){
 
 }
 
-int readNFiles(int N, const char *pathname){
+int readNFiles(int N, const char *dirname){
+
+    void *buff;
+    size_t size;
+    char *token;
 
     Request request;
     Response response;
 
     request.operation = OP_READ_N_FILES;
-    strncpy(request.filepath, pathname,MAX_PATH_SIZE);
+//    strncpy(request.filepath, pathname,MAX_PATH_SIZE);
     request.clientId = getpid();
     request.flags = N; /* Uso il campo flag per comunicare al server quanti file voglio */
 
@@ -355,11 +359,22 @@ int readNFiles(int N, const char *pathname){
             int comingFiles = response.statusCode;
             printf("Il server sta per inviare %d files\n", comingFiles);
 
-            /* Adesso devo leggere e memorizzare gli n file che il server mi sta per inviare */
-            for(int i = 0; i < comingFiles; i++){
+            /* Dentro message c'è la lista di file che il server può inviare */
+            token = strtok(response.message,":");
 
-                printf("Attendo che il server invii num.%d file...\n",i+1);
+            /* Per ogni file nella lista faccio una read al server */
+            while( token != NULL){
 
+                printf("Richiedo al server il file %s\n",token);
+
+                //todo Capire se richiedere i file tramite la readFile va bene
+                readFile(token,&buff,&size);
+                char *path = malloc(sizeof(dirname)+sizeof(token)+1);
+                strcat(path, dirname);
+                strcat(path, token);
+                saveFile(path, buff, size);
+
+                token = strtok(NULL, ":");
             }
 
         }else{

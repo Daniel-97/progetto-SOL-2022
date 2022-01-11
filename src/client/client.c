@@ -34,12 +34,14 @@ int main(int argc, char *argv[]){
     }
 
     openFile("./prova.txt",O_CREATE | O_LOCK);
+    openFile("./test.txt",O_CREATE | O_LOCK);
 //    closeFile("./prova.txt");
 //    lockFile("./prova.txt");
-    readNFiles(10, "./tmp");
 //    writeFile("./prova.txt", "./tmp");
 
-//    appendToFile("./prova.txt","ciao\n",sizeof("ciao\n"),"./tmp");
+    appendToFile("./prova.txt","file1",sizeof("file1"),"./tmp/");
+    appendToFile("./test.txt","file2",sizeof("file2"),"./tmp/");
+    readNFiles(10, "./tmp/");
 //    appendToFile("./prova.txt","123",sizeof("123"),"./tmp");
 
 //    removeFile("./prova.txt");
@@ -51,7 +53,7 @@ int main(int argc, char *argv[]){
 //        printf("%s\n",(char*)buff);
 ////        for(int i = 0; i < size; i++)
 ////            printf("%s\n",(char*)buff);
-//        saveFile("./prova.txt", buff, size);
+//        saveFile("./tmp/prova.txt", buff, size);
 //    }
 
 //    unlockFile("./prova.txt");

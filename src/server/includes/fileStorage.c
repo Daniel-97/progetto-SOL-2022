@@ -617,17 +617,19 @@ int hasFileLock(Queue *queue, const char *pathname, int clientId){
 
 }
 
-int getFileList(Queue *queue, char ***files, int *size){
+char* getFileList(Queue *queue, char ***files, size_t *size){
 
-    pthread_t self = pthread_self();
+//    pthread_t self = pthread_self();
     FileNode *fileNode;
     Node *node;
     int cont = 0;
+    char *fileList = NULL;
+    char *tmp = NULL;
 
-    if (queue == NULL) return -1;
+    if (queue == NULL) return NULL;
 
     pthread_mutex_lock(&queue->qlock);
-    printf("FILE LIST\n");
+//    printf("FILE LIST\n");
     // Alloco un array con la stessa dimensione della mia coda
     *files = malloc(queue->len * sizeof(char *));
     *size = queue->len;
@@ -637,15 +639,32 @@ int getFileList(Queue *queue, char ***files, int *size){
     while( (node = node->next) != NULL){
 
         fileNode = node->data;
-        //Alloco lo spazio per il nomde del file dentro l array
+        //Alloco lo spazio per il nome del file dentro l array
         *files[cont] = malloc(( strlen(fileNode->pathname)) * sizeof(char) );
         strcpy(*files[cont], fileNode->pathname); //Copio il nome del file nell array
-        printf("- %s\n", *files[cont]);
+//        printf("- %s\n", *files[cont]);
+
+
+        /* concat file list */
+        int s = (sizeof(fileList)+1+sizeof(fileNode->pathname))*sizeof(char);
+        tmp = malloc(s);
+        if(fileList != NULL) {
+            strcat(tmp, fileList);
+            strcat(tmp, ":");
+        }
+        strcat(tmp, *files[cont]);
+//        printf("tmp: %s\n", tmp);
+        free(fileList);
+        fileList = malloc(s);
+        strcpy(fileList, tmp);
+        free(tmp);
+
         cont++;
     }
 
     signalQueue(queue);
 
-    return 0;
+    printf("CONCAT FILE LIST %s\n", fileList);
+    return fileList;
 
 }
