@@ -161,11 +161,18 @@ void write_file_controller(int *fd_client_skt, Request *request){
         }
 
     }
-    /* Se il server è pieno devo inviare il file meno recente al client e cancellarlo*/
+
+    //todo DA TESTARE
+    /* Se il server è pieno devo inviare il file meno recente al client e cancellarlo */
     if(serverIsFull){
 
-        data = pop(fileQueue);
+        pthread_mutex_lock(&fileQueue->qlock);
+        data = getFirstNode(fileQueue);
+        pthread_mutex_unlock(&fileQueue->qlock);
+
         sendFileToClient(*fd_client_skt, data->pathname);
+        //Cancello il file
+        removeNode(fileQueue, data);
 
     }
 

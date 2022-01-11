@@ -36,6 +36,8 @@ int removeNode(Queue *queue, FileNode *node);
 
 FileNode *getFileNode(Queue *queue, const char *pathname);
 
+FileNode *getFirstNode(Queue *queue);
+
 
 /***** FUNZIONI SU FILE ******/
 int openVirtualFile(Queue *queue,const char* pathname, int flags, int clientId);

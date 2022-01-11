@@ -106,6 +106,19 @@ FileNode *getFileNode(Queue *queue, const char *pathname){
         return NULL;
 }
 
+//ATTENZIONE MUTEX DA ESEGUIRE FUORI DA FUNZIONE
+FileNode *getFirstNode(Queue *queue){
+
+    Node *node;
+    node = queue->head;
+
+    if(node != NULL)
+        return node->data;
+
+    return NULL;
+}
+
+
 int removeNode(Queue *queue, FileNode *node){
 
     Node *tmp;
