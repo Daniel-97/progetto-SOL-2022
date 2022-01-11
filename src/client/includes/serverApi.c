@@ -89,7 +89,6 @@ int openFile(const char* pathname, int flags){
 int readFile(const char* pathname, void** buf, size_t* size){
 
     Request request;
-    Response response;
 
     request.operation = OP_READ_FILE;
     strncpy(request.filepath, pathname,MAX_PATH_SIZE);
@@ -103,35 +102,7 @@ int readFile(const char* pathname, void** buf, size_t* size){
     if ( write(fd_socket,&request,sizeof(Request)) != -1 ){
 
 //        printf("Attendo dimensione del file dal server...\n");
-        /* Attendo risposta dal server con dimensione del file che sto per ricevere */
-        if ( read(fd_socket,&response,sizeof(Response)) != -1 ){
-
-            printServerResponse(&response);
-
-            if(response.statusCode == -1)
-                return -1;
-
-            /* Mi salvo la dimensione del file */
-            *size = response.fileSize;
-            *buf = malloc(response.fileSize); //Alloco il buffer per la lettura del file
-            // Leggo effettivamente il file dal server
-            if (read(fd_socket,*buf,*size) != -1){
-
-                printf("File ricevuto correttamente!\n");
-                return 0;
-
-            }else{
-
-                printf("Errore ricezione file. errno: %d. %s", errno, strerror(errno));
-                return -1;
-
-            }
-
-
-        }else{
-            printf("Errore read socket, errno: %d, %s\n",errno, strerror(errno));
-            return -1;
-        }
+        return waitServerFile(buf, size);
 
     }else{
         printf("Errore write socket, errno: %d, %s\n",errno, strerror(errno));
@@ -146,6 +117,7 @@ int writeFile(const char* pathname, const char* dirname){
     Response response;
     FILE *file;
     void *buf;
+    int isServerFull = 0;
 
     if (pathname == NULL) return -1;
 
@@ -166,6 +138,8 @@ int writeFile(const char* pathname, const char* dirname){
         /* Attendo risposta dal server */
         if ( read(fd_socket, &response, sizeof(Response)) != -1){
 
+            isServerFull = response.statusCode;
+
             printServerResponse(&response);
 
             if(response.statusCode == -1) return -1;
@@ -173,7 +147,7 @@ int writeFile(const char* pathname, const char* dirname){
             /* Leggo il contenuto del nuovo file */
             buf = malloc(request.fileSize); //Alloco buffer per lettura file
             rewind(file); //Mi riposiziono all inizio del file
-            int cont = fread(buf,request.fileSize,1,file);
+            fread(buf,request.fileSize,1,file);
 
             printf("Invio il file %s al server\n",pathname);
             /* Invio al server il file! */
@@ -204,6 +178,25 @@ int writeFile(const char* pathname, const char* dirname){
         printf("Errore invio richiesta di scrittura al server. errno %d,%s",errno, strerror(errno));
         return -1;
     }
+
+    /* Il server è pieno, deve inviarmi il file meno recente */
+    if(isServerFull){
+
+        void **buf1 = NULL;
+        size_t size;
+        waitServerFile(buf1,&size);
+
+        //Todo, qui salvare il file con il suo vero nome
+        /* If the dirname path is not null save the ejected file from the server */
+        if(dirname != NULL){
+            char *path = malloc(sizeof(dirname)+sizeof("ejected.txt")+1);
+            strcat(path, dirname);
+            strcat(path, "ejected.txt");
+            saveFile(path, buf1, size);
+        }
+
+    }
+    return 0;
 
 
 }
@@ -245,6 +238,9 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
                     printServerResponse(&response);
                     return response.statusCode;
 
+                }else{
+                    printf("Errore ricezione file al server\n");
+                    return -1;
                 }
 
             }else{

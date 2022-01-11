@@ -34,14 +34,14 @@ int main(int argc, char *argv[]){
     }
 
     openFile("./prova.txt",O_CREATE | O_LOCK);
-    openFile("./test.txt",O_CREATE | O_LOCK);
+//    openFile("./test.txt",O_CREATE | O_LOCK);
 //    closeFile("./prova.txt");
 //    lockFile("./prova.txt");
 //    writeFile("./prova.txt", "./tmp");
 
     appendToFile("./prova.txt","file1",sizeof("file1"),"./tmp/");
-    appendToFile("./test.txt","file2",sizeof("file2"),"./tmp/");
-    readNFiles(10, "./tmp/");
+//    appendToFile("./test.txt","file2",sizeof("file2"),"./tmp/");
+//    readNFiles(10, "./tmp/");
 //    appendToFile("./prova.txt","123",sizeof("123"),"./tmp");
 
 //    removeFile("./prova.txt");
@@ -49,12 +49,12 @@ int main(int argc, char *argv[]){
 //    writeFile("./prova.txt","/tmp");
 //    writeFile("./prova.txt","/tmp");
 
-//    if (readFile("./prova.txt", &buff,&size) == 0 ) {
-//        printf("%s\n",(char*)buff);
-////        for(int i = 0; i < size; i++)
-////            printf("%s\n",(char*)buff);
-//        saveFile("./tmp/prova.txt", buff, size);
-//    }
+    if (readFile("./prova.txt", &buff,&size) == 0 ) {
+        printf("%s\n",(char*)buff);
+//        for(int i = 0; i < size; i++)
+//            printf("%s\n",(char*)buff);
+        saveFile("./tmp/prova.txt", buff, size);
+    }
 
 //    unlockFile("./prova.txt");
     closeConnection(SOCKET_NAME);
