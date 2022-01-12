@@ -16,6 +16,8 @@
 #include <errno.h>
 #include <math.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <sys/stat.h>
 #include "../../common/common.h"
 #include "serverApi.h"
 
@@ -30,5 +32,7 @@ int saveFile(const char* pathname, void *buf, size_t size);
 int saveFileDir(void *buf, size_t size, const char* dirname);
 
 int waitServerFile(void** buf, size_t* size);
+
+char* getFileListFromDir(const char* dirname);
 
 #endif //PROGETTO_SOL_2022_UTILS_H

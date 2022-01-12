@@ -86,3 +86,65 @@ int waitServerFile(void** buf, size_t* size){
     }
 
 }
+
+char* getFileListFromDir(const char* dirname){
+
+    DIR *d = opendir(dirname);
+    struct dirent* file;
+    struct stat file_stat;
+    char *fileList = NULL;
+    char *fileName = NULL;
+    char *tmp = NULL;
+    int size;
+
+    /* Add the '/' */
+    if(strcmp(dirname,"/") < 0){
+        tmp = malloc(strlen(dirname)+1);
+        strcpy(tmp, dirname);
+        strcat(tmp, "/");
+        dirname = tmp;
+    }
+
+    while( (file = readdir(d)) != NULL){
+
+        if(strcmp(file->d_name,"..") == 0 || strcmp(file->d_name,".") == 0)
+            continue;
+
+        tmp = malloc(strlen(dirname)+strlen(file->d_name));
+        strcpy(tmp, dirname);
+        strcat(tmp, file->d_name);
+
+        lstat(tmp, &file_stat);
+
+        if(S_ISDIR(file_stat.st_mode)){
+            fileName = getFileListFromDir(tmp);
+        }else{
+            fileName = file->d_name;
+        }
+
+        free(tmp);
+
+        if (fileList == NULL) {
+            fileList = malloc(strlen(fileName));
+            strcpy(fileList, fileName);
+            continue;
+        }
+
+        size = strlen(fileList) + strlen(fileName) + 1;
+        tmp = malloc(size);
+        strcpy(tmp, fileList);
+        strcat(tmp, ",");
+        strcat(tmp, fileName);
+
+        free(fileList);
+        fileList = malloc(size);
+        strcpy(fileList, tmp);
+        free(tmp);
+
+    }
+
+//    printf("FileList: %s\n",fileList);
+    closedir(d);
+    return fileList;
+
+}

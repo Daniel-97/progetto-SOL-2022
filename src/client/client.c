@@ -14,25 +14,94 @@
 #include "includes/serverApi.h"
 #include "../common/common.h"
 
-#define SOCKET_NAME "./connection.sk"
+#define DEFAULT_SOCKET_NAME "./connection.sk"
 
 int main(int argc, char *argv[]){
 
+    char *socket_name = NULL;
+    char *dirname = NULL;
     int opt = 0;
     opt += 0;
     struct timespec time;
     void *buff;
     size_t size;
+    char *token;
+    char *fileList;
 
     time.tv_sec = 3;
     time.tv_nsec = 0;
 
-    if(openConnection(SOCKET_NAME,1000, time) == 0){
-        printf("CONNESSO CON SERVER!\n");
-    }else{
-        exit(-1);
-    }
+    while( (opt = getopt(argc, argv, "hf:W:w:")) != -1 ){
 
+        switch (opt) {
+
+            case 'h':  /* Print help menu */
+                help();
+                exit(0);
+                break;
+
+            case 'f':
+                socket_name = malloc(sizeof(optarg));
+                strcpy(socket_name, optarg);
+
+                /* Apro connessione con il server */
+                if(openConnection(socket_name,1000, time) == 0){
+                    printf("CONNESSO CON SERVER SU SOCKET: %s\n",socket_name);
+                }else{
+                    exit(-1);
+                }
+
+                break;
+
+            case 'w': /* Scriver sul server i file nella directory specificata */
+                token = getFileListFromDir(optarg);
+                printf("File to send: %s\n",token);
+
+                break;
+
+            case 'W': /* Lista di file da inviare separati da , */
+
+                token = strtok(optarg,",");
+                while ( token != NULL ){
+
+                    openFile(token,O_CREATE | O_LOCK);
+                    writeFile(token, dirname);
+                    token = strtok(NULL, ",");
+                }
+                break;
+
+            case 'D': /* Specifica cartella dove scrivere file rimossi per capacity miss*/
+                dirname = malloc(sizeof(optarg));
+                strcpy(dirname, optarg);
+                break;
+
+            case 'r': /* Lista di file da leggere separari da , */
+                break;
+
+            case 'R': /* Legge n file qualsiasi dal server */
+                break;
+
+            case 'd': /* Specifica cartella in cui salvare file lato client */
+                break;
+
+            case 't': /* tempo tra una richiesta e l'altra */
+                break;
+
+            case 'l': /* Lista di file su cui fare lock */
+                break;
+
+            case 'u': /* Lista di file su cui fare unlock */
+                break;
+
+            case 'c': /* Lista di file da rimuovere dal server */
+                break;
+
+            case 'p': /* Abilita print */
+                break;
+        }
+
+    }
+    exit(0);
     openFile("./prova.txt",O_CREATE | O_LOCK);
     openFile("./test.txt",O_CREATE | O_LOCK);
 //    closeFile("./prova.txt");
@@ -57,7 +126,7 @@ int main(int argc, char *argv[]){
 //    }
 
 //    unlockFile("./prova.txt");
-    closeConnection(SOCKET_NAME);
+    closeConnection(socket_name);
 
     return 0;
 }
