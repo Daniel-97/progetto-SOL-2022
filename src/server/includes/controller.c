@@ -112,12 +112,31 @@ void write_file_controller(int *fd_client_skt, Request *request){
     FileNode *data;
     void *buf;
     size_t size;
+    int freeSpace;
 
     /* C'è bisogno di espellere un file per capacity miss. Informo il client di questa cosa */
-    if(serverConfig->max_file == fileQueue->len){
+    freeSpace = getFreeSpace(fileQueue);
+
+    //Todo capire se questa parte di free space funziona
+    if(freeSpace < request->fileSize){
+
+        printf("[%lu] No space left, need to expel a file\n",self);
+        data = expelFile(fileQueue, request->fileSize);
+
+        /* Impossibile espellere file. */
+        if(data == NULL){ }
+
         response->statusCode = 1;
-        serverIsFull = 1;
+        response->fileSize = data->size;
+        strcpy(response->message, "Server pieno, invio file espulso");
+        write(*fd_client_skt, response, sizeof(Response));
+
+        sendFileToClient(*fd_client_skt, data->pathname);
+
+        removeNode(fileQueue, data);
+
     }
+
     /* Controllo prima che il client abbia il lock sul file */
     if (hasFileLock(fileQueue,request->filepath,request->clientId) == 0){
         strcpy(response->message, "Ready to receive file, client has lock");
@@ -159,20 +178,6 @@ void write_file_controller(int *fd_client_skt, Request *request){
         if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
             printf("[%lu] Risposta inviata al client!\n", self);
         }
-
-    }
-
-    //todo DA TESTARE
-    /* Se il server è pieno devo inviare il file meno recente al client e cancellarlo */
-    if(serverIsFull){
-
-        pthread_mutex_lock(&fileQueue->qlock);
-        data = getFirstNode(fileQueue);
-        pthread_mutex_unlock(&fileQueue->qlock);
-
-        sendFileToClient(*fd_client_skt, data->pathname);
-        //Cancello il file
-        removeNode(fileQueue, data);
 
     }
 

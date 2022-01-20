@@ -43,3 +43,55 @@ void sendFileToClient(int fd_client_skt, const char* pathname){
 
 }
 
+int getFreeSpace(Queue *queue){
+
+    Node *node = queue->head;
+    FileNode *fileNode;
+
+    int size = 0;
+    int available = 0;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    while( (node = node->next) != NULL){
+
+        fileNode = node->data;
+        size += fileNode->size;
+
+    }
+
+    pthread_mutex_unlock(&queue->qlock);
+
+    available = serverConfig->max_mem_size - size;
+//    printf("Current available space: %d bytes\n",available);
+
+    return available;
+
+}
+
+FileNode* expelFile(Queue  *queue, int requiredSpace){
+
+    Node *node = queue->head;
+    FileNode *fileNode;
+    FileNode *expelFile;
+    int freeSpace = getFreeSpace(queue);
+
+    pthread_mutex_lock(&queue->qlock);
+
+    while( (node = node->next) != NULL){
+
+        fileNode = node->data;
+        if( freeSpace+fileNode->size >= requiredSpace) {
+            expelFile = fileNode;
+            break;
+        }
+
+    }
+
+    pthread_mutex_unlock(&queue->qlock);
+
+    return expelFile;
+
+}
+
+

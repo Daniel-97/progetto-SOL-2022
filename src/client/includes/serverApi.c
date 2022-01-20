@@ -138,11 +138,29 @@ int writeFile(const char* pathname, const char* dirname){
         /* Attendo risposta dal server */
         if ( read(fd_socket, &response, sizeof(Response)) != -1){
 
-            isServerFull = response.statusCode;
 
-            printServerResponse(&response);
+            //Il server è pieno, mi invierà il file che è stato espulso
+            if(response.statusCode == 1){
 
-            if(response.statusCode == -1) return -1;
+                printServerResponse(&response);
+                printf("Il server sta per inviare il file che ha espulso\n");
+                buf = malloc(response.fileSize);
+                if (read(fd_socket,buf,response.fileSize) != -1)
+                    printf("Ricevuto file espulso dal server\n");
+
+                if(dirname != NULL){ //save the file on disk
+                    free(buf);
+                }
+
+                //Rieffettuo una read per leggere il file effettivo che il server mi deve inviare
+                read(fd_socket, &response, sizeof(Response));
+
+            }
+
+            if(response.statusCode == -1){
+                printServerResponse(&response);
+                return -1;
+            }
 
             /* Leggo il contenuto del nuovo file */
             buf = malloc(request.fileSize); //Alloco buffer per lettura file
@@ -156,12 +174,13 @@ int writeFile(const char* pathname, const char* dirname){
                 printf("File inviato correttamente al server!\n");
 
                 /* Attendo risposta dal server con messaggio di successo */
-                if( read(fd_socket, &response, sizeof(Response)) ){
-
+                if( read(fd_socket, &response, sizeof(Response)) )
                     printServerResponse(&response);
-                    return response.statusCode;
 
-                }
+                /* Faccio la unlock sul file */
+                unlockFile(pathname);
+
+                return response.statusCode;
 
             }else{
 

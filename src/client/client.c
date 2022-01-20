@@ -64,8 +64,8 @@ int main(int argc, char *argv[]){
                 token = strtok(optarg,",");
                 while ( token != NULL ){
 
-                    openFile(token,O_CREATE | O_LOCK);
-                    writeFile(token, dirname);
+                    if ( openFile(token,O_CREATE | O_LOCK) != -1)
+                        writeFile(token, dirname);
                     token = strtok(NULL, ",");
                 }
                 break;

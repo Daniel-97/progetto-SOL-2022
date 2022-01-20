@@ -91,7 +91,7 @@ int main(int argc, char *argv[]){
 
         } else {
 
-            printf("[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",*fd_client_skt);
+            printf("\n[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",*fd_client_skt);
             if( push(connectionQueue,fd_client_skt) != -1){
                 printf("[MASTER] File descriptor client socket inserito nella coda\n");
 
@@ -123,7 +123,7 @@ static void *worker(void *arg){
             while( read(*fd_client_skt, request,sizeof(Request)) > 0 ) {
 
                 /* Leggo la richiesta del client */
-                printf("[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n", self,
+                printf("\n[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n", self,
                        request->clientId, request->operation, request->filepath, request->flags);
 
                 switch (request->operation) {

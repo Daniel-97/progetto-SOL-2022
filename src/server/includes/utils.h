@@ -14,7 +14,12 @@
 #include <sys/un.h>
 
 #include "fileStorage.h"
+#include "globals.h"
 
 void sendFileToClient(int fd_client_skt, const char* pathname);
+
+int getFreeSpace(Queue *queue);
+
+FileNode* expelFile(Queue  *queue, int requiredSpace);
 
 #endif //PROGETTO_SOL_2022_UTILS_H

@@ -107,6 +107,7 @@ char* getFileListFromDir(const char* dirname){
 
     while( (file = readdir(d)) != NULL){
 
+        // Ignore cartelle . e ..
         if(strcmp(file->d_name,"..") == 0 || strcmp(file->d_name,".") == 0)
             continue;
 
@@ -114,8 +115,10 @@ char* getFileListFromDir(const char* dirname){
         strcpy(tmp, dirname);
         strcat(tmp, file->d_name);
 
+        //Prendo le stat del file
         lstat(tmp, &file_stat);
 
+        //Se è una directory faccio una chiamata ricorsiva
         if(S_ISDIR(file_stat.st_mode)){
             fileName = getFileListFromDir(tmp);
         }else{
@@ -124,12 +127,14 @@ char* getFileListFromDir(const char* dirname){
 
         free(tmp);
 
+        //Lista vuota
         if (fileList == NULL) {
             fileList = malloc(strlen(fileName));
             strcpy(fileList, fileName);
             continue;
         }
 
+        //Aggiungo elementi alla lista che ho attualmente
         size = strlen(fileList) + strlen(fileName) + 1;
         tmp = malloc(size);
         strcpy(tmp, fileList);
