@@ -23,11 +23,11 @@ void help(){
 
 void printServerResponse(Response *response){
 
-    printf("Server response: {STATUS_CODE: %d, MESSAGE: %s, FILE_SIZE: %zu }\n",response->statusCode, response->message,response->fileSize);
+    printf("Server response: {STATUS_CODE: %d, MESSAGE: %s, FILE_SIZE: %zu , FILE_NAME: %s }\n",response->statusCode, response->message,response->fileSize,response->fileName);
 
 }
 
-int saveFile(const char* pathname, void *buf, size_t size){
+int saveFile(char* pathname, void *buf, size_t size){
 
     FILE *file = fopen(pathname, "w");
 
@@ -46,8 +46,15 @@ int saveFile(const char* pathname, void *buf, size_t size){
 
 }
 
-int saveFileDir(void *buf, size_t size, const char* dirname){
-    return 0;
+int saveFileDir(void *buf, size_t size, char* dirname, char* fileName){
+
+    char *name = getFileNameFromPath(fileName);
+    char *path = malloc(sizeof(dirname)+sizeof(name));
+    strcat(path,dirname);
+    strcat(path,name);
+    printf("Salvataggio file %s in corso\n",path);
+    return saveFile(path,buf,size);
+
 }
 
 /* Funzione unica per attesa di un file in arrivo dal server */
@@ -151,5 +158,18 @@ char* getFileListFromDir(const char* dirname){
 //    printf("FileList: %s\n",fileList);
     closedir(d);
     return fileList;
+
+}
+
+char* getFileNameFromPath(char* path){
+
+    if(path == NULL) return NULL;
+
+    char *last = strrchr(path, '/');
+
+    if(last != NULL)
+        return last+1;
+    else
+        return path;
 
 }

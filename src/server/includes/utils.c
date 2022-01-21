@@ -5,7 +5,7 @@
 #include "utils.h"
 #include "globals.h"
 
-void sendFileToClient(int fd_client_skt, const char* pathname){
+void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
 
     void *buf;
     size_t size;
@@ -14,9 +14,10 @@ void sendFileToClient(int fd_client_skt, const char* pathname){
 
     /* Leggo il file */
     if ( readVirtualFile(fileQueue,pathname,&buf,&size) == 0) {
-        response->statusCode = 0;
+        response->statusCode = statusCode;
         response->fileSize = size;
         strcpy(response->message, "Ready to send file");
+        strcpy(response->fileName, pathname);
 //                            printf("buffer letto: %s\n",(char*)buf);
         /* Invio al client la dimensione del file che sta per leggere */
         if (write(fd_client_skt, response, sizeof(Response)) != -1){

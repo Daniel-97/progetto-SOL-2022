@@ -475,7 +475,7 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
         if(file->client_id == clientId){
 
             file->client_id = 0; //Tolgo il lock sul file
-            printf("[%lu] Unlock sul file eseguito corretamente %s\n",self,pathname);
+            printf("[%lu] Unlock sul file eseguito correttamente %s\n",self,pathname);
             status = 0;
 
         }else if (file->client_id == 0){

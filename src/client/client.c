@@ -23,15 +23,15 @@ int main(int argc, char *argv[]){
     int opt = 0;
     opt += 0;
     struct timespec time;
-    void *buff;
-    size_t size;
+//    void *buff;
+//    size_t size;
     char *token;
-    char *fileList;
+//    char *fileList;
 
     time.tv_sec = 3;
     time.tv_nsec = 0;
 
-    while( (opt = getopt(argc, argv, "hf:W:w:")) != -1 ){
+    while( (opt = getopt(argc, argv, "hf:W:w:D:")) != -1 ){
 
         switch (opt) {
 

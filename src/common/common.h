@@ -40,6 +40,7 @@ typedef struct Response{
     int     statusCode; /* 0 -> ok, -1 -> error */
     size_t  fileSize; /* Dimensione del file, usata quando il server deve inviare dati al client */
     char    message[MAX_MESSAGE_SIZE];
+    char    fileName[MAX_PATH_SIZE];
 
 }Response;
 

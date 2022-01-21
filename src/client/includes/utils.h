@@ -26,13 +26,16 @@ void help();
 void printServerResponse(Response *response);
 
 /* Salva il file su disco */
-int saveFile(const char* pathname, void *buf, size_t size);
+int saveFile(char* pathname, void *buf, size_t size);
 
 /* Salva il file nella directory specificata */
-int saveFileDir(void *buf, size_t size, const char* dirname);
+int saveFileDir(void *buf, size_t size, char* dirname, char* fileName);
 
 int waitServerFile(void** buf, size_t* size);
 
 char* getFileListFromDir(const char* dirname);
+
+char* getFileNameFromPath(char* path);
+
 
 #endif //PROGETTO_SOL_2022_UTILS_H

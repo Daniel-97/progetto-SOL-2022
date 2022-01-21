@@ -57,11 +57,14 @@ int openFile(const char* pathname, int flags){
 
     Request *request = malloc(sizeof(Request));
     Response *response = malloc(sizeof(Response));
+    char *fileName;
+
+    fileName = getFileNameFromPath(pathname);
 
     request->clientId = getpid();
     request->operation = OP_OPEN_FILE;
     request->flags = flags;
-    strncpy(request->filepath,pathname,MAX_PATH_SIZE);
+    strncpy(request->filepath,fileName,MAX_PATH_SIZE);
 
     printf("Invio richiesta apertura per filepath: %s\n",request->filepath);
 
@@ -91,7 +94,7 @@ int readFile(const char* pathname, void** buf, size_t* size){
     Request request;
 
     request.operation = OP_READ_FILE;
-    strncpy(request.filepath, pathname,MAX_PATH_SIZE);
+    strncpy(request.filepath,getFileNameFromPath(pathname),MAX_PATH_SIZE);
     request.clientId = getpid();
     request.flags = 0;
 
@@ -118,15 +121,18 @@ int writeFile(const char* pathname, const char* dirname){
     FILE *file;
     void *buf;
     int isServerFull = 0;
+    char *fileName;
 
     if (pathname == NULL) return -1;
+
+    fileName = getFileNameFromPath(pathname);
 
     /* Apro il file locale che devo inviare al server */
     file = fopen(pathname, "r");
     fseek(file,0L, SEEK_END); /* Mi posiziono all inizio del file */
 
     request.operation = OP_WRITE_FILE;
-    strncpy(request.filepath, pathname, MAX_PATH_SIZE);
+    strncpy(request.filepath, fileName, MAX_PATH_SIZE);
     request.clientId = getpid();
     request.fileSize = ftell(file);
 
@@ -149,11 +155,12 @@ int writeFile(const char* pathname, const char* dirname){
                     printf("Ricevuto file espulso dal server\n");
 
                 if(dirname != NULL){ //save the file on disk
-                    free(buf);
+                    saveFileDir(buf, response.fileSize, dirname,response.fileName);
                 }
+                free(buf);
 
-                //Rieffettuo una read per leggere il file effettivo che il server mi deve inviare
-                read(fd_socket, &response, sizeof(Response));
+                //Ri-effettuo una read per leggere il file effettivo che il server mi deve inviare
+//                read(fd_socket, &response, sizeof(Response));
 
             }
 
@@ -229,7 +236,7 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
     if (pathname == NULL || buf == NULL) return -1;
 
     request.operation = OP_APPEND_FILE;
-    strncpy(request.filepath, pathname, MAX_PATH_SIZE);
+    strncpy(request.filepath, getFileNameFromPath(pathname), MAX_PATH_SIZE);
     request.clientId = getpid();
     request.fileSize = size;
 
@@ -284,11 +291,14 @@ int lockFile(const char* pathname){
 
     Request request;
     Response response;
+    char *fileName;
 
     if(pathname == NULL) return -1;
 
+    fileName = getFileNameFromPath(pathname);
+
     request.operation = OP_LOCK_FILE;
-    strcpy(request.filepath, pathname);
+    strcpy(request.filepath, fileName);
     request.clientId = getpid();
 
     printf("Invio richiesta di lock per file %s\n", pathname);
@@ -301,11 +311,14 @@ int unlockFile(const char* pathname){
 
     Request request;
     Response response;
+    char *fileName;
 
     if(pathname == NULL) return -1;
 
+    fileName = getFileNameFromPath(pathname);
+
     request.operation = OP_UNLOCK_FILE;
-    strcpy(request.filepath, pathname);
+    strcpy(request.filepath, fileName);
     request.clientId = getpid();
 
     printf("Invio richiesta di unlock per file %s\n", pathname);
@@ -317,11 +330,14 @@ int removeFile(const char* pathname){
 
     Request request;
     Response response;
+    char* fileName;
 
     if(pathname == NULL) return -1;
 
+    fileName = getFileNameFromPath(pathname);
+
     request.operation = OP_DELETE_FILE;
-    strcpy(request.filepath, pathname);
+    strcpy(request.filepath, fileName);
     request.clientId = getpid();
 
     printf("Invio richiesta di cancellazione per file %s\n", pathname);
@@ -337,7 +353,7 @@ int closeFile(const char* pathname){
     if(pathname == NULL) return -1;
 
     request.operation = OP_CLOSE_FILE;
-    strcpy(request.filepath, pathname);
+    strcpy(request.filepath, getFileNameFromPath(pathname));
     request.clientId = getpid();
 
     printf("Invio richiesta di chiusura per file %s\n", pathname);

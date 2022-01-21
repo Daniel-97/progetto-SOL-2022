@@ -81,7 +81,7 @@ void append_file_controller(int *fd_client_skt, Request *request){
 
 void read_file_controller(int *fd_client_skt, Request *request){
 
-    sendFileToClient(*fd_client_skt, request->filepath);
+    sendFileToClient(*fd_client_skt, request->filepath,0);
 
 }
 
@@ -126,12 +126,8 @@ void write_file_controller(int *fd_client_skt, Request *request){
         /* Impossibile espellere file. */
         if(data == NULL){ }
 
-        response->statusCode = 1;
-        response->fileSize = data->size;
-        strcpy(response->message, "Server pieno, invio file espulso");
-        write(*fd_client_skt, response, sizeof(Response));
-
-        sendFileToClient(*fd_client_skt, data->pathname);
+        //1 è lo status code
+        sendFileToClient(*fd_client_skt, data->pathname,1);
 
         removeNode(fileQueue, data);
 
