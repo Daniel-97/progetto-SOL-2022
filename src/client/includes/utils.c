@@ -27,7 +27,7 @@ void printServerResponse(Response *response){
 
 }
 
-int saveFile(char* pathname, void *buf, size_t size){
+int saveFile(const char* pathname, void *buf, size_t size){
 
     FILE *file = fopen(pathname, "w");
 
@@ -46,7 +46,7 @@ int saveFile(char* pathname, void *buf, size_t size){
 
 }
 
-int saveFileDir(void *buf, size_t size, char* dirname, char* fileName){
+int saveFileDir(void *buf, size_t size,const char* dirname,const char* fileName){
 
     char *name = getFileNameFromPath(fileName);
     char *path = malloc(sizeof(dirname)+sizeof(name));
@@ -161,7 +161,7 @@ char* getFileListFromDir(const char* dirname){
 
 }
 
-char* getFileNameFromPath(char* path){
+char* getFileNameFromPath(const char* path){
 
     if(path == NULL) return NULL;
 
