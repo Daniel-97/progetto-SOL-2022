@@ -160,7 +160,7 @@ int writeFile(const char* pathname, const char* dirname){
                 free(buf);
 
                 //Ri-effettuo una read per leggere il file effettivo che il server mi deve inviare
-//                read(fd_socket, &response, sizeof(Response));
+                read(fd_socket, &response, sizeof(Response));
 
             }
 
