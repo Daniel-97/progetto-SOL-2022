@@ -371,6 +371,11 @@ int readNFiles(int N, const char *dirname){
     Request request;
     Response response;
 
+    if(dirname == NULL){
+        printf("Dirname non può essere nullo\n");
+        return -1;
+    }
+
     request.operation = OP_READ_N_FILES;
 //    strncpy(request.filepath, pathname,MAX_PATH_SIZE);
     request.clientId = getpid();
@@ -399,11 +404,13 @@ int readNFiles(int N, const char *dirname){
                 printf("Richiedo al server il file %s\n",token);
 
                 //todo Capire se richiedere i file tramite la readFile va bene
-                readFile(token,&buff,&size);
-                char *path = malloc(sizeof(dirname)+sizeof(token)+1);
-                strcat(path, dirname);
-                strcat(path, token);
-                saveFile(path, buff, size);
+                if( readFile(token,&buff,&size) != -1 ) {
+                    saveFileDir(buff, size, dirname, token);
+                }
+//                char *path = malloc(sizeof(dirname)+sizeof(token)+1);
+//                strcat(path, dirname);
+//                strcat(path, token);
+//                saveFile(path, buff, size);
 
                 token = strtok(NULL, ":");
             }

@@ -245,16 +245,20 @@ void readn_file_controller(int *fd_client_skt, Request *request){
     char *fileList;
     size_t size;
 
-    fileList = getFileList(fileQueue, &arr, &size);
-    printf("File size %ld\n", size);
+    /* The flag in the request contains the number of requested files */
+    fileList = getNFileList(fileQueue, &arr, &size, request->flags);
+    printf("File list size: %ld\n", size);
     response->statusCode = size;
     strcpy(response->message, "Pronto per inviare files");
 
-    if(size == 0)
-        if (write(*fd_client_skt, response, sizeof(Response)) != -1){
-            printf("[%lu] Risposta inviata al client!\n",self);
+    if(size == 0) {
+        response->statusCode = -1;
+        strcpy(response->message, "0 file da leggere");
+        if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
+            printf("[%lu] Risposta inviata al client!\n", self);
             return;
         }
+    }
 
     strcpy(response->message, fileList);
 

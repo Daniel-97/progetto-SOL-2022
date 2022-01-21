@@ -20,18 +20,20 @@ int main(int argc, char *argv[]){
 
     char *socket_name = NULL;
     char *dirname = NULL;
+    char *destFolder = NULL;
     int opt = 0;
     opt += 0;
     struct timespec time;
-//    void *buff;
-//    size_t size;
+    void *buff;
+    size_t size;
     char *token;
+    int numFiles;
 //    char *fileList;
 
     time.tv_sec = 3;
     time.tv_nsec = 0;
 
-    while( (opt = getopt(argc, argv, "hf:W:w:D:")) != -1 ){
+    while( (opt = getopt(argc, argv, "hf:W:w:D:d:r:R:")) != -1 ){
 
         switch (opt) {
 
@@ -76,12 +78,29 @@ int main(int argc, char *argv[]){
                 break;
 
             case 'r': /* Lista di file da leggere separari da , */
+                token = strtok(optarg,",");
+                while ( token != NULL ){
+
+                    if ( openFile(token, O_LOCK) != -1)
+                        if( readFile(token, &buff, &size) != -1 )
+                            saveFileDir(buff, size, destFolder, token);
+
+                    token = strtok(NULL, ",");
+                }
                 break;
 
             case 'R': /* Legge n file qualsiasi dal server */
+                numFiles = atoi(optarg);
+                if(numFiles == 0){
+                    readNFiles(-1, destFolder);
+                }else{
+                    readNFiles(numFiles, destFolder);
+                }
                 break;
 
             case 'd': /* Specifica cartella in cui salvare file lato client */
+                destFolder = malloc(sizeof(optarg));
+                strcpy(destFolder, optarg);
                 break;
 
             case 't': /* tempo tra una richiesta e l'altra */
