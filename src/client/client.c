@@ -28,12 +28,13 @@ int main(int argc, char *argv[]){
     size_t size;
     char *token;
     int numFiles;
+    int enableDebug = 0;
 //    char *fileList;
 
     time.tv_sec = 3;
     time.tv_nsec = 0;
 
-    while( (opt = getopt(argc, argv, "hf:W:w:D:d:r:R:")) != -1 ){
+    while( (opt = getopt(argc, argv, "hf:W:w:D:d:r:R:l:u:c:")) != -1 ){
 
         switch (opt) {
 
@@ -106,16 +107,36 @@ int main(int argc, char *argv[]){
             case 't': /* tempo tra una richiesta e l'altra */
                 break;
 
-            case 'l': /* Lista di file su cui fare lock */
+            case 'l': /* Lista di file su cui fare lock separati da ,*/
+                token = strtok(optarg,",");
+
+                while( token != NULL){
+                    lockFile(token);
+                    token = strtok(NULL, ",");
+                }
+
                 break;
 
-            case 'u': /* Lista di file su cui fare unlock */
+            case 'u': /* Lista di file su cui fare unlock separati da , */
+                token = strtok(optarg,",");
+
+                while( token != NULL){
+                    unlockFile(token);
+                    token = strtok(NULL, ",");
+                }
                 break;
 
-            case 'c': /* Lista di file da rimuovere dal server */
+            case 'c': /* Lista di file da rimuovere dal server separati da , */
+                token = strtok(optarg,",");
+
+                while( token != NULL){
+                    removeFile(token);
+                    token = strtok(NULL, ",");
+                }
                 break;
 
-            case 'p': /* Abilita print */
+            case 'p': /* Abilita print di debug*/
+                enableDebug = 1;
                 break;
         }
 
