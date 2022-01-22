@@ -58,6 +58,6 @@ int closeVirtualFile(Queue *queue, const char* pathname, int clientId);
 
 int hasFileLock(Queue *queue, const char *pathname, int clientId);
 
-char* getNFileList(Queue *queue, char ***files, size_t *size, int N);
+char* getNFileList(Queue *queue, size_t *size, int N);
 
 #endif //PROGETTO_SOL_2022_FILESTORAGE_H

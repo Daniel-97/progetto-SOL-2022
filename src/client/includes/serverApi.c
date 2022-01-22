@@ -396,7 +396,7 @@ int readNFiles(int N, const char *dirname){
             printf("Il server sta per inviare %d files\n", comingFiles);
 
             /* Dentro message c'è la lista di file che il server può inviare */
-            token = strtok(response.message,":");
+            token = strtok(response.message,",");
 
             /* Per ogni file nella lista faccio una read al server */
             while( token != NULL){
@@ -412,7 +412,7 @@ int readNFiles(int N, const char *dirname){
 //                strcat(path, token);
 //                saveFile(path, buff, size);
 
-                token = strtok(NULL, ":");
+                token = strtok(NULL, ",");
             }
 
         }else{

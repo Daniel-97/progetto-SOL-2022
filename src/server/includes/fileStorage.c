@@ -630,7 +630,7 @@ int hasFileLock(Queue *queue, const char *pathname, int clientId){
 
 }
 
-char* getNFileList(Queue *queue, char ***files, size_t *size, int N){
+char* getNFileList(Queue *queue, size_t *size, int N){
 
 //    pthread_t self = pthread_self();
     FileNode *fileNode;
@@ -638,6 +638,7 @@ char* getNFileList(Queue *queue, char ***files, size_t *size, int N){
     int cont = 0;
     char *fileList = NULL;
     char *tmp = NULL;
+    int s = 0;
 
     if (queue == NULL) return NULL;
 
@@ -648,37 +649,35 @@ char* getNFileList(Queue *queue, char ***files, size_t *size, int N){
     *size = N;
 
     // Alloco un array con la stessa dimensione della mia coda
-    *files = malloc(N * sizeof(char *));
-
-    printf("queue->len = %lu\nN:%d\n",queue->len,N);
+//    *files = malloc(N * sizeof(char *));
 
     node = queue->head;
-    //TODO QUI DA QUALCHE PARTE C'è UN BUG, SE RICHIEDO PIU DI UN FILE CRASHA
     while( cont < N && ((node = node->next) != NULL)){
 
         fileNode = node->data;
         //Alloco lo spazio per il nome del file dentro l array
-        *files[cont] = malloc(( strlen(fileNode->pathname)) * sizeof(char) );
-        strcpy(*files[cont], fileNode->pathname); //Copio il nome del file nell array
-//        printf("- %s\n", *files[cont]);
+//        *files[cont] = malloc(strlen(fileNode->pathname));
+//        strcpy(*files[cont], fileNode->pathname); //Copio il nome del file nell array
+        printf("- %s\n", fileNode->pathname);
 
         /* concat file list */
-        int s = (sizeof(fileList)+1+sizeof(fileNode->pathname))*sizeof(char);
-        tmp = malloc(s);
+
         if(fileList != NULL) {
-            strcat(tmp, fileList);
-            strcat(tmp, ":");
+            s = strlen(fileList)+1+strlen(fileNode->pathname);
+            tmp = malloc(s);
+            strcpy(tmp, fileList);
+            strcat(tmp, ",");
+            strcat(tmp, fileNode->pathname);
+            free(fileList);
+            fileList = malloc(s);
+            strcpy(fileList, tmp);
+            free(tmp);
+        }else{
+            fileList = malloc(strlen(fileNode->pathname));
+            strcpy(fileList, fileNode->pathname);
         }
 
-        strcat(tmp, *files[cont]);
-//        printf("tmp: %s\n", tmp);
-        free(fileList);
-        fileList = malloc(s);
-        strcpy(fileList, tmp);
-        free(tmp);
-
         cont++;
-        printf("Sono qui3\n");
 
     }
 

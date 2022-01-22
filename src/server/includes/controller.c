@@ -241,12 +241,12 @@ void readn_file_controller(int *fd_client_skt, Request *request){
 
     Response *response = malloc(sizeof(Response));
     pthread_t self = pthread_self();
-    char **arr = NULL;
+//    char **arr = NULL;
     char *fileList;
     size_t size;
 
     /* The flag in the request contains the number of requested files */
-    fileList = getNFileList(fileQueue, &arr, &size, request->flags);
+    fileList = getNFileList(fileQueue, &size, request->flags);
     printf("File list size: %ld\n", size);
     response->statusCode = size;
     strcpy(response->message, "Pronto per inviare files");
@@ -265,13 +265,8 @@ void readn_file_controller(int *fd_client_skt, Request *request){
     if (write(*fd_client_skt, response, sizeof(Response)) != -1){
         printf("[%lu] Risposta inviata al client!\n",self);
     }
-    //todo capire se far inviare i file qui oppure tramite la readFIle
 
-    /* Send files */
-//                        for(int i = 0; i < size; i++){
-//                            printf("Sending file %s to client\n", arr[i]);
-//                            sendFileToClient(*fd_client_skt, arr[i]);
-//                        }
+    //todo al momento è il client che richiedei files mediante delle re
 
 }
 
