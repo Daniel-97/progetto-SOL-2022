@@ -16,11 +16,15 @@
 #include <errno.h>
 #include <math.h>
 #include <fcntl.h>
+#include <stdbool.h>
 
 #include "../../common/common.h"
 #include "utils.h"
 
+// Client config
 int fd_socket;  // Variabile per socket
+bool enablePrintDebug;
+long waitingTime;
 
 int openConnection(const char* sockname, int msec,const struct timespec abstime);
 

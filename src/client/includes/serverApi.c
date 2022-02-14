@@ -48,12 +48,14 @@ int openConnection(const char* sockname, int msec, const struct timespec abstime
 }
 
 int closeConnection(const char* sockname){
-
+    sleep(waitingTime);
     return close(fd_socket);
 
 }
 
 int openFile(const char* pathname, int flags){
+
+    sleep(waitingTime);
 
     Request *request = malloc(sizeof(Request));
     Response *response = malloc(sizeof(Response));
@@ -91,6 +93,8 @@ int openFile(const char* pathname, int flags){
 
 int readFile(const char* pathname, void** buf, size_t* size){
 
+    sleep(waitingTime);
+
     Request request;
 
     request.operation = OP_READ_FILE;
@@ -115,6 +119,8 @@ int readFile(const char* pathname, void** buf, size_t* size){
 }
 
 int writeFile(const char* pathname, const char* dirname){
+
+    sleep(waitingTime);
 
     Request request;
     Response response;
@@ -227,8 +233,9 @@ int writeFile(const char* pathname, const char* dirname){
 
 }
 
-//Todo implementare questa funzione
 int appendToFile(const char* pathname, void *buf, size_t size, const char* dirname){
+
+    sleep(waitingTime);
 
     Request request;
     Response response;
@@ -289,6 +296,8 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
 
 int lockFile(const char* pathname){
 
+    sleep(waitingTime);
+
     Request request;
     Response response;
     char *fileName;
@@ -309,6 +318,8 @@ int lockFile(const char* pathname){
 
 int unlockFile(const char* pathname){
 
+    sleep(waitingTime);
+
     Request request;
     Response response;
     char *fileName;
@@ -327,6 +338,8 @@ int unlockFile(const char* pathname){
 }
 
 int removeFile(const char* pathname){
+
+    sleep(waitingTime);
 
     Request request;
     Response response;
@@ -347,6 +360,8 @@ int removeFile(const char* pathname){
 
 int closeFile(const char* pathname){
 
+    sleep(waitingTime);
+
     Request request;
     Response response;
 
@@ -363,6 +378,8 @@ int closeFile(const char* pathname){
 }
 
 int readNFiles(int N, const char *dirname){
+
+    sleep(waitingTime);
 
     void *buff;
     size_t size;

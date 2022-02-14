@@ -3,6 +3,7 @@
 //
 
 #include "utils.h"
+#include "serverApi.h"
 
 void help(){
     printf("***** ARGOMENTI CLIENT ******\n");
@@ -23,7 +24,8 @@ void help(){
 
 void printServerResponse(Response *response){
 
-    printf("Server response: {STATUS_CODE: %d, MESSAGE: %s, FILE_SIZE: %zu , FILE_NAME: %s }\n",response->statusCode, response->message,response->fileSize,response->fileName);
+    if(!enablePrintDebug)
+        printf("Server response: {STATUS_CODE: %d, MESSAGE: %s, FILE_SIZE: %zu , FILE_NAME: %s }\n",response->statusCode, response->message,response->fileSize,response->fileName);
 
 }
 
