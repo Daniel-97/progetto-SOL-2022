@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
             case 'w': { /* Scriver sul server i file nella directory specificata */
                 char *token = getFileListFromDir(optarg);
                 printf("File to send: %s\n", token);
-
+                //todo da implementare questa funzione
                 break;
             }
 
