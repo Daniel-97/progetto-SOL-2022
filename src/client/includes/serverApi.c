@@ -59,7 +59,7 @@ int openFile(const char* pathname, int flags){
 
     Request *request = malloc(sizeof(Request));
     Response *response = malloc(sizeof(Response));
-    char *fileName;
+    const char *fileName;
 
     fileName = getFileNameFromPath(pathname);
 
@@ -127,7 +127,7 @@ int writeFile(const char* pathname, const char* dirname){
     FILE *file;
     void *buf;
     int isServerFull = 0;
-    char *fileName;
+    const char *fileName;
 
     if (pathname == NULL) return -1;
 
@@ -300,7 +300,7 @@ int lockFile(const char* pathname){
 
     Request request;
     Response response;
-    char *fileName;
+    const char *fileName;
 
     if(pathname == NULL) return -1;
 
@@ -322,7 +322,7 @@ int unlockFile(const char* pathname){
 
     Request request;
     Response response;
-    char *fileName;
+    const char *fileName;
 
     if(pathname == NULL) return -1;
 
@@ -343,7 +343,7 @@ int removeFile(const char* pathname){
 
     Request request;
     Response response;
-    char* fileName;
+    const char* fileName;
 
     if(pathname == NULL) return -1;
 

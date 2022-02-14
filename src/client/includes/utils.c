@@ -50,7 +50,7 @@ int saveFile(const char* pathname, void *buf, size_t size){
 
 int saveFileDir(void *buf, size_t size,const char* dirname,const char* fileName){
 
-    char *name = getFileNameFromPath(fileName);
+    const char *name = getFileNameFromPath(fileName);
     char *path = malloc(sizeof(dirname)+sizeof(name));
     strcat(path,dirname);
     strcat(path,name);
@@ -125,7 +125,7 @@ char* getFileListFromDir(const char* dirname){
         strcat(tmp, file->d_name);
 
         //Prendo le stat del file
-        lstat(tmp, &file_stat);
+        stat(tmp, &file_stat);
 
         //Se è una directory faccio una chiamata ricorsiva
         if(S_ISDIR(file_stat.st_mode)){
@@ -163,7 +163,7 @@ char* getFileListFromDir(const char* dirname){
 
 }
 
-char* getFileNameFromPath(const char* path){
+const char* getFileNameFromPath(const char* path){
 
     if(path == NULL) return NULL;
 

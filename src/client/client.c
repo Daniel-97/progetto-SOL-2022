@@ -31,7 +31,7 @@ int main(int argc, char *argv[]){
 //    char *fileList;
 
     /* CONFIG INIT */
-    enablePrintDebug = false;
+    enablePrintDebug = true;
     waitingTime = 0;
 
     time.tv_sec = 3;

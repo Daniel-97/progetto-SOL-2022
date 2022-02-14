@@ -35,7 +35,7 @@ int waitServerFile(void** buf, size_t* size);
 
 char* getFileListFromDir(const char* dirname);
 
-char* getFileNameFromPath(const char* path);
+const char* getFileNameFromPath(const char* path);
 
 
 #endif //PROGETTO_SOL_2022_UTILS_H
