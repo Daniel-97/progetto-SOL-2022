@@ -20,7 +20,7 @@
 int main(int argc, char *argv[]){
 
     char *socket_name = NULL;
-    char *dirname = NULL;
+    char *expFileDir = NULL;
     char *destFolder = NULL;
     int opt = 0;
     struct timespec time;
@@ -60,9 +60,18 @@ int main(int argc, char *argv[]){
             }
 
             case 'w': { /* Scriver sul server i file nella directory specificata */
-                char *token = getFileListFromDir(optarg);
-                printf("File to send: %s\n", token);
-                //todo da implementare questa funzione
+                //todo da testare, vedere se funziona
+                char *fileList = getFileListFromDir(optarg);
+                printf("Sto per inviare i seguenti file: %s\n",fileList);
+                char *token = strtok(fileList, ",");
+
+                while (token != NULL){
+
+                    if(openFile(token, O_CREATE | O_LOCK) != -1)
+                        writeFile(token, expFileDir);
+                    token = strtok(NULL, ",");
+                }
+
                 break;
             }
 
@@ -72,15 +81,15 @@ int main(int argc, char *argv[]){
                 while (token != NULL) {
 
                     if (openFile(token, O_CREATE | O_LOCK) != -1)
-                        writeFile(token, dirname);
+                        writeFile(token, expFileDir);
                     token = strtok(NULL, ",");
                 }
                 break;
             }
 
             case 'D': { /* Specifica cartella dove scrivere file rimossi per capacity miss*/
-                dirname = malloc(sizeof(optarg));
-                strcpy(dirname, optarg);
+                expFileDir = malloc(sizeof(optarg));
+                strcpy(expFileDir, optarg);
                 break;
             }
 

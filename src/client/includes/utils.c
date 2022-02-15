@@ -24,7 +24,7 @@ void help(){
 
 void printServerResponse(Response *response){
 
-    if(!enablePrintDebug)
+    if(enablePrintDebug)
         printf("Server response: {STATUS_CODE: %d, MESSAGE: %s, FILE_SIZE: %zu , FILE_NAME: %s }\n",response->statusCode, response->message,response->fileSize,response->fileName);
 
 }
@@ -106,17 +106,18 @@ char* getFileListFromDir(const char* dirname){
     char *tmp = NULL;
     int size;
 
-    /* Add the '/' */
+    /* Add the '/' */ //todo da fixare qui, vengono messi degli / si troppo.
     if(strcmp(dirname,"/") < 0){
-        tmp = malloc(strlen(dirname)+1);
+        tmp = malloc(strlen(dirname)+2);
         strcpy(tmp, dirname);
         strcat(tmp, "/");
         dirname = tmp;
     }
 
-    while( (file = readdir(d)) != NULL){
+//    printf("Directory: %s\n",dirname);
+    while( (file = readdir(d)) != NULL ){
 
-        // Ignore cartelle . e ..
+        // Ignora cartelle . e ..
         if(strcmp(file->d_name,"..") == 0 || strcmp(file->d_name,".") == 0)
             continue;
 
@@ -131,7 +132,13 @@ char* getFileListFromDir(const char* dirname){
         if(S_ISDIR(file_stat.st_mode)){
             fileName = getFileListFromDir(tmp);
         }else{
-            fileName = file->d_name;
+
+            // Se è un file devo copiarci prima il path della directory
+            fileName = malloc(strlen(dirname) + strlen(file->d_name)+1);
+            strcpy(fileName, dirname);
+            strcat(fileName, file->d_name);
+            printf("Dir: %s, File name: %s\n",dirname,fileName);
+
         }
 
         free(tmp);
@@ -151,9 +158,8 @@ char* getFileListFromDir(const char* dirname){
         strcat(tmp, fileName);
 
         free(fileList);
-        fileList = malloc(size);
-        strcpy(fileList, tmp);
-        free(tmp);
+        fileList = tmp;
+        free(fileName);
 
     }
 
