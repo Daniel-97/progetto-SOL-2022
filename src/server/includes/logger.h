@@ -12,6 +12,6 @@
 FILE *logFile;
 
 void loggerInit();
-void logRequest(Request request, char *replacedFile);
+void logRequest(Request request,int readByte, int writeByte, char *replacedFile);
 
 #endif //PROGETTO_SOL_2022_LOGGER_H

@@ -9,6 +9,8 @@ void open_file_controller(int *fd_client_skt, Request *request){
     Response *response = malloc(sizeof(Response));
     pthread_t self = pthread_self();
 
+    logRequest(*request,0,0,NULL);
+
     if (openVirtualFile(fileQueue,request->filepath, request->flags, request->clientId) == 0) {
         /* Preparo la risposta per il client */
         response->statusCode = 0;
@@ -32,6 +34,8 @@ void append_file_controller(int *fd_client_skt, Request *request){
     pthread_t self = pthread_self();
     void *buf;
     size_t size;
+
+    logRequest(*request, 0, request->fileSize,NULL);
 
     /* Controllo prima che il client abbia il lock sul file */
     if (hasFileLock(fileQueue,request->filepath,request->clientId) == 0){
@@ -81,6 +85,7 @@ void append_file_controller(int *fd_client_skt, Request *request){
 
 void read_file_controller(int *fd_client_skt, Request *request){
 
+    //todo qui manca il logging
     sendFileToClient(*fd_client_skt, request->filepath,0);
 
 }
@@ -89,6 +94,9 @@ void delete_file_controller(int *fd_client_skt, Request *request){
 
     Response *response = malloc(sizeof(Response));
     pthread_t self = pthread_self();
+
+    logRequest(*request, 0,0,NULL);
+
 
     if(deleteVirtualFile(fileQueue,request->filepath, request->clientId) == 0){
         response->statusCode = 0;
@@ -108,7 +116,7 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
     Response *response = malloc(sizeof(Response));
     pthread_t self = pthread_self();
-    int serverIsFull = 0;
+//    int serverIsFull = 0;
     FileNode *data;
     void *buf;
     size_t size;
@@ -131,6 +139,11 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
         removeNode(fileQueue, data);
 
+        logRequest(*request, 0,request->fileSize,data->pathname);
+
+    }else{
+
+        logRequest(*request,0, request->fileSize, NULL);
     }
 
     /* Controllo prima che il client abbia il lock sul file */
@@ -184,6 +197,8 @@ void close_file_controller(int *fd_client_skt, Request *request){
     Response *response = malloc(sizeof(Response));
     pthread_t self = pthread_self();
 
+    logRequest(*request,0,0, NULL);
+
     if(closeVirtualFile(fileQueue,request->filepath, request->clientId) == 0){
         response->statusCode = 0;
         strcpy(response->message, "File chiuso correttamente!");
@@ -205,6 +220,8 @@ void lock_file_controller(int *fd_client_skt, Request *request){
     Response *response = malloc(sizeof(Response));
     pthread_t self = pthread_self();
 
+    logRequest(*request,0,0, NULL);
+
     /* Tento di acquisire il lock sul file */
     if(lockVirtualFile(fileQueue,request->filepath,request->clientId) == 0){
         response->statusCode = 0;
@@ -222,6 +239,8 @@ void unlock_file_controller(int *fd_client_skt, Request *request){
 
     Response *response = malloc(sizeof(Response));
     pthread_t self = pthread_self();
+
+    logRequest(*request,0,0, NULL);
 
     /* Tentativo di unlock sul file */
     if(unlockVirtualFile(fileQueue,request->filepath,request->clientId) == 0){
@@ -244,6 +263,9 @@ void readn_file_controller(int *fd_client_skt, Request *request){
 //    char **arr = NULL;
     char *fileList;
     size_t size;
+
+    //todo qui devo loggare tutti i byte effettivamente letti
+    logRequest(*request,0,0,NULL);
 
     /* The flag in the request contains the number of requested files */
     fileList = getNFileList(fileQueue, &size, request->flags);

@@ -15,18 +15,18 @@ void loggerInit(){
 
     fclose(logFile);
 
-    Request r;
-    r.fileSize = 100;
-    r.operation = 1;
-    r.clientId = 4535353;
-    strcpy(r.filepath,"prova.txt");
-    logRequest(r, NULL);
+//    Request r;
+//    r.fileSize = 100;
+//    r.operation = 1;
+//    r.clientId = 4535353;
+//    strcpy(r.filepath,"prova.txt");
+//    logRequest(r, NULL);
 
 }
 /* FORMATO LOG
- * DATA-ORA,ID-CLIENT, OPERAZIONE, FILE-TARGET, BYTE-LETTI/SCRITTI, FILE-RIMPIAZZATO
+ * DATA-ORA,ID-CLIENT, OPERAZIONE, FILE-TARGET, BYTE-LETTI, BYTE-SCRITTI, FILE-RIMPIAZZATO
  */
-void logRequest(Request request,char *replacedFile){
+void logRequest(Request request,int readByte, int writeByte, char *replacedFile){
 
     char s[100];
     time_t now = time(NULL);
@@ -35,7 +35,7 @@ void logRequest(Request request,char *replacedFile){
 
     if( (logFile = fopen(serverConfig->log_file, "a")) != NULL ){
 
-        fprintf(logFile, "%s,%d,%d,%s,%zu",s,request.clientId,request.operation,request.filepath,request.fileSize);
+        fprintf(logFile, "%s,%d,%d,%s,%d,%d",s,request.clientId,request.operation,request.filepath,readByte,writeByte);
         if(replacedFile != NULL)
             fprintf(logFile,",%s\n", replacedFile);
         else

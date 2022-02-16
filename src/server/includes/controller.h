@@ -18,6 +18,7 @@
 #include "config.h"
 #include "queue.h"
 #include "globals.h"
+#include "logger.h"
 
 void open_file_controller(int *fd_client_skt, Request *request);
 void append_file_controller(int *fd_client_skt, Request *request);

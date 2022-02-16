@@ -11,6 +11,7 @@
 
 #include "queue.h"
 #include "config.h"
+#include "logger.h"
 #include "../../common/common.h"
 
 #define READ_CHUNK_SIZE 100
