@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
             case 'w': { /* Scriver sul server i file nella directory specificata */
                 //todo da testare, vedere se funziona
                 char *fileList = getFileListFromDir(optarg);
-                printf("Sto per inviare i seguenti file: %s\n",fileList);
+//                printf("Sto per inviare i seguenti file: %s\n",fileList);
                 char *token = strtok(fileList, ",");
 
                 while (token != NULL){

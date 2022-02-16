@@ -137,7 +137,7 @@ char* getFileListFromDir(const char* dirname){
             fileName = malloc(strlen(dirname) + strlen(file->d_name)+1);
             strcpy(fileName, dirname);
             strcat(fileName, file->d_name);
-            printf("Dir: %s, File name: %s\n",dirname,fileName);
+//            printf("Dir: %s, File name: %s\n",dirname,fileName);
 
         }
 

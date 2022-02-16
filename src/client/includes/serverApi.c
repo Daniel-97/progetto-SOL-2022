@@ -180,7 +180,7 @@ int writeFile(const char* pathname, const char* dirname){
             rewind(file); //Mi riposiziono all inizio del file
             fread(buf,request.fileSize,1,file);
 
-            printf("Invio il file %s al server\n",pathname);
+            printf("Invio il file %s al server\n", getFileNameFromPath(pathname));
             /* Invio al server il file! */
             if ( write(fd_socket,buf,request.fileSize) != -1){
 
@@ -332,7 +332,7 @@ int unlockFile(const char* pathname){
     strcpy(request.filepath, fileName);
     request.clientId = getpid();
 
-    printf("Invio richiesta di unlock per file %s\n", pathname);
+    printf("Invio richiesta di unlock per file %s\n", fileName);
 
     return sendRequest(&request,&response);
 }

@@ -45,7 +45,12 @@ int readConfig(struct Config* serverConfig){
             else if(strcmp(key,"max-file") == 0){
                 serverConfig->max_file = strtol(value, NULL,10);
 
-            }else{
+            }
+            else if(strcmp(key, "log-file") == 0){
+                strncpy(serverConfig->log_file, value, strcspn(value,"\n"));
+
+            }
+            else{
                 printf("Setting not recognized: %s",key);
             }
 

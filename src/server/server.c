@@ -13,6 +13,7 @@
 #include "includes/fileStorage.h"
 #include "includes/utils.h"
 #include "includes/controller.h"
+#include "includes/logger.h"
 
 static void *worker(void *arg);
 
@@ -25,6 +26,9 @@ int main(int argc, char *argv[]){
         exit(-1);
     }
     printConfig(serverConfig);
+
+    /***** LOGGER INIT *******/
+    loggerInit();
 
     /***** FILE QUEUE INIT ******/
     fileQueue = initQueue();

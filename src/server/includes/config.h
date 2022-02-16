@@ -16,6 +16,7 @@ typedef struct Config{
     unsigned thread_workers;
     unsigned max_mem_size; /* Size in MB */
     unsigned max_file;
+    char log_file[255];
 }Config;
 
 int readConfig(struct Config* serverConfig);
