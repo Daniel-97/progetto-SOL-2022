@@ -35,7 +35,39 @@ void logRequest(Request request,int readByte, int writeByte, char *replacedFile)
 
     if( (logFile = fopen(serverConfig->log_file, "a")) != NULL ){
 
-        fprintf(logFile, "%s,%d,%d,%s,%d,%d",s,request.clientId,request.operation,request.filepath,readByte,writeByte);
+        fprintf(logFile, "%s",s);
+
+        switch (request.operation) {
+            case 0:
+                fprintf(logFile, ",%s,","OPEN_FILE");
+                break;
+            case 1:
+                fprintf(logFile, ",%s,","WRITE_FILE");
+                break;
+            case 2:
+                fprintf(logFile, ",%s,","READ_FILE");
+                break;
+            case 3:
+                fprintf(logFile, ",%s,","DELETE_FILE");
+                break;
+            case 4:
+                fprintf(logFile, ",%s,","APPEND_FILE");
+                break;
+            case 5:
+                fprintf(logFile, ",%s,","CLOSE_FILE");
+                break;
+            case 6:
+                fprintf(logFile, ",%s,","LOCK_FILE");
+                break;
+            case 7:
+                fprintf(logFile, ",%s,","UNLOCK_FILE");
+                break;
+            case 8:
+                fprintf(logFile, ",%s,","READ_N_FILES");
+                break;
+        }
+
+        fprintf(logFile, "%s,%d,%s,%d,%d",s,request.clientId,request.filepath,readByte,writeByte);
         if(replacedFile != NULL)
             fprintf(logFile,",%s\n", replacedFile);
         else
