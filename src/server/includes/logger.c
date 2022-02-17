@@ -39,7 +39,10 @@ void logRequest(Request request,int readByte, int writeByte, char *replacedFile)
 
         switch (request.operation) {
             case 0:
-                fprintf(logFile, ",%s,","OPEN_FILE");
+                if((request.flags & O_LOCK) == O_LOCK)
+                    fprintf(logFile, ",%s,","OPEN_FILE_LOCK");
+                else
+                    fprintf(logFile, ",%s,","OPEN_FILE");
                 break;
             case 1:
                 fprintf(logFile, ",%s,","WRITE_FILE");
@@ -67,7 +70,7 @@ void logRequest(Request request,int readByte, int writeByte, char *replacedFile)
                 break;
         }
 
-        fprintf(logFile, "%s,%d,%s,%d,%d",s,request.clientId,request.filepath,readByte,writeByte);
+        fprintf(logFile, "%d,%s,%d,%d",request.clientId,request.filepath,readByte,writeByte);
         if(replacedFile != NULL)
             fprintf(logFile,",%s\n", replacedFile);
         else
