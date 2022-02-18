@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
                     fileList = getFileListFromDir(dir, -1);
                 }
 
-                printf("Sto per inviare i seguenti file: %s\n",fileList);
+//                printf("Sto per inviare i seguenti file: %s\n",fileList);
                 token = strtok(fileList, ",");
 
                 while (token != NULL){
