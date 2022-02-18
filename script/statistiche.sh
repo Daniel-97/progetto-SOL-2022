@@ -10,6 +10,8 @@ cont_close=$(grep "CLOSE_FILE" -c $1)
 cont_open=$(grep "OPEN_FILE" -c $1)
 cont_open_lock=$(grep "OPEN_FILE_LOCK" -c $1)
 
+cont_expelled=0
+
 byte_read=0
 byte_write=0
 
@@ -27,6 +29,12 @@ while read line; do
     byte_read=$((byte_read+byte))
   fi
 
+  #Conta il numero di file espulsi
+  len=${#array[@]}
+  if [ $len -eq 5 ]; then
+    cont_expelled=$((cont_expelled+1))
+  fi
+
 done < $1
 
 echo "****** STATISTICHE SERVER *****"
@@ -40,3 +48,4 @@ echo "- cont open-lock: $((cont_open_lock))"
 echo "- cont open: $cont_open"
 echo "- total read byte: $byte_read"
 echo "- total write byte: $byte_write"
+echo "- total replaced file: $cont_expelled"
