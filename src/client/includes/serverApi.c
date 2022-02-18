@@ -57,27 +57,27 @@ int openFile(const char* pathname, int flags){
 
     sleep(waitingTime);
 
-    Request *request = malloc(sizeof(Request));
-    Response *response = malloc(sizeof(Response));
-    const char *fileName;
+    Request request;
+    Response response;
 
+    const char *fileName;
     fileName = getFileNameFromPath(pathname);
 
-    request->clientId = getpid();
-    request->operation = OP_OPEN_FILE;
-    request->flags = flags;
-    strncpy(request->filepath,fileName,MAX_PATH_SIZE);
+    request.clientId = getpid();
+    request.operation = OP_OPEN_FILE;
+    request.flags = flags;
+    strncpy(request.filepath,fileName,MAX_PATH_SIZE);
 
-    printf("Invio richiesta apertura per filepath: %s\n",request->filepath);
+    printf("Invio richiesta apertura per filepath: %s\n",request.filepath);
 
     /* Invio richiesta al server */
-    if ( write(fd_socket,request,sizeof(Request)) != -1 ){
+    if ( write(fd_socket,&request,sizeof(Request)) != -1 ){
 
         /* Attendo risposta dal server */
-        if ( read(fd_socket,response,sizeof(Response)) != -1 ){
+        if ( read(fd_socket,&response,sizeof(Response)) != -1 ){
 
-            printServerResponse(response);
-            return response->statusCode;
+            printServerResponse(&response);
+            return response.statusCode;
 
         }else{
             printf("Errore write socket, errno: %d\n",errno);

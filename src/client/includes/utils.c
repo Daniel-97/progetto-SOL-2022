@@ -98,74 +98,46 @@ int waitServerFile(void** buf, size_t* size){
 
 char* getFileListFromDir(const char* dirname){
 
-    DIR *d = opendir(dirname);
-    struct dirent* file;
-    struct stat file_stat;
     char *fileList = NULL;
-    char *fileName = NULL;
     char *tmp = NULL;
-    int size;
 
-    /* Add the '/' */ //todo da fixare qui, vengono messi degli / si troppo.
-    if(strcmp(dirname,"/") < 0){
-        tmp = malloc(strlen(dirname)+2);
-        strcpy(tmp, dirname);
-        strcat(tmp, "/");
-        dirname = tmp;
-    }
+    FILE *fp;
+    char command[255];
+    char output[1000];
+    strcat(command,"/bin/find ");
+    strcat(command,dirname);
+    strcat(command," -type f");
 
-//    printf("Directory: %s\n",dirname);
-    while( (file = readdir(d)) != NULL ){
+    printf("%s\n",command);
+    fp = popen(command,"r");
 
-        // Ignora cartelle . e ..
-        if(strcmp(file->d_name,"..") == 0 || strcmp(file->d_name,".") == 0)
-            continue;
+    if(fp != NULL){
+        /* Read the output a line at a time - output it. */
+        while (fgets(output, sizeof(output), fp) != NULL) {
 
-        tmp = malloc(strlen(dirname)+strlen(file->d_name));
-        strcpy(tmp, dirname);
-        strcat(tmp, file->d_name);
+            if(fileList == NULL){
 
-        //Prendo le stat del file
-        stat(tmp, &file_stat);
+                fileList = malloc(strlen(output)-1);
+                strncpy(fileList, output, strlen(output)-1);
 
-        //Se è una directory faccio una chiamata ricorsiva
-        if(S_ISDIR(file_stat.st_mode)){
-            fileName = getFileListFromDir(tmp);
-        }else{
+            }else{
+                tmp = malloc(strlen(fileList));
+                strcpy(tmp, fileList);
+                free(fileList);
+                fileList = malloc(strlen(tmp)+strlen(output));
+                strncpy(fileList, tmp, strlen(tmp));
+                strcat(fileList,",");
+                strncat(fileList, output, strlen(output)-1);
+                free(tmp);
 
-            // Se è un file devo copiarci prima il path della directory
-            fileName = malloc(strlen(dirname) + strlen(file->d_name)+1);
-            strcpy(fileName, dirname);
-            strcat(fileName, file->d_name);
-//            printf("Dir: %s, File name: %s\n",dirname,fileName);
-
+            }
         }
 
-        free(tmp);
-
-        //Lista vuota
-        if (fileList == NULL) {
-            fileList = malloc(strlen(fileName));
-            strcpy(fileList, fileName);
-            continue;
-        }
-
-        //Aggiungo elementi alla lista che ho attualmente
-        size = strlen(fileList) + strlen(fileName) + 1;
-        tmp = malloc(size);
-        strcpy(tmp, fileList);
-        strcat(tmp, ",");
-        strcat(tmp, fileName);
-
-        free(fileList);
-        fileList = tmp;
-        free(fileName);
-
+        pclose(fp);
+        return fileList;
     }
 
-//    printf("FileList: %s\n",fileList);
-    closedir(d);
-    return fileList;
+    return NULL;
 
 }
 
