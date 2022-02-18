@@ -12,4 +12,7 @@ Config *serverConfig;
 Queue *connectionQueue; /* Coda per le connessioni in arrivo */
 Queue *fileQueue; /* Coda per i file dei client */
 
+pthread_mutex_t mutex_n_connections;
+int n_connections;
+
 #endif //PROGETTO_SOL_2022_GLOBALS_H

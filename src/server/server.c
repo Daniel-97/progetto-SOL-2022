@@ -27,6 +27,9 @@ int main(int argc, char *argv[]){
     }
     printConfig(serverConfig);
 
+    /****** NUM CONNECTION INIT *****/
+    n_connections = 0;
+
     /***** LOGGER INIT *******/
     loggerInit();
 
@@ -121,6 +124,8 @@ static void *worker(void *arg){
         printf("[%lu] In attesa di nuova richiesta...\n",self);
         fd_client_skt = pop(connectionQueue);
 
+        addConnectionCont();
+
         if (*fd_client_skt != -1){
 
             /* Continuo a leggere dal socket del client fintanto che ci sono dati */
@@ -194,6 +199,8 @@ static void *worker(void *arg){
             printf("[%lu] Errore pop coda: %d\n",self,*fd_client_skt);
             break;
         }
+
+        subConnectionCont();
 
     }
     return 0;

@@ -95,4 +95,26 @@ FileNode* expelFile(Queue  *queue, int requiredSpace){
 
 }
 
+/* Funzioni per tenere traccia del numero di connessioni concorrenti */
+void addConnectionCont(){
+    pthread_mutex_lock(&mutex_n_connections);
+    n_connections += 1;
+    pthread_mutex_unlock(&mutex_n_connections);
+}
+
+void subConnectionCont(){
+    pthread_mutex_lock(&mutex_n_connections);
+    n_connections -= 1;
+    pthread_mutex_unlock(&mutex_n_connections);
+}
+
+int getNumConnections(){
+    int n;
+    pthread_mutex_lock(&mutex_n_connections);
+    n = n_connections;
+    pthread_mutex_unlock(&mutex_n_connections);
+
+    return n;
+}
+
 

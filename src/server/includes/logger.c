@@ -3,6 +3,7 @@
 //
 
 #include "logger.h"
+#include "utils.h"
 
 void loggerInit(){
 
@@ -13,6 +14,7 @@ void loggerInit(){
         printf("ERRORE APERTURA FILE DI LOG\n");
     }
 
+    fprintf(logFile,"%s","datetime,client-id,thread-id,operation,file-target,read-byte,write-byte,replaced-file,connections\n");
     fclose(logFile);
 
 //    Request r;
@@ -24,7 +26,7 @@ void loggerInit(){
 
 }
 /* FORMATO LOG
- * DATA-ORA,ID-CLIENT, ID-THREAD, OPERAZIONE, FILE-TARGET, BYTE-LETTI, BYTE-SCRITTI, FILE-RIMPIAZZATO
+ * DATA-ORA,ID-CLIENT, ID-THREAD, OPERAZIONE, FILE-TARGET, BYTE-LETTI, BYTE-SCRITTI, FILE-RIMPIAZZATO, CONNESSIONI ATTUALI
  */
 void logRequest(Request request,int readByte, int writeByte, char *replacedFile){
 
@@ -71,11 +73,15 @@ void logRequest(Request request,int readByte, int writeByte, char *replacedFile)
                 break;
         }
 
+        /* If there is no replaced file write null */
         fprintf(logFile, "%d,%lu,%s,%d,%d",request.clientId,self,request.filepath,readByte,writeByte);
         if(replacedFile != NULL)
-            fprintf(logFile,",%s\n", replacedFile);
+            fprintf(logFile,",%s", replacedFile);
         else
-            fprintf(logFile,"%s","\n");
+            fprintf(logFile,",%s","null");
+
+        /* Save current connection */
+        fprintf(logFile,",%d\n",getNumConnections());
 
         fclose(logFile);
 

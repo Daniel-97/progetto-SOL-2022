@@ -22,4 +22,10 @@ int getFreeSpace(Queue *queue);
 
 FileNode* expelFile(Queue  *queue, int requiredSpace);
 
+void addConnectionCont();
+
+void subConnectionCont();
+
+int getNumConnections();
+
 #endif //PROGETTO_SOL_2022_UTILS_H
