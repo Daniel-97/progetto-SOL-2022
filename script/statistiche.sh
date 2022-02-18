@@ -29,7 +29,7 @@ while read line; do
     byte_read=$((byte_read+byte))
   fi
 
-  #Conta il numero di file espulsi
+  #Conta il numero di file espulsi. todo da sistemare questa cosa numero parametri cambiato
   len=${#array[@]}
   if [ $len -eq 5 ]; then
     cont_expelled=$((cont_expelled+1))

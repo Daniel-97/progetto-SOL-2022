@@ -24,10 +24,11 @@ void loggerInit(){
 
 }
 /* FORMATO LOG
- * DATA-ORA,ID-CLIENT, OPERAZIONE, FILE-TARGET, BYTE-LETTI, BYTE-SCRITTI, FILE-RIMPIAZZATO
+ * DATA-ORA,ID-CLIENT, ID-THREAD, OPERAZIONE, FILE-TARGET, BYTE-LETTI, BYTE-SCRITTI, FILE-RIMPIAZZATO
  */
 void logRequest(Request request,int readByte, int writeByte, char *replacedFile){
 
+    pthread_t self = pthread_self();
     char s[100];
     time_t now = time(NULL);
     struct tm *t = localtime(&now);
@@ -70,7 +71,7 @@ void logRequest(Request request,int readByte, int writeByte, char *replacedFile)
                 break;
         }
 
-        fprintf(logFile, "%d,%s,%d,%d",request.clientId,request.filepath,readByte,writeByte);
+        fprintf(logFile, "%d,%lu,%s,%d,%d",request.clientId,self,request.filepath,readByte,writeByte);
         if(replacedFile != NULL)
             fprintf(logFile,",%s\n", replacedFile);
         else
