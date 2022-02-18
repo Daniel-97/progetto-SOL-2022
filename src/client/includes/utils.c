@@ -96,10 +96,11 @@ int waitServerFile(void** buf, size_t* size){
 
 }
 
-char* getFileListFromDir(const char* dirname){
+char* getFileListFromDir(const char* dirname, int maxFile){
 
     char *fileList = NULL;
     char *tmp = NULL;
+    int cont = 0;
 
     FILE *fp;
     char command[255];
@@ -131,6 +132,12 @@ char* getFileListFromDir(const char* dirname){
                 free(tmp);
 
             }
+            /* Exit when reached max file */
+            if(cont == maxFile)
+                break;
+            /* Limit max file only if maxFile is -1 */
+            if(maxFile != -1)
+                cont = cont + 1;
         }
 
         pclose(fp);

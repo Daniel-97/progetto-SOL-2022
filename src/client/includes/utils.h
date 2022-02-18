@@ -33,7 +33,7 @@ int saveFileDir(void *buf, size_t size,const char* dirname, const char* fileName
 
 int waitServerFile(void** buf, size_t* size);
 
-char* getFileListFromDir(const char* dirname);
+char* getFileListFromDir(const char* dirname, int maxFile);
 
 const char* getFileNameFromPath(const char* path);
 

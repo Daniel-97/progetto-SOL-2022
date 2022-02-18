@@ -60,10 +60,20 @@ int main(int argc, char *argv[]){
             }
 
             case 'w': { /* Scriver sul server i file nella directory specificata */
-                //todo da testare, vedere se funziona
-                char *fileList = getFileListFromDir(optarg);
+
+                char *fileList;
+                char *dir = strtok(optarg,",");
+                token = strtok(NULL, ",");
+
+                if(token != NULL){
+                    int maxFile = atoi(token);
+                    fileList = getFileListFromDir(dir, maxFile);
+                } else{
+                    fileList = getFileListFromDir(dir, -1);
+                }
+
                 printf("Sto per inviare i seguenti file: %s\n",fileList);
-                char *token = strtok(fileList, ",");
+                token = strtok(fileList, ",");
 
                 while (token != NULL){
 
