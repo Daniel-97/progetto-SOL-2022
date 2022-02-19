@@ -135,7 +135,16 @@ int writeFile(const char* pathname, const char* dirname){
 
     /* Apro il file locale che devo inviare al server */
     file = fopen(pathname, "r");
-    fseek(file,0L, SEEK_END); /* Mi posiziono all inizio del file */
+
+    if(file == NULL){
+        printf("Errore apertura file %s, errno: %s\n",pathname, strerror(errno));
+        return -1;
+    }
+    /* Mi posiziono all inizio del file */
+    if ( fseek(file,0L, SEEK_END) != 0) {
+        printf("Errore fseek file %s\n", pathname);
+        return -1;
+    }
 
     request.operation = OP_WRITE_FILE;
     strncpy(request.filepath, fileName, MAX_PATH_SIZE);

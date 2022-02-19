@@ -141,7 +141,7 @@ int removeNode(Queue *queue, FileNode *node){
             prec->next = tmp->next;
             free(tmp2);
             free(node->file);
-            free(node);
+//            free(node);
             queue->len--;
             return 0;
         }

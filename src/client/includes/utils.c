@@ -51,8 +51,8 @@ int saveFile(const char* pathname, void *buf, size_t size){
 int saveFileDir(void *buf, size_t size,const char* dirname,const char* fileName){
 
     const char *name = getFileNameFromPath(fileName);
-    char *path = malloc(sizeof(dirname)+sizeof(name));
-    strcat(path,dirname);
+    char *path = malloc(strlen(dirname)+strlen(name)+1);
+    strcpy(path,dirname);
     strcat(path,name);
     printf("Salvataggio file %s in corso\n",path);
     return saveFile(path,buf,size);

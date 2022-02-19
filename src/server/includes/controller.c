@@ -135,11 +135,13 @@ void write_file_controller(int *fd_client_skt, Request *request){
         if(data == NULL){ }
 
         //1 è lo status code
-        sendFileToClient(*fd_client_skt, data->pathname,1);
-
-        removeNode(fileQueue, data);
+//        sendFileToClient(*fd_client_skt, data->pathname,1);
+        sendBufferFileToClient(*fd_client_skt, data, 1);
 
         logRequest(*request, 0,request->fileSize,data->pathname);
+        if( removeNode(fileQueue, data) != -1 ){
+            free(data);
+        }
 
     }else{
 
