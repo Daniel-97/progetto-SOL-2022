@@ -34,8 +34,32 @@ void append_file_controller(int *fd_client_skt, Request *request){
     pthread_t self = pthread_self();
     void *buf;
     size_t size;
+    FileNode *data;
+    int freeSpace;
 
-    logRequest(*request, 0, request->fileSize,NULL);
+    freeSpace = getFreeSpace(fileQueue);
+
+    /* C'è bisogno di espellere un file per capacity miss. Informo il client di questa cosa */
+    if(freeSpace < request->fileSize){
+
+        printf("[%lu] No space left, need to expel a file\n",self);
+        data = expelFile(fileQueue, request->fileSize);
+
+        /* Impossibile espellere file. */
+        if(data == NULL){ }
+
+        //1 è lo status code
+        sendBufferFileToClient(*fd_client_skt, data, 1);
+
+        logRequest(*request, 0,request->fileSize,data->pathname);
+        if( removeNode(fileQueue, data) != -1 ){
+            free(data);
+        }
+
+    }else{
+
+        logRequest(*request,0, request->fileSize, NULL);
+    }
 
     /* Controllo prima che il client abbia il lock sul file */
     if (hasFileLock(fileQueue,request->filepath,request->clientId) == 0){
@@ -122,10 +146,11 @@ void write_file_controller(int *fd_client_skt, Request *request){
     size_t size;
     int freeSpace;
 
-    /* C'è bisogno di espellere un file per capacity miss. Informo il client di questa cosa */
     freeSpace = getFreeSpace(fileQueue);
 
     //Todo capire se questa parte di free space funziona
+
+    /* C'è bisogno di espellere un file per capacity miss. Informo il client di questa cosa */
     if(freeSpace < request->fileSize){
 
         printf("[%lu] No space left, need to expel a file\n",self);

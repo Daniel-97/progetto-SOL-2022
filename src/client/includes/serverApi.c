@@ -248,6 +248,7 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
 
     Request request;
     Response response;
+    void *buf2;
 
     if (pathname == NULL || buf == NULL) return -1;
 
@@ -265,8 +266,27 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
         if ( read(fd_socket, &response, sizeof(Response)) != -1){
 
             printServerResponse(&response);
+            //todo da controllare se questa parte funziona effettivamente
+            //Il server è pieno, mi invierà il file che è stato espulso
+            if(response.statusCode == 1){
 
-            if(response.statusCode == -1) return -1;
+                printf("Il server sta per inviare il file che ha espulso\n");
+                buf2 = malloc(response.fileSize);
+                if (read(fd_socket,buf2,response.fileSize) != -1)
+                    printf("Ricevuto file espulso dal server\n");
+
+                if(dirname != NULL){ //save the file on disk
+                    saveFileDir(buf2, response.fileSize, dirname,response.fileName);
+                }
+                free(buf2);
+
+                //Ri-effettuo una read per leggere il file effettivo che il server mi deve inviare
+                read(fd_socket, &response, sizeof(Response));
+
+            }
+
+            if(response.statusCode == -1)
+                return -1;
 
             printf("Invio i dati per append file %s al server\n",pathname);
             /* Invio al server il file! */
