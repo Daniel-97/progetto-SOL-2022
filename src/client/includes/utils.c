@@ -109,7 +109,7 @@ char* getFileListFromDir(const char* dirname, int maxFile){
     strcat(command,dirname);
     strcat(command," -type f");
 
-    printf("%s\n",command);
+//    printf("%s\n",command);
     fp = popen(command,"r");
 
     if(fp != NULL){

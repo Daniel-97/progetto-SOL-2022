@@ -98,7 +98,7 @@ int main(int argc, char *argv[]){
             }
 
             case 'D': { /* Specifica cartella dove scrivere file rimossi per capacity miss*/
-                expFileDir = malloc(sizeof(optarg));
+                expFileDir = malloc(strlen(optarg));
                 strcpy(expFileDir, optarg);
                 break;
             }
