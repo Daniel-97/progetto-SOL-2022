@@ -1,6 +1,7 @@
 
 CC = gcc
-CFLAGS = -std=c99 -Wall -g
+#CFLAGS = -std=c99 -Wall -pedantic -g
+CFLAGS = -Wall -pedantic -g
 LIBS = -lpthread
 
 SERVER_INCLUDE = src/server/includes

@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <signal.h>
 
 #include "includes/globals.h"
 #include "../common/common.h"
@@ -16,8 +17,22 @@
 #include "includes/logger.h"
 
 static void *worker(void *arg);
+static void *signalThread(void *arg);
+
 
 int main(int argc, char *argv[]){
+
+    /***** SIGNAL HANDLER INIT *****/
+    /* Maschero i segnali */
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set,SIGINT);
+    sigaddset(&set,SIGQUIT);
+    sigaddset(&set,SIGHUP);
+    pthread_sigmask(SIG_SETMASK,&set,NULL);
+
+    pthread_t tid_signal_thread;
+    pthread_create(&tid_signal_thread, NULL, &signalThread, NULL);
 
     /****** CONFIG INIT *******/
     serverConfig = malloc(sizeof(Config));
@@ -120,6 +135,14 @@ static void *worker(void *arg){
 
     printf("[%lu] Worker start\n", self);
 
+    /* Maschero i signal per i nuovi worker per evitare che vengano interrotti */
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set,SIGINT);
+    sigaddset(&set,SIGQUIT);
+    sigaddset(&set,SIGHUP);
+    pthread_sigmask(SIG_SETMASK,&set,NULL);
+
     while(1){
         printf("[%lu] In attesa di nuova richiesta...\n",self);
         fd_client_skt = pop(connectionQueue);
@@ -205,4 +228,34 @@ static void *worker(void *arg){
     }
     return 0;
 
+}
+
+static void *signalThread(void *arg){
+
+    printf("****** SIGNAL THREAD INIT *****\n");
+    printf("Avvio thread per la gestione dei signal\n");
+
+    sigset_t set; int sig;
+    sigemptyset(&set);
+    sigaddset(&set,SIGINT);
+    sigaddset(&set,SIGQUIT);
+    sigaddset(&set,SIGHUP);
+    pthread_sigmask(SIG_SETMASK,&set,NULL);
+
+    sigwait(&set,&sig); //Mi blocco in attesa di un segnale
+
+    switch (sig) {
+        case SIGINT:
+            printf("\nRicevuto segnale SIGINT\n");
+            break;
+        case SIGQUIT:
+            printf("\nRicevuto segnale SIGQUIT\n");
+            break;
+        case SIGHUP:
+            printf("\nRicevuto segnale SIGHUP\n");
+            break;
+    }
+    exit(0);
+
+    return NULL;
 }
