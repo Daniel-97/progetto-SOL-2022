@@ -15,6 +15,7 @@
 #include "includes/utils.h"
 #include "includes/controller.h"
 #include "includes/logger.h"
+#include "includes/statistic.h"
 
 static void *worker(void *arg);
 static void *signalThread(void *arg);
@@ -47,6 +48,9 @@ int main(int argc, char *argv[]){
 
     /***** LOGGER INIT *******/
     loggerInit();
+
+    /***** STATISTIC INIT ******/
+    statInit();
 
     /***** FILE QUEUE INIT ******/
     fileQueue = initQueue();
@@ -247,12 +251,15 @@ static void *signalThread(void *arg){
     switch (sig) {
         case SIGINT:
             printf("\nRicevuto segnale SIGINT\n");
+            printStat(fileQueue);
             break;
         case SIGQUIT:
             printf("\nRicevuto segnale SIGQUIT\n");
+            printStat(fileQueue);
             break;
         case SIGHUP:
             printf("\nRicevuto segnale SIGHUP\n");
+            printStat(fileQueue);
             break;
     }
     exit(0);

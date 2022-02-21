@@ -118,6 +118,62 @@ FileNode *getFirstNode(Queue *queue){
     return NULL;
 }
 
+char* getFileList(Queue *queue){
+
+    Node *tmp;
+    FileNode *fileNode;
+    char *fileList = NULL;
+    char *s;
+
+    pthread_mutex_lock(&queue->qlock);
+    tmp = queue->head;
+
+    while( (tmp = tmp->next) != NULL ){
+
+        fileNode = tmp->data;
+        if(fileList == NULL){
+            fileList = malloc(strlen(fileNode->pathname));
+            strcpy(fileList, fileNode->pathname);
+        }
+        else {
+            s = malloc(strlen(fileList) + strlen(fileNode->pathname) + 1);
+            strcpy(s, fileList);
+            strcat(s, ",");
+            strcat(s, fileNode->pathname);
+            free(fileList);
+            fileList = malloc(strlen(s));
+            strcpy(fileList, s);
+            free(s);
+        }
+    }
+
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    return fileList;
+
+}
+
+int getStorageSize(Queue *queue) {
+
+    Node *tmp;
+    FileNode *fileNode;
+    int size = 0;
+
+    pthread_mutex_lock(&queue->qlock);
+    tmp = queue->head;
+
+    while ((tmp = tmp->next) != NULL) {
+        fileNode = tmp->data;
+        size = size + fileNode->size;
+    }
+
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+    return size;
+}
+
 
 int removeNode(Queue *queue, FileNode *node){
 
@@ -183,6 +239,7 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
 
             if (editFileNode(queue, pathname, NULL, 0, clientId) == 0) {
                 printf("[%lu] Lock acquisito sul file!\n", self);
+
                 return 0;
             }
         }
@@ -213,6 +270,9 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
         if( push(queue, newNode) ){
 
             printf("[%lu] Nuovo file inserito nella coda!\n",self);
+            int max_file = getMaxNumFile();
+            if(fileQueue->len > max_file)
+                setMaxNumFile(fileQueue->len);
             return 0;
 
         }else{
@@ -313,6 +373,7 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
             memcpy(file->file, buf, size); //Copio il contenuto del file nel buffer
             file->size = size;
             printf("[%lu] File scritto correttamente in buffer!\n",self);
+
             status = 0;
 
         }else{
@@ -325,6 +386,11 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
     }
 
     signalQueue(queue);
+
+    int max_size = getMaxFileStorageSize();
+    int actual_size = getStorageSize(queue);
+    if(actual_size > max_size)
+        setMaxFileStorageSize(actual_size);
 
     return status;
 
@@ -396,6 +462,11 @@ int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size
 
     }
     signalQueue(queue);
+
+    int max_size = getMaxFileStorageSize();
+    int actual_size = getStorageSize(queue);
+    if(actual_size > max_size)
+        setMaxFileStorageSize(actual_size);
 
     return status;
 

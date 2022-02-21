@@ -12,6 +12,7 @@
 #include "queue.h"
 #include "config.h"
 #include "logger.h"
+#include "statistic.h"
 #include "../../common/common.h"
 
 #define READ_CHUNK_SIZE 100
@@ -39,6 +40,9 @@ FileNode *getFileNode(Queue *queue, const char *pathname);
 
 FileNode *getFirstNode(Queue *queue);
 
+char* getFileList(Queue *queue);
+
+int getStorageSize(Queue *queue);
 
 /***** FUNZIONI SU FILE ******/
 int openVirtualFile(Queue *queue,const char* pathname, int flags, int clientId);

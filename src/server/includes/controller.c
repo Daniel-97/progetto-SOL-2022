@@ -165,6 +165,9 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
         logRequest(*request, 0,request->fileSize,data->pathname);
         if( removeNode(fileQueue, data) != -1 ){
+
+            incNumFileReplacement();
+
             free(data);
         }
 
