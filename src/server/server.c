@@ -19,7 +19,7 @@
 
 static void *worker(void *arg);
 static void *signalThread(void *arg);
-
+int acceptNewConnection = 1;
 
 int main(int argc, char *argv[]){
 
@@ -117,7 +117,13 @@ int main(int argc, char *argv[]){
 
         } else {
 
+            if(acceptNewConnection == 0){
+                printf("\n[MASTER] Impossibile accettare nuove connessioni\n");
+                break;
+            }
+
             printf("\n[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",*fd_client_skt);
+
             if( push(connectionQueue,fd_client_skt) != -1){
                 printf("[MASTER] File descriptor client socket inserito nella coda\n");
 
@@ -127,6 +133,16 @@ int main(int argc, char *argv[]){
             }
         }
     }
+
+    printf("\n[MASTER] Attendo che tutti i client chiudano la connessione");
+
+    while(1){
+        if(getNumConnections() == 0)
+            break;
+    }
+
+    printf("\n[MASTER] Tutte le connessioni sono chiuse, termino il programma\n");
+
     close(fd_server_skt);
     return 0;
 }
@@ -249,20 +265,29 @@ static void *signalThread(void *arg){
     sigwait(&set,&sig); //Mi blocco in attesa di un segnale
 
     switch (sig) {
-        case SIGINT:
+
+        case SIGINT: // Ctrl^c
             printf("\nRicevuto segnale SIGINT\n");
+            acceptNewConnection = 0;
             printStat(fileQueue);
+            printf("Blocco le nuove richieste di connessione al server\n");
             break;
+
         case SIGQUIT:
             printf("\nRicevuto segnale SIGQUIT\n");
             printStat(fileQueue);
+            exit(0);
             break;
+
         case SIGHUP:
             printf("\nRicevuto segnale SIGHUP\n");
             printStat(fileQueue);
+            exit(0);
             break;
+
+        default:
+            printf("\nRicevuto segnale non gestito:%d\n",sig);
     }
-    exit(0);
 
     return NULL;
 }
