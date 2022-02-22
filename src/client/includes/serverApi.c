@@ -11,7 +11,6 @@ int openConnection(const char* sockname, int msec, const struct timespec abstime
 
     clock_gettime(CLOCK_REALTIME,&start_time); //Get current time
 
-    //TODO DA AGGIUNGERE GESTIONE TIMER
     struct sockaddr_un socketAddress;
 
     strncpy(socketAddress.sun_path, sockname,100);
@@ -66,7 +65,7 @@ int openFile(const char* pathname, int flags){
     request.clientId = getpid();
     request.operation = OP_OPEN_FILE;
     request.flags = flags;
-    strncpy(request.filepath,fileName,MAX_PATH_SIZE);
+    strncpy(request.filepath,fileName,PATH_MAX);
 
     printf("Invio richiesta apertura per filepath: %s\n",request.filepath);
 
@@ -98,7 +97,7 @@ int readFile(const char* pathname, void** buf, size_t* size){
     Request request;
 
     request.operation = OP_READ_FILE;
-    strncpy(request.filepath,getFileNameFromPath(pathname),MAX_PATH_SIZE);
+    strncpy(request.filepath,getFileNameFromPath(pathname),PATH_MAX);
     request.clientId = getpid();
     request.flags = 0;
 
@@ -147,7 +146,7 @@ int writeFile(const char* pathname, const char* dirname){
     }
 
     request.operation = OP_WRITE_FILE;
-    strncpy(request.filepath, fileName, MAX_PATH_SIZE);
+    strncpy(request.filepath, fileName, PATH_MAX);
     request.clientId = getpid();
     request.fileSize = ftell(file);
 
@@ -227,7 +226,6 @@ int writeFile(const char* pathname, const char* dirname){
         size_t size;
         waitServerFile(buf1,&size);
 
-        //Todo, qui salvare il file con il suo vero nome
         /* If the dirname path is not null save the ejected file from the server */
         if(dirname != NULL){
             char *path = malloc(sizeof(dirname)+sizeof("ejected.txt")+1);
@@ -253,7 +251,7 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
     if (pathname == NULL || buf == NULL) return -1;
 
     request.operation = OP_APPEND_FILE;
-    strncpy(request.filepath, getFileNameFromPath(pathname), MAX_PATH_SIZE);
+    strncpy(request.filepath, getFileNameFromPath(pathname), PATH_MAX);
     request.clientId = getpid();
     request.fileSize = size;
 

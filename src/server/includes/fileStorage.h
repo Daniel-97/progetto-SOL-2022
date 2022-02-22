@@ -4,10 +4,11 @@
 
 #ifndef PROGETTO_SOL_2022_FILESTORAGE_H
 #define PROGETTO_SOL_2022_FILESTORAGE_H
-#define _POSIX_C_SOURCE 200809L //Necessaria per utilizzare funzione posix fmemopen
+//#define _POSIX_C_SOURCE 200809L //Necessaria per utilizzare funzione posix fmemopen
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "queue.h"
 #include "config.h"
@@ -19,7 +20,7 @@
 
 typedef struct FileNode{
 
-    char        pathname[MAX_PATH_SIZE];
+    char        pathname[PATH_MAX];
     char        *file;   /* Puntatore al file */
     size_t      size;   /* Dimensione in byte del file memorizzato */
     int         client_id; /* Se il file e' in lock da un client contiene l'identificatore del client */

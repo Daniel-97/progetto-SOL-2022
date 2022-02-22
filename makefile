@@ -1,7 +1,7 @@
 
 CC = gcc
-#CFLAGS = -std=c99 -Wall -pedantic -g
-CFLAGS = -Wall -pedantic -g
+CFLAGS = -std=c99 -Wall -pedantic -g -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE
+#CFLAGS = -Wall -pedantic -g
 LIBS = -lpthread
 
 SERVER_INCLUDE = src/server/includes
@@ -22,7 +22,7 @@ bin/server: src/server/server.c src/server/includes/*.c
 
 #D_POSIX_C_SOURCE server per timespec, -lm per linkare math.h
 bin/client: src/client/client.c src/client/includes/*.c
-		$(CC) $(CFLAGS) src/client/client.c	src/client/includes/*.c -o bin/client -D_POSIX_C_SOURCE=199309L -lm
+		$(CC) $(CFLAGS) src/client/client.c	src/client/includes/*.c -o bin/client -lm
 
 all: $(TARGETS)
 

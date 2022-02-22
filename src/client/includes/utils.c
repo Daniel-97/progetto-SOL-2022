@@ -3,7 +3,6 @@
 //
 
 #include "utils.h"
-#include "serverApi.h"
 
 void help(){
     printf("***** ARGOMENTI CLIENT ******\n");
@@ -150,13 +149,11 @@ char* getFileListFromDir(const char* dirname, int maxFile){
 
 const char* getFileNameFromPath(const char* path){
 
+    char *absPath = malloc(PATH_MAX);
     if(path == NULL) return NULL;
 
-    char *last = strrchr(path, '/');
+    realpath(path, absPath);
 
-    if(last != NULL)
-        return last+1;
-    else
-        return path;
+    return absPath;
 
 }

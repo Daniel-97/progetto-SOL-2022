@@ -17,6 +17,7 @@
 #include <math.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <limits.h>
 
 #include "../../common/common.h"
 #include "utils.h"

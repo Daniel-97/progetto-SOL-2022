@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include "../../common/common.h"
 #include "serverApi.h"
+#include <limits.h>
 
 void help();
 
