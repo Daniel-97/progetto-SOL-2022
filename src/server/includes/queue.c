@@ -3,10 +3,11 @@
 //
 
 #include "queue.h"
+#include "utils.h"
 
 Queue* initQueue(){
 
-    Queue *q = malloc(sizeof(Queue)); //Alloco spazio per coda
+    Queue *q = allocateMemory(1, sizeof(Queue)); //Alloco spazio per coda
 
     if(!q) return NULL;
 
@@ -25,7 +26,7 @@ int push(Queue *q, void *data){
     if( (q == NULL) || (data == NULL))
         return -1;
 
-    Node *n = malloc(sizeof(Node));
+    Node *n = allocateMemory(1, sizeof(Node));
     if(!n) return -1;
     n->data = data;
     n->next = NULL;

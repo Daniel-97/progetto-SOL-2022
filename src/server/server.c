@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
     pthread_create(&tid_signal_thread, NULL, &signalThread, NULL);
 
     /****** CONFIG INIT *******/
-    serverConfig = malloc(sizeof(Config));
+    serverConfig = allocateMemory(1, sizeof(Config));
     int res = readConfig(serverConfig);
     if(res == -1){
         exit(-1);

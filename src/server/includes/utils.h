@@ -30,4 +30,6 @@ void subConnectionCont();
 
 int getNumConnections();
 
+void *allocateMemory(size_t n, size_t size);
+
 #endif //PROGETTO_SOL_2022_UTILS_H

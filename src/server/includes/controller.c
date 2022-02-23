@@ -6,7 +6,7 @@
 
 void open_file_controller(int *fd_client_skt, Request *request){
 
-    Response *response = malloc(sizeof(Response));
+    Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
 
     logRequest(*request,0,0,NULL);
@@ -30,7 +30,7 @@ void open_file_controller(int *fd_client_skt, Request *request){
 
 void append_file_controller(int *fd_client_skt, Request *request){
 
-    Response *response = malloc(sizeof(Response));
+    Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
     void *buf;
     size_t size;
@@ -70,7 +70,7 @@ void append_file_controller(int *fd_client_skt, Request *request){
 
             size = request->fileSize;
             printf("[%lu] Il client sta per inviare un file di %zu byte\n",self,request->fileSize);
-            buf = malloc(size); //Alloco il buffer per la ricezione del file
+            buf = allocateMemory(1, size); //Alloco il buffer per la ricezione del file
 
             if( read(*fd_client_skt,buf, size) != -1 ){
                 printf("[%lu] File %s ricevuto correttamente!\n",self,request->filepath);
@@ -116,7 +116,7 @@ void read_file_controller(int *fd_client_skt, Request *request){
 
 void delete_file_controller(int *fd_client_skt, Request *request){
 
-    Response *response = malloc(sizeof(Response));
+    Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
 
     logRequest(*request, 0,0,NULL);
@@ -138,7 +138,7 @@ void delete_file_controller(int *fd_client_skt, Request *request){
 
 void write_file_controller(int *fd_client_skt, Request *request){
 
-    Response *response = malloc(sizeof(Response));
+    Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
 //    int serverIsFull = 0;
     FileNode *data;
@@ -185,7 +185,7 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
             size = request->fileSize;
             printf("[%lu] Il client sta per inviare un file di %zu byte\n",self,request->fileSize);
-            buf = malloc(size); //Alloco il buffer per la ricezione del file
+            buf = allocateMemory(1, size); //Alloco il buffer per la ricezione del file
 
             if( read(*fd_client_skt,buf, size) != -1 ){
                 printf("[%lu] File %s ricevuto correttamente!\n",self,request->filepath);
@@ -224,7 +224,7 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
 void close_file_controller(int *fd_client_skt, Request *request){
 
-    Response *response = malloc(sizeof(Response));
+    Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
 
     logRequest(*request,0,0, NULL);
@@ -247,7 +247,7 @@ void close_file_controller(int *fd_client_skt, Request *request){
 
 void lock_file_controller(int *fd_client_skt, Request *request){
 
-    Response *response = malloc(sizeof(Response));
+    Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
 
     logRequest(*request,0,0, NULL);
@@ -267,7 +267,7 @@ void lock_file_controller(int *fd_client_skt, Request *request){
 
 void unlock_file_controller(int *fd_client_skt, Request *request){
 
-    Response *response = malloc(sizeof(Response));
+    Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
 
     logRequest(*request,0,0, NULL);
@@ -288,7 +288,7 @@ void unlock_file_controller(int *fd_client_skt, Request *request){
 
 void readn_file_controller(int *fd_client_skt, Request *request){
 
-    Response *response = malloc(sizeof(Response));
+    Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
 //    char **arr = NULL;
     char *fileList;
