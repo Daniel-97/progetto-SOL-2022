@@ -40,4 +40,6 @@ const char* getFileNameFromPath(const char* path);
 
 void *allocateMemory(size_t n, size_t size);
 
+void msleep(long millis);
+
 #endif //PROGETTO_SOL_2022_UTILS_H

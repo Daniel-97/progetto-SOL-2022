@@ -167,3 +167,9 @@ void *allocateMemory(size_t n, size_t size){
     }
     return mem;
 }
+
+void msleep(long millis){
+
+    usleep(millis*1000);
+
+}

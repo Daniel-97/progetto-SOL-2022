@@ -47,14 +47,14 @@ int openConnection(const char* sockname, int msec, const struct timespec abstime
 }
 
 int closeConnection(const char* sockname){
-    sleep(waitingTime);
+    msleep(waitingTime);
     return close(fd_socket);
 
 }
 
 int openFile(const char* pathname, int flags){
 
-    sleep(waitingTime);
+    msleep(waitingTime);
 
     Request request;
     Response response;
@@ -92,7 +92,7 @@ int openFile(const char* pathname, int flags){
 
 int readFile(const char* pathname, void** buf, size_t* size){
 
-    sleep(waitingTime);
+    msleep(waitingTime);
 
     Request request;
 
@@ -119,7 +119,7 @@ int readFile(const char* pathname, void** buf, size_t* size){
 
 int writeFile(const char* pathname, const char* dirname){
 
-    sleep(waitingTime);
+    msleep(waitingTime);
 
     Request request;
     Response response;
@@ -242,7 +242,7 @@ int writeFile(const char* pathname, const char* dirname){
 
 int appendToFile(const char* pathname, void *buf, size_t size, const char* dirname){
 
-    sleep(waitingTime);
+    msleep(waitingTime);
 
     Request request;
     Response response;
@@ -323,7 +323,7 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
 
 int lockFile(const char* pathname){
 
-    sleep(waitingTime);
+    msleep(waitingTime);
 
     Request request;
     Response response;
@@ -345,7 +345,7 @@ int lockFile(const char* pathname){
 
 int unlockFile(const char* pathname){
 
-    sleep(waitingTime);
+    msleep(waitingTime);
 
     Request request;
     Response response;
@@ -366,7 +366,7 @@ int unlockFile(const char* pathname){
 
 int removeFile(const char* pathname){
 
-    sleep(waitingTime);
+    msleep(waitingTime);
 
     Request request;
     Response response;
@@ -387,7 +387,7 @@ int removeFile(const char* pathname){
 
 int closeFile(const char* pathname){
 
-    sleep(waitingTime);
+    msleep(waitingTime);
 
     Request request;
     Response response;
@@ -406,7 +406,7 @@ int closeFile(const char* pathname){
 
 int readNFiles(int N, const char *dirname){
 
-    sleep(waitingTime);
+    msleep(waitingTime);
 
     void *buff;
     size_t size;
