@@ -31,13 +31,13 @@ int main(int argc, char *argv[]){
 //    char *fileList;
 
     /* CONFIG INIT */
-    enablePrintDebug = true;
+    enablePrintDebug = false;
     waitingTime = 0;
 
     time.tv_sec = 3;
     time.tv_nsec = 0;
 
-    while( (opt = getopt(argc, argv, "hf:W:w:D:d:r:R:l:u:c:t:")) != -1 ){
+    while( (opt = getopt(argc, argv, "hf:W:w:D:d:r:R:l:u:c:t:p")) != -1 ){
 
         switch (opt) {
 

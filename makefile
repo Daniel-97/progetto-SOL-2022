@@ -36,3 +36,6 @@ test_server:
 
 test_client:
 	./bin/client
+
+test1:
+	./script/test1.sh
