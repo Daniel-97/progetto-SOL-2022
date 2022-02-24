@@ -55,6 +55,8 @@ int readConfig(struct Config* serverConfig){
             }
 
         }
+
+        fclose(fp);
         return 0;
 
     }else{

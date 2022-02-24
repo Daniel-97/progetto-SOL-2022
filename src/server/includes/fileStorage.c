@@ -248,7 +248,7 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
 
         printf("[%lu] Il file NON ESISTE, tento di crearlo...\n",self);
 
-        if(queue->len == serverConfig->max_file ){
+        if(queue->len == serverConfig.max_file ){
             printf("[%lu] Raggiunta capacità massima storage, impossibile aggiungere nuovi file\n",self);
             return -1;
         }

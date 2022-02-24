@@ -22,10 +22,13 @@ void printStat(Queue *queue){
     printf("*** SERVER FILE LIST ***\n");
 
     char *fileList = getFileList(queue);
-    char *token = strtok(fileList, ",");
-    while (token != NULL){
-        printf("- %s\n",token);
-        token = strtok(NULL, ",");
+
+    if(fileList != NULL) {
+        char *token = strtok(fileList, ",");
+        while (token != NULL) {
+            printf("- %s\n", token);
+            token = strtok(NULL, ",");
+        }
     }
 
 }

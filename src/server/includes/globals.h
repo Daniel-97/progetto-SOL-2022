@@ -8,7 +8,10 @@
 #include "config.h"
 #include "queue.h"
 
-Config *serverConfig;
+#define MAX_THREAD 20
+
+pthread_t threadPool[MAX_THREAD];
+Config serverConfig;
 Queue *connectionQueue; /* Coda per le connessioni in arrivo */
 Queue *fileQueue; /* Coda per i file dei client */
 

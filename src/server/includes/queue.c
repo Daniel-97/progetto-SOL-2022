@@ -81,3 +81,23 @@ void signalQueue(Queue *queue){
     pthread_mutex_unlock(&queue->qlock);
 
 }
+
+void deleteQueue(Queue *queue){
+
+    Node *tmp;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    while( queue->head != NULL){
+
+        tmp = queue->head;
+        queue->head = queue->head->next;
+        free(tmp);
+
+    }
+
+    pthread_mutex_unlock(&queue->qlock);
+
+    free(queue);
+
+}

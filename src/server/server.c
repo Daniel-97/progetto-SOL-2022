@@ -18,7 +18,7 @@
 #include "includes/statistic.h"
 
 static void *worker(void *arg);
-static void *signalThread(void *arg);
+static void *signalThreadHandler(void *arg);
 int acceptNewConnection = 1;
 
 int main(int argc, char *argv[]){
@@ -32,16 +32,19 @@ int main(int argc, char *argv[]){
     sigaddset(&set,SIGHUP);
     pthread_sigmask(SIG_SETMASK,&set,NULL);
 
+    /* Creo il thread per i segnali in modalità detached */
     pthread_t tid_signal_thread;
-    pthread_create(&tid_signal_thread, NULL, &signalThread, NULL);
+    pthread_attr_t tattr;
+    pthread_attr_init(&tattr);
+    pthread_attr_setdetachstate(&tattr,PTHREAD_CREATE_DETACHED);
+    pthread_create(&tid_signal_thread, &tattr, &signalThreadHandler, NULL);
 
     /****** CONFIG INIT *******/
-    serverConfig = allocateMemory(1, sizeof(Config));
-    int res = readConfig(serverConfig);
+    int res = readConfig(&serverConfig);
     if(res == -1){
         exit(-1);
     }
-    printConfig(serverConfig);
+    printConfig(&serverConfig);
 
     /****** NUM CONNECTION INIT *****/
     n_connections = 0;
@@ -63,14 +66,14 @@ int main(int argc, char *argv[]){
     }
 
     /******* THREAD INIT *****/
-    pthread_t *threadPool;
+//    pthread_t threadPool[MAX_THREAD];
 //    int *threadPoolStatus;
     // Alloco un array per i descrittori di processo
-    threadPool = (pthread_t*)malloc(serverConfig->thread_workers * sizeof(pthread_t) );
+//    threadPool = (pthread_t*)malloc(serverConfig->thread_workers * sizeof(pthread_t) );
 //    threadPoolStatus = (int*) malloc(serverConfig->thread_workers * sizeof(int));
 
-    for(int i = 0; i<serverConfig->thread_workers; i++) {
-        pthread_create(&threadPool[i], NULL, &worker, NULL);
+    for(int i = 0; i<serverConfig.thread_workers; i++) {
+        pthread_create(&threadPool[i], &tattr, &worker, NULL);
     }
 
 //    for(int i = 0; i<serverConfig->thread_workers; i++) {
@@ -79,10 +82,10 @@ int main(int argc, char *argv[]){
 
     /***** SOCKET INIT *****/
     int fd_server_skt;
-    int *fd_client_skt; //File descriptor per connessioni client
+    int fd_client_skt; //File descriptor per connessioni client
     struct sockaddr_un socketAddress;
 
-    strncpy(socketAddress.sun_path, serverConfig->socket_path,100);
+    strncpy(socketAddress.sun_path, serverConfig.socket_path,100);
     socketAddress.sun_family = AF_UNIX; // Socket di tipo AF_UNIX
 
     //Creazione socket
@@ -91,7 +94,7 @@ int main(int argc, char *argv[]){
         exit(-1);
     }
     // Unlink vecchio socket se esistente
-    unlink(serverConfig->socket_path);
+    unlink(serverConfig.socket_path);
 
     //Bind socket con address
     if ( (bind(fd_server_skt, (struct sockaddr*) &socketAddress, sizeof(socketAddress)) ) == -1 ){
@@ -108,9 +111,7 @@ int main(int argc, char *argv[]){
 
     while(1) {
 
-        fd_client_skt = malloc(sizeof(int)); //Alloco puntatore per nuovo id file descriptor
-
-        if ((*fd_client_skt = accept(fd_server_skt, NULL, 0)) == -1) {
+        if ((fd_client_skt = accept(fd_server_skt, NULL, 0)) == -1) {
 
             printf("[MASTER] Errore accept socket, errno: %d, %s\n", errno, strerror(errno));
             break;
@@ -122,9 +123,9 @@ int main(int argc, char *argv[]){
                 break;
             }
 
-            printf("\n[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",*fd_client_skt);
+            printf("\n[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",fd_client_skt);
 
-            if( push(connectionQueue,fd_client_skt) != -1){
+            if( push(connectionQueue,&fd_client_skt) != -1){
                 printf("[MASTER] File descriptor client socket inserito nella coda\n");
 
             }else{
@@ -151,7 +152,7 @@ static void *worker(void *arg){
 
     pthread_t self = pthread_self();
     int *fd_client_skt = NULL;
-    Request *request =  malloc(sizeof(Request));
+    Request request;
 
     printf("[%lu] Worker start\n", self);
 
@@ -167,64 +168,69 @@ static void *worker(void *arg){
         printf("[%lu] In attesa di nuova richiesta...\n",self);
         fd_client_skt = pop(connectionQueue);
 
+        if(acceptNewConnection == 0){
+            printf("[%lu] Need to terminate\n",self);
+            break;
+        }
+
         addConnectionCont();
 
         if (*fd_client_skt != -1){
 
             /* Continuo a leggere dal socket del client fintanto che ci sono dati */
-            while( read(*fd_client_skt, request,sizeof(Request)) > 0 ) {
+            while( read(*fd_client_skt, &request,sizeof(Request)) > 0 ) {
 
                 /* Leggo la richiesta del client */
                 printf("\n[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n", self,
-                       request->clientId, request->operation, request->filepath, request->flags);
+                       request.clientId, request.operation, request.filepath, request.flags);
 
-                switch (request->operation) {
+                switch (request.operation) {
 
                     case OP_OPEN_FILE:
-                        open_file_controller(fd_client_skt, request);
+                        open_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_APPEND_FILE:
 
-                        append_file_controller(fd_client_skt, request);
+                        append_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_READ_FILE:
 
-                        read_file_controller(fd_client_skt, request);
+                        read_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_DELETE_FILE:
 
-                        delete_file_controller(fd_client_skt, request);
+                        delete_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_WRITE_FILE:
-                        write_file_controller(fd_client_skt, request);
+                        write_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_CLOSE_FILE:
 
-                        close_file_controller(fd_client_skt, request);
+                        close_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_LOCK_FILE:
 
-                        lock_file_controller(fd_client_skt, request);
+                        lock_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_UNLOCK_FILE:
 
-                        unlock_file_controller(fd_client_skt, request);
+                        unlock_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_READ_N_FILES:
 
-                        readn_file_controller(fd_client_skt, request);
+                        readn_file_controller(fd_client_skt, &request);
                         break;
 
                     default:
-                        printf("Received unknown operation: %d\n", request->operation);
+                        printf("Received unknown operation: %d\n", request.operation);
 
                 }
 
@@ -250,7 +256,7 @@ static void *worker(void *arg){
 
 }
 
-static void *signalThread(void *arg){
+static void *signalThreadHandler(void *arg){
 
     printf("****** SIGNAL THREAD INIT *****\n");
     printf("Avvio thread per la gestione dei signal\n");
@@ -271,17 +277,28 @@ static void *signalThread(void *arg){
             acceptNewConnection = 0;
             printStat(fileQueue);
             printf("Blocco le nuove richieste di connessione al server\n");
+            while(getNumConnections() != 0){}
+
+//            pthread_cond_broadcast(&fileQueue->qcond);
+            deleteQueue(fileQueue);
+            deleteQueue(connectionQueue);
+            exit(0);
+
             break;
 
         case SIGQUIT:
             printf("\nRicevuto segnale SIGQUIT\n");
             printStat(fileQueue);
+            deleteQueue(fileQueue);
+            deleteQueue(connectionQueue);
             exit(0);
             break;
 
         case SIGHUP:
             printf("\nRicevuto segnale SIGHUP\n");
             printStat(fileQueue);
+            deleteQueue(fileQueue);
+            deleteQueue(connectionQueue);
             exit(0);
             break;
 
@@ -289,5 +306,5 @@ static void *signalThread(void *arg){
             printf("\nRicevuto segnale non gestito:%d\n",sig);
     }
 
-    return NULL;
+    return 0;
 }
