@@ -133,7 +133,7 @@ char* getFileList(Queue *queue){
         fileNode = tmp->data;
         if(fileList == NULL){
             fileList = malloc(strlen(fileNode->pathname));
-            strcpy(fileList, fileNode->pathname);
+            strncpy(fileList, fileNode->pathname, strlen(fileNode->pathname));
         }
         else {
             s = malloc(strlen(fileList) + strlen(fileNode->pathname) + 1);
