@@ -157,12 +157,12 @@ static void *worker(void *arg){
     printf("[%lu] Worker start\n", self);
 
     /* Maschero i signal per i nuovi worker per evitare che vengano interrotti */
-    sigset_t set;
-    sigemptyset(&set);
-    sigaddset(&set,SIGINT);
-    sigaddset(&set,SIGQUIT);
-    sigaddset(&set,SIGHUP);
-    pthread_sigmask(SIG_SETMASK,&set,NULL);
+//    sigset_t set;
+//    sigemptyset(&set);
+//    sigaddset(&set,SIGINT);
+//    sigaddset(&set,SIGQUIT);
+//    sigaddset(&set,SIGHUP);
+//    pthread_sigmask(SIG_SETMASK,&set,NULL);
 
     while(1){
         printf("[%lu] In attesa di nuova richiesta...\n",self);
@@ -266,14 +266,15 @@ static void *signalThreadHandler(void *arg){
     sigaddset(&set,SIGINT);
     sigaddset(&set,SIGQUIT);
     sigaddset(&set,SIGHUP);
-    pthread_sigmask(SIG_SETMASK,&set,NULL);
+//    pthread_sigmask(SIG_SETMASK,&set,NULL);
 
     sigwait(&set,&sig); //Mi blocco in attesa di un segnale
 
     switch (sig) {
 
-        case SIGINT: // Ctrl^c
-            printf("\nRicevuto segnale SIGINT\n");
+        case SIGINT:
+        case SIGHUP: // Ctrl^c
+            printf("\nRicevuto segnale SIGHUP\n");
             acceptNewConnection = 0;
             printStat(fileQueue);
             printf("Blocco le nuove richieste di connessione al server\n");
@@ -286,6 +287,7 @@ static void *signalThreadHandler(void *arg){
 
             break;
 
+//        case SIGINT:
         case SIGQUIT:
             printf("\nRicevuto segnale SIGQUIT\n");
             printStat(fileQueue);
@@ -294,13 +296,6 @@ static void *signalThreadHandler(void *arg){
             exit(0);
             break;
 
-        case SIGHUP:
-            printf("\nRicevuto segnale SIGHUP\n");
-            printStat(fileQueue);
-            deleteQueue(fileQueue);
-            deleteQueue(connectionQueue);
-            exit(0);
-            break;
 
         default:
             printf("\nRicevuto segnale non gestito:%d\n",sig);
