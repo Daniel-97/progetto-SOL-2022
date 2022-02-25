@@ -268,37 +268,39 @@ static void *signalThreadHandler(void *arg){
     sigaddset(&set,SIGHUP);
 //    pthread_sigmask(SIG_SETMASK,&set,NULL);
 
-    sigwait(&set,&sig); //Mi blocco in attesa di un segnale
+    while(1) {
+        sigwait(&set, &sig); //Mi blocco in attesa di un segnale
 
-    switch (sig) {
+        switch (sig) {
 
-        case SIGINT:
-        case SIGHUP: // Ctrl^c
-            printf("\nRicevuto segnale SIGHUP\n");
-            acceptNewConnection = 0;
-            printStat(fileQueue);
-            printf("Blocco le nuove richieste di connessione al server\n");
-            while(getNumConnections() != 0){}
+            case SIGINT:
+            case SIGHUP: // Ctrl^c
+                printf("\nRicevuto segnale SIGHUP\n");
+                acceptNewConnection = 0;
+                printStat(fileQueue);
+                printf("Blocco le nuove richieste di connessione al server\n");
+                while (getNumConnections() != 0) {}
 
 //            pthread_cond_broadcast(&fileQueue->qcond);
-            deleteQueue(fileQueue);
-            deleteQueue(connectionQueue);
-            exit(0);
+                deleteQueue(fileQueue);
+                deleteQueue(connectionQueue);
+                exit(0);
 
-            break;
+                break;
 
 //        case SIGINT:
-        case SIGQUIT:
-            printf("\nRicevuto segnale SIGQUIT\n");
-            printStat(fileQueue);
-            deleteQueue(fileQueue);
-            deleteQueue(connectionQueue);
-            exit(0);
-            break;
+            case SIGQUIT:
+                printf("\nRicevuto segnale SIGQUIT\n");
+                printStat(fileQueue);
+                deleteQueue(fileQueue);
+                deleteQueue(connectionQueue);
+                exit(0);
+                break;
 
 
-        default:
-            printf("\nRicevuto segnale non gestito:%d\n",sig);
+            default:
+                printf("\nRicevuto segnale non gestito:%d\n", sig);
+        }
     }
 
     return 0;
