@@ -4,6 +4,7 @@
 
 #include "fileStorage.h"
 #include "globals.h"
+#include "utils.h"
 
 int findFileNode(Queue *queue,const char *pathname){
 
@@ -254,7 +255,7 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
         }
 
         //TODO inserire controllo qui
-        FileNode *newNode = malloc(sizeof(FileNode));
+        FileNode *newNode = allocateMemory(1, sizeof(FileNode));
 
         printf("[%lu] File %s creato correttamente!\n",self,pathname);
         strcpy(newNode->pathname, pathname);
@@ -273,11 +274,14 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
             int max_file = getMaxNumFile();
             if(fileQueue->len > max_file)
                 setMaxNumFile(fileQueue->len);
+
+//            free(newNode);
             return 0;
 
         }else{
 
             printf("[%lu] Errore inserimento file sulla coda\n",self);
+//            free(newNode);
             return -1;
 
         }

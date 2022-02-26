@@ -26,6 +26,8 @@ void open_file_controller(int *fd_client_skt, Request *request){
         printf("[%lu] Risposta inviata al client!\n", self);
     }
 
+    free(response);
+
 }
 
 void append_file_controller(int *fd_client_skt, Request *request){
@@ -207,6 +209,8 @@ void write_file_controller(int *fd_client_skt, Request *request){
             }else{
                 printf("[%lu] Errore ricezione file %s da client\n",self,request->filepath);
             }
+
+            free(buf);
         }
 
     }else{

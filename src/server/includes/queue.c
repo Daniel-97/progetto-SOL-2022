@@ -51,15 +51,18 @@ void *pop(Queue *q){
 
     if(q == NULL){
         printf("[POP] queue pointer is null!\n");
-        return NULL;
+        return (void *)-1;
     }
 
     //Inizio sezione critica
     pthread_mutex_lock(&q->qlock);
 
     //Attendo fino a che non ci sono dei nuovi elementi nella coda
-    while(q->head == q->tail)
-        pthread_cond_wait(&q->qcond, &q->qlock);
+//    while(q->head == q->tail)
+//        pthread_cond_wait(&q->qcond, &q->qlock);
+
+    if(q->head == q->tail)
+        return (void *)-1;
 
     Node *n = q->head;
     data = q->head->next->data;

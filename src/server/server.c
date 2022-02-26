@@ -23,6 +23,9 @@ static void *signalThreadHandler(void *arg);
 
 int handler_signal_pipe[2];
 
+pthread_mutex_t mutex_workers;
+pthread_cond_t cond_workers;
+
 int main(int argc, char *argv[]){
 
     /***** SIGNAL HANDLER INIT *****/
@@ -168,6 +171,13 @@ int main(int argc, char *argv[]){
                     else
                         printf("[MASTER] Errore inserimento file descriptor client socket nella coda\n");
 
+
+                    printf("[MASTER] Sveglio un thread in attesa per avvertirlo della nuova connessione\n");
+
+                    pthread_mutex_lock(&mutex_workers);
+                    pthread_cond_signal(&cond_workers);
+                    pthread_mutex_unlock(&mutex_workers);
+
                 }
 
             }
@@ -219,9 +229,9 @@ static void *worker(void *arg){
         /*todo il problema qui è che se metto queste condizioni il thread si sveglia quando arriva una connessione ma
         ritorna subito a dormire durante la pop .*/
 
-//        pthread_mutex_lock(&fileQueue->qlock);
-//        pthread_cond_wait(&fileQueue->qcond, &fileQueue->qlock);
-//        pthread_mutex_unlock(&fileQueue->qlock);
+        pthread_mutex_lock(&mutex_workers);
+        pthread_cond_wait(&cond_workers, &mutex_workers);
+        pthread_mutex_unlock(&mutex_workers);
 
         if(!acceptNewConnection){
             printf("[%lu] Mi termino...\n",self);
@@ -340,8 +350,9 @@ static void *signalThreadHandler(void *arg){
                 printf("Blocco le nuove richieste di connessione al server\n");
                 close(handler_signal_pipe[1]);
 //                while (getNumConnections() != 0) {}
-
-                pthread_cond_broadcast(&fileQueue->qcond);
+                pthread_mutex_lock(&mutex_workers);
+                pthread_cond_broadcast(&cond_workers);
+                pthread_mutex_unlock(&mutex_workers);
 //                deleteQueue(fileQueue);
 //                deleteQueue(connectionQueue);
 
