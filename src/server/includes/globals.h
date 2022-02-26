@@ -7,6 +7,7 @@
 
 #include "config.h"
 #include "queue.h"
+#include <stdbool.h>
 
 #define MAX_THREAD 20
 
@@ -17,5 +18,7 @@ Queue *fileQueue; /* Coda per i file dei client */
 
 pthread_mutex_t mutex_n_connections;
 int n_connections;
+
+bool acceptNewConnection;
 
 #endif //PROGETTO_SOL_2022_GLOBALS_H

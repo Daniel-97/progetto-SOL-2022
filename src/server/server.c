@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <signal.h>
+#include <sys/select.h>
 
 #include "includes/globals.h"
 #include "../common/common.h"
@@ -19,7 +20,8 @@
 
 static void *worker(void *arg);
 static void *signalThreadHandler(void *arg);
-int acceptNewConnection = 1;
+
+int handler_signal_pipe[2];
 
 int main(int argc, char *argv[]){
 
@@ -34,10 +36,11 @@ int main(int argc, char *argv[]){
 
     /* Creo il thread per i segnali in modalità detached */
     pthread_t tid_signal_thread;
-    pthread_attr_t tattr;
-    pthread_attr_init(&tattr);
-    pthread_attr_setdetachstate(&tattr,PTHREAD_CREATE_DETACHED);
-    pthread_create(&tid_signal_thread, &tattr, &signalThreadHandler, NULL);
+//    pthread_attr_t tattr;
+//    pthread_attr_init(&tattr);
+//    pthread_attr_setdetachstate(&tattr,PTHREAD_CREATE_DETACHED);
+//    pthread_create(&tid_signal_thread, &tattr, &signalThreadHandler, NULL);
+    pthread_create(&tid_signal_thread, NULL, &signalThreadHandler, NULL);
 
     /****** CONFIG INIT *******/
     int res = readConfig(&serverConfig);
@@ -48,6 +51,7 @@ int main(int argc, char *argv[]){
 
     /****** NUM CONNECTION INIT *****/
     n_connections = 0;
+    acceptNewConnection = true;
 
     /***** LOGGER INIT *******/
     loggerInit();
@@ -65,6 +69,14 @@ int main(int argc, char *argv[]){
         exit(-1);
     }
 
+    /**** PIPE INIT ****/
+    handler_signal_pipe[0] = -1;
+    handler_signal_pipe[1] = -1;
+    if (pipe(handler_signal_pipe) == -1){
+        perror("Error creazione pipe\n");
+        exit(EXIT_FAILURE);
+    }
+
     /******* THREAD INIT *****/
 //    pthread_t threadPool[MAX_THREAD];
 //    int *threadPoolStatus;
@@ -73,7 +85,8 @@ int main(int argc, char *argv[]){
 //    threadPoolStatus = (int*) malloc(serverConfig->thread_workers * sizeof(int));
 
     for(int i = 0; i<serverConfig.thread_workers; i++) {
-        pthread_create(&threadPool[i], &tattr, &worker, NULL);
+//        pthread_create(&threadPool[i], &tattr, &worker, NULL);
+        pthread_create(&threadPool[i], NULL, &worker, NULL);
     }
 
 //    for(int i = 0; i<serverConfig->thread_workers; i++) {
@@ -106,44 +119,79 @@ int main(int argc, char *argv[]){
         printf("[MASTER] Errore listen socket, errno: %d, %s\n",errno, strerror(errno));
         exit(-1);
     }
+
+    /**** FD SET INIT *****/
+    fd_set master_set, working_set;
+    FD_ZERO(&master_set);
+    int max_sd = fd_server_skt;
+    // Imposto i descrittori di file che devo monitorare
+    FD_SET(fd_server_skt,&master_set);
+    FD_SET(handler_signal_pipe[0],&master_set);
+    int desc_ready;
+
     /****** MAIN SERVER LOOP *****/
-    printf("\n***** ATTENDO NUOVE CONNESSIONI *****\n");
+    printf("\n[MASTER] ATTENDO NUOVE CONNESSIONI...\n");
 
-    while(1) {
+    while(acceptNewConnection) {
 
-        if ((fd_client_skt = accept(fd_server_skt, NULL, 0)) == -1) {
+        memcpy(&working_set, &master_set, sizeof(master_set));
 
-            printf("[MASTER] Errore accept socket, errno: %d, %s\n", errno, strerror(errno));
-            break;
+        /* La select rimane in ascolto dei file descriptor e risveglia il thread quando uno dei fd è pronto */
+        printf("[MASTER] Waiting on select...\n");
+        if((desc_ready = select(max_sd+1, &working_set, NULL, NULL, NULL)) == -1){
+            perror("[MASTER] Error select");
+            exit(EXIT_FAILURE);
+        }
 
-        } else {
+        for(int i = 0; i <= max_sd; i++){
 
-            if(acceptNewConnection == 0){
-                printf("\n[MASTER] Impossibile accettare nuove connessioni\n");
+            if(!FD_ISSET(i, &working_set))
+                continue;
+
+            if( i == fd_server_skt ){
+
+                printf("Server socket is ready!\n");
+                if ((fd_client_skt = accept(fd_server_skt, NULL, 0)) == -1) {
+
+                    printf("[MASTER] Errore accept socket, errno: %d, %s\n", errno, strerror(errno));
+                    break;
+
+                } else {
+
+//                    FD_SET(fd_client_skt, &master_set);
+//                    if(fd_server_skt > max_sd)
+//                        max_sd = fd_client_skt;
+                    printf("\n[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",fd_client_skt);
+
+                    if( push(connectionQueue,&fd_client_skt) != -1)
+                        printf("[MASTER] File descriptor client socket inserito nella coda\n");
+                    else
+                        printf("[MASTER] Errore inserimento file descriptor client socket nella coda\n");
+
+                }
+
+            }
+
+            if( i == handler_signal_pipe[0] ){
+                printf("[MASTER] Ricevuto segnale da pipe per terminare i processi\n");
                 break;
             }
-
-            printf("\n[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",fd_client_skt);
-
-            if( push(connectionQueue,&fd_client_skt) != -1){
-                printf("[MASTER] File descriptor client socket inserito nella coda\n");
-
-            }else{
-                printf("[MASTER] Errore inserimento file descriptor client socket nella coda\n");
-
-            }
         }
+
     }
 
-    printf("\n[MASTER] Attendo che tutti i client chiudano la connessione");
+    printf("[MASTER] Attendo che tutti i client chiudano la connessione\n");
+        for(int i = 0; i<serverConfig.thread_workers; i++)
+            pthread_join(threadPool[i], NULL);
 
-    while(1){
-        if(getNumConnections() == 0)
-            break;
-    }
+    printf("\n[MASTER] Tutte le connessioni sono chiuse\n");
 
-    printf("\n[MASTER] Tutte le connessioni sono chiuse, termino il programma\n");
+    printf("[MASTER] Attendo che il thread signal termini...\n");
+    pthread_join(tid_signal_thread, NULL);
+    printf("[MASTER] Signal thread terminato, chiudo il programma...\n");
 
+    deleteQueue(fileQueue);
+    deleteQueue(connectionQueue);
     close(fd_server_skt);
     return 0;
 }
@@ -165,13 +213,22 @@ static void *worker(void *arg){
 //    pthread_sigmask(SIG_SETMASK,&set,NULL);
 
     while(1){
-        printf("[%lu] In attesa di nuova richiesta...\n",self);
-        fd_client_skt = pop(connectionQueue);
 
-        if(acceptNewConnection == 0){
-            printf("[%lu] Need to terminate\n",self);
+        printf("[%lu] In attesa di nuova richiesta...\n",self);
+
+        /*todo il problema qui è che se metto queste condizioni il thread si sveglia quando arriva una connessione ma
+        ritorna subito a dormire durante la pop .*/
+
+//        pthread_mutex_lock(&fileQueue->qlock);
+//        pthread_cond_wait(&fileQueue->qcond, &fileQueue->qlock);
+//        pthread_mutex_unlock(&fileQueue->qlock);
+
+        if(!acceptNewConnection){
+            printf("[%lu] Mi termino...\n",self);
             break;
         }
+
+        fd_client_skt = pop(connectionQueue);
 
         addConnectionCont();
 
@@ -252,6 +309,7 @@ static void *worker(void *arg){
         subConnectionCont();
 
     }
+//    close(*fd_client_skt);
     return 0;
 
 }
@@ -268,7 +326,7 @@ static void *signalThreadHandler(void *arg){
     sigaddset(&set,SIGHUP);
 //    pthread_sigmask(SIG_SETMASK,&set,NULL);
 
-    while(1) {
+//    while(1) {
         sigwait(&set, &sig); //Mi blocco in attesa di un segnale
 
         switch (sig) {
@@ -276,15 +334,18 @@ static void *signalThreadHandler(void *arg){
             case SIGINT:
             case SIGHUP: // Ctrl^c
                 printf("\nRicevuto segnale SIGHUP\n");
-                acceptNewConnection = 0;
-                printStat(fileQueue);
-                printf("Blocco le nuove richieste di connessione al server\n");
-                while (getNumConnections() != 0) {}
+                acceptNewConnection = false;
 
-//            pthread_cond_broadcast(&fileQueue->qcond);
-                deleteQueue(fileQueue);
-                deleteQueue(connectionQueue);
-                exit(0);
+//                printStat(fileQueue);
+                printf("Blocco le nuove richieste di connessione al server\n");
+                close(handler_signal_pipe[1]);
+//                while (getNumConnections() != 0) {}
+
+                pthread_cond_broadcast(&fileQueue->qcond);
+//                deleteQueue(fileQueue);
+//                deleteQueue(connectionQueue);
+
+//                exit(0);
 
                 break;
 
@@ -301,7 +362,7 @@ static void *signalThreadHandler(void *arg){
             default:
                 printf("\nRicevuto segnale non gestito:%d\n", sig);
         }
-    }
+//    }
 
     return 0;
 }
