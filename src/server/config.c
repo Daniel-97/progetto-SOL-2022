@@ -2,7 +2,7 @@
 // Created by daniele on 09/11/21.
 //
 
-#include "config.h"
+#include "includes/config.h"
 
 /* TODO convert to strtok_r(), convert to int function (return err) */
 int readConfig(struct Config* serverConfig){

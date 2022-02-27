@@ -2,8 +2,8 @@
 // Created by daniele on 11/01/22.
 //
 
-#include "utils.h"
-#include "globals.h"
+#include "includes/utils.h"
+#include "includes/globals.h"
 
 void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
 

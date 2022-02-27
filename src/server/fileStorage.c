@@ -2,9 +2,9 @@
 // Created by daniele on 17/11/21.
 //
 
-#include "fileStorage.h"
-#include "globals.h"
-#include "utils.h"
+#include "includes/fileStorage.h"
+#include "includes/globals.h"
+#include "includes/utils.h"
 
 int findFileNode(Queue *queue,const char *pathname){
 
