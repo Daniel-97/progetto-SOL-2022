@@ -200,6 +200,9 @@ int main(int argc, char *argv[]){
     pthread_join(tid_signal_thread, NULL);
     printf("[MASTER] Signal thread terminato, chiudo il programma...\n");
 
+    /* Stampo le statistiche */
+    printStat(fileQueue);
+
     deleteFileQueue(fileQueue);
     deleteQueue(connectionQueue);
     close(fd_server_skt);
