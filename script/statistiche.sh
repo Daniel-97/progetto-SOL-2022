@@ -12,26 +12,35 @@ cont_open_lock=$(grep "OPEN_FILE_LOCK" -c $1)
 
 cont_expelled=0
 
-byte_read=0
-byte_write=0
+total_byte_read=0
+total_byte_write=0
 
-while read line; do
+i=0
+
+while r
+ead line; do
+  i=$((i+1))
+  if [ $i == 1 ]; then
+    continue
+  fi
 
   IFS=','
   read -a array <<< $line
-  byte="${array[2]}"
+
+  b_read="${array[5]}"
+  b_write="${array[6]}"
 
   if grep -q "WRITE" <<< "$line"; then
-    byte_write=$((byte_write+byte))
+    total_byte_write=$((total_byte_write+b_write))
   fi
 
   if grep -q "READ" <<< "$line" || grep -q "READ_N" <<< "$line"; then
-    byte_read=$((byte_read+byte))
+    total_byte_read=$((total_byte_read+b_read))
   fi
 
   #Conta il numero di file espulsi. todo da sistemare questa cosa numero parametri cambiato
-  len=${#array[@]}
-  if [ $len -eq 5 ]; then
+  replaced="${array[7]}"
+  if [ "$replaced" != "null" ]; then
     cont_expelled=$((cont_expelled+1))
   fi
 
@@ -46,6 +55,6 @@ echo "- cont unlock: $cont_unlock"
 echo "- cont close: $cont_close"
 echo "- cont open-lock: $((cont_open_lock))"
 echo "- cont open: $cont_open"
-echo "- total read byte: $byte_read"
-echo "- total write byte: $byte_write"
+echo "- total read byte: $total_byte_read"
+echo "- total write byte: $total_byte_write"
 echo "- total replaced file: $cont_expelled"
