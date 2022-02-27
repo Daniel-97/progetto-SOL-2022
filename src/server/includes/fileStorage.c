@@ -254,7 +254,6 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
             return -1;
         }
 
-        //TODO inserire controllo qui
         FileNode *newNode = allocateMemory(1, sizeof(FileNode));
 
         printf("[%lu] File %s creato correttamente!\n",self,pathname);
@@ -275,13 +274,11 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
             if(fileQueue->len > max_file)
                 setMaxNumFile(fileQueue->len);
 
-//            free(newNode);
             return 0;
 
         }else{
 
             printf("[%lu] Errore inserimento file sulla coda\n",self);
-//            free(newNode);
             return -1;
 
         }
@@ -370,7 +367,7 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
             free(file->file);
         }
 
-        file->file = malloc(size);
+        file->file = allocateMemory(1, size);
 
         if (file->file) {
 
@@ -761,4 +758,30 @@ char* getNFileList(Queue *queue, size_t *size, int N){
     printf("CONCAT FILE LIST %s\n", fileList);
     return fileList;
 
+}
+
+void deleteFileQueue(Queue *queue){
+
+    Node *tmp;
+    FileNode *fileNode;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    while( queue->head != NULL){
+
+        tmp = queue->head;
+
+        fileNode = tmp->data;
+        if(fileNode != NULL && fileNode->file != NULL)
+            free(fileNode->file);
+        free(fileNode);
+
+        queue->head = queue->head->next;
+        free(tmp);
+
+    }
+
+    pthread_mutex_unlock(&queue->qlock);
+
+    free(queue);
 }

@@ -66,4 +66,6 @@ int hasFileLock(Queue *queue, const char *pathname, int clientId);
 
 char* getNFileList(Queue *queue, size_t *size, int N);
 
+void deleteFileQueue(Queue *queue);
+
 #endif //PROGETTO_SOL_2022_FILESTORAGE_H

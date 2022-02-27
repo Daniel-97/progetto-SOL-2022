@@ -224,6 +224,8 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
     }
 
+    free(response);
+
 }
 
 void close_file_controller(int *fd_client_skt, Request *request){
@@ -288,6 +290,7 @@ void unlock_file_controller(int *fd_client_skt, Request *request){
         printf("[%lu] Risposta inviata al client!\n",self);
     }
 
+    free(response);
 }
 
 void readn_file_controller(int *fd_client_skt, Request *request){
