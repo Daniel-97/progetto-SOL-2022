@@ -20,5 +20,6 @@ pthread_mutex_t mutex_n_connections;
 int n_connections;
 
 bool acceptNewConnection;
+bool closeServer;
 
 #endif //PROGETTO_SOL_2022_GLOBALS_H

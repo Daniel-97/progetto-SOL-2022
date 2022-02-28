@@ -14,6 +14,8 @@ echo -e "socket-path:${SOCKET}\nthread-workers:${N_WORKER}\nmax-mem-size:${STORA
 valgrind --leak-check=full ${SERVER} &
 PID_SERVER=$!
 
+${CLIENT} -h
+
 #Lancio client 1
 ${CLIENT} -f ${SOCKET} -p -t 200 -D test/test1/expelled -w test/test1/folder/
 

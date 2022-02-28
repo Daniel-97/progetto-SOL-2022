@@ -38,7 +38,7 @@ ead line; do
     total_byte_read=$((total_byte_read+b_read))
   fi
 
-  #Conta il numero di file espulsi. todo da sistemare questa cosa numero parametri cambiato
+  #Conta il numero di file espulsi
   replaced="${array[7]}"
   if [ "$replaced" != "null" ]; then
     cont_expelled=$((cont_expelled+1))

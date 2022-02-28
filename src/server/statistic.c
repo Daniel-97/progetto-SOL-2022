@@ -31,6 +31,8 @@ void printStat(Queue *queue){
         }
     }
 
+    free(fileList);
+
 }
 
 void setMaxNumFile(int n){

@@ -55,6 +55,7 @@ int main(int argc, char *argv[]){
     /****** NUM CONNECTION INIT *****/
     n_connections = 0;
     acceptNewConnection = true;
+    closeServer = false;
 
     /***** LOGGER INIT *******/
     loggerInit();
@@ -135,7 +136,7 @@ int main(int argc, char *argv[]){
     /****** MAIN SERVER LOOP *****/
     printf("\n[MASTER] ATTENDO NUOVE CONNESSIONI...\n");
 
-    while(acceptNewConnection) {
+    while(acceptNewConnection && !closeServer) {
 
         memcpy(&working_set, &master_set, sizeof(master_set));
 
@@ -146,7 +147,7 @@ int main(int argc, char *argv[]){
             exit(EXIT_FAILURE);
         }
 
-        for(int i = 0; i <= max_sd; i++){
+        for(int i = 0; i <= max_sd && desc_ready > 0; i++){
 
             if(!FD_ISSET(i, &working_set))
                 continue;
@@ -229,14 +230,11 @@ static void *worker(void *arg){
 
         printf("[%lu] In attesa di nuova richiesta...\n",self);
 
-        /*todo il problema qui è che se metto queste condizioni il thread si sveglia quando arriva una connessione ma
-        ritorna subito a dormire durante la pop .*/
-
         pthread_mutex_lock(&mutex_workers);
         pthread_cond_wait(&cond_workers, &mutex_workers);
         pthread_mutex_unlock(&mutex_workers);
 
-        if(!acceptNewConnection){
+        if(!acceptNewConnection || closeServer){
             printf("[%lu] Mi termino...\n",self);
             break;
         }
@@ -249,6 +247,11 @@ static void *worker(void *arg){
 
             /* Continuo a leggere dal socket del client fintanto che ci sono dati */
             while( read(*fd_client_skt, &request,sizeof(Request)) > 0 ) {
+
+                if(closeServer) {
+                    printf("[%lu] Forcing connection close\n",self);
+                    break;
+                }
 
                 /* Leggo la richiesta del client */
                 printf("\n[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n", self,
@@ -314,6 +317,12 @@ static void *worker(void *arg){
 //                }
             }
 
+            printf("[%lu] Connessione con client chiusa\n", self);
+            if(!acceptNewConnection || closeServer){
+                printf("[%lu] Mi termino...\n",self);
+                break;
+            }
+
         }else{
             printf("[%lu] Errore pop coda: %d\n",self,*fd_client_skt);
             break;
@@ -344,13 +353,13 @@ static void *signalThreadHandler(void *arg){
 
         switch (sig) {
 
-            case SIGINT:
-            case SIGHUP: // Ctrl^c
-                printf("\nRicevuto segnale SIGHUP\n");
+            /* Non accetto più connessioni, finisco di servire quelle attuali */
+            case SIGHUP:
+                printf("\n[SIGNAL-THREAD] Ricevuto segnale SIGHUP\n");
                 acceptNewConnection = false;
 
 //                printStat(fileQueue);
-                printf("Blocco le nuove richieste di connessione al server\n");
+                printf("[SIGNAL-THREAD] Blocco le nuove richieste di connessione al server\n");
                 close(handler_signal_pipe[1]);
 //                while (getNumConnections() != 0) {}
                 pthread_mutex_lock(&mutex_workers);
@@ -363,15 +372,24 @@ static void *signalThreadHandler(void *arg){
 
                 break;
 
-//        case SIGINT:
+            /* Non accetto più connessioni, termino il prima possibile */
+            case SIGINT:
             case SIGQUIT:
-                printf("\nRicevuto segnale SIGQUIT\n");
-                printStat(fileQueue);
-                deleteQueue(fileQueue);
-                deleteQueue(connectionQueue);
-                exit(0);
-                break;
+                printf("\n[SIGNAL-THREAD] Ricevuto segnale SIGINT o SIGQUIT\n");
+                closeServer = true;
 
+//                printStat(fileQueue);
+//                printf("[SIGNAL-THREAD] Blocco le nuove richieste di connessione al server\n");
+                close(handler_signal_pipe[1]);
+//                while (getNumConnections() != 0) {}
+                pthread_mutex_lock(&mutex_workers);
+                pthread_cond_broadcast(&cond_workers);
+                pthread_mutex_unlock(&mutex_workers);
+//                deleteQueue(fileQueue);
+//                deleteQueue(connectionQueue);
+
+//                exit(0);
+                break;
 
             default:
                 printf("\nRicevuto segnale non gestito:%d\n", sig);

@@ -180,7 +180,9 @@ int main(int argc, char *argv[]){
         }
 
     }
-    exit(0);
+    closeConnection(socket_name);
+    return 0;
+
     openFile("./prova.txt",O_CREATE | O_LOCK);
     openFile("./test.txt",O_CREATE | O_LOCK);
 //    closeFile("./prova.txt");
