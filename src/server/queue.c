@@ -2,11 +2,12 @@
 // Created by daniele on 11/11/21.
 //
 
-#include "queue.h"
+#include "includes/queue.h"
+#include "includes/utils.h"
 
 Queue* initQueue(){
 
-    Queue *q = malloc(sizeof(Queue)); //Alloco spazio per coda
+    Queue *q = allocateMemory(1, sizeof(Queue)); //Alloco spazio per coda
 
     if(!q) return NULL;
 
@@ -25,7 +26,7 @@ int push(Queue *q, void *data){
     if( (q == NULL) || (data == NULL))
         return -1;
 
-    Node *n = malloc(sizeof(Node));
+    Node *n = allocateMemory(1, sizeof(Node));
     if(!n) return -1;
     n->data = data;
     n->next = NULL;
@@ -50,15 +51,18 @@ void *pop(Queue *q){
 
     if(q == NULL){
         printf("[POP] queue pointer is null!\n");
-        return NULL;
+        return (void *)-1;
     }
 
     //Inizio sezione critica
     pthread_mutex_lock(&q->qlock);
 
     //Attendo fino a che non ci sono dei nuovi elementi nella coda
-    while(q->head == q->tail)
-        pthread_cond_wait(&q->qcond, &q->qlock);
+//    while(q->head == q->tail)
+//        pthread_cond_wait(&q->qcond, &q->qlock);
+
+    if(q->head == q->tail)
+        return (void *)-1;
 
     Node *n = q->head;
     data = q->head->next->data;
@@ -72,4 +76,31 @@ void *pop(Queue *q){
     free(n);
 
     return data;
+}
+
+void signalQueue(Queue *queue){
+
+    pthread_cond_signal(&queue->qcond);
+    pthread_mutex_unlock(&queue->qlock);
+
+}
+
+void deleteQueue(Queue *queue){
+
+    Node *tmp;
+
+    pthread_mutex_lock(&queue->qlock);
+
+    while( queue->head != NULL){
+
+        tmp = queue->head;
+        queue->head = queue->head->next;
+        free(tmp);
+
+    }
+
+    pthread_mutex_unlock(&queue->qlock);
+
+    free(queue);
+
 }

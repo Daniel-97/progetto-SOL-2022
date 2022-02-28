@@ -5,24 +5,63 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <signal.h>
+#include <sys/select.h>
 
 #include "includes/globals.h"
 #include "../common/common.h"
 #include "includes/config.h"
 #include "includes/queue.h"
 #include "includes/fileStorage.h"
+#include "includes/utils.h"
+#include "includes/controller.h"
+#include "includes/logger.h"
+#include "includes/statistic.h"
 
 static void *worker(void *arg);
+static void *signalThreadHandler(void *arg);
+
+int handler_signal_pipe[2];
+
+pthread_mutex_t mutex_workers;
+pthread_cond_t cond_workers;
 
 int main(int argc, char *argv[]){
 
+    /***** SIGNAL HANDLER INIT *****/
+    /* Maschero i segnali */
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set,SIGINT);
+    sigaddset(&set,SIGQUIT);
+    sigaddset(&set,SIGHUP);
+    pthread_sigmask(SIG_SETMASK,&set,NULL);
+
+    /* Creo il thread per i segnali in modalità detached */
+    pthread_t tid_signal_thread;
+//    pthread_attr_t tattr;
+//    pthread_attr_init(&tattr);
+//    pthread_attr_setdetachstate(&tattr,PTHREAD_CREATE_DETACHED);
+//    pthread_create(&tid_signal_thread, &tattr, &signalThreadHandler, NULL);
+    pthread_create(&tid_signal_thread, NULL, &signalThreadHandler, NULL);
+
     /****** CONFIG INIT *******/
-    serverConfig = malloc(sizeof(Config));
-    int res = readConfig(serverConfig);
+    int res = readConfig(&serverConfig);
     if(res == -1){
         exit(-1);
     }
-    printConfig(serverConfig);
+    printConfig(&serverConfig);
+
+    /****** NUM CONNECTION INIT *****/
+    n_connections = 0;
+    acceptNewConnection = true;
+    closeServer = false;
+
+    /***** LOGGER INIT *******/
+    loggerInit();
+
+    /***** STATISTIC INIT ******/
+    statInit();
 
     /***** FILE QUEUE INIT ******/
     fileQueue = initQueue();
@@ -34,14 +73,23 @@ int main(int argc, char *argv[]){
         exit(-1);
     }
 
+    /**** PIPE INIT ****/
+    handler_signal_pipe[0] = -1;
+    handler_signal_pipe[1] = -1;
+    if (pipe(handler_signal_pipe) == -1){
+        perror("Error creazione pipe\n");
+        exit(EXIT_FAILURE);
+    }
+
     /******* THREAD INIT *****/
-    pthread_t *threadPool;
+//    pthread_t threadPool[MAX_THREAD];
 //    int *threadPoolStatus;
     // Alloco un array per i descrittori di processo
-    threadPool = (pthread_t*)malloc(serverConfig->thread_workers * sizeof(pthread_t) );
+//    threadPool = (pthread_t*)malloc(serverConfig->thread_workers * sizeof(pthread_t) );
 //    threadPoolStatus = (int*) malloc(serverConfig->thread_workers * sizeof(int));
 
-    for(int i = 0; i<serverConfig->thread_workers; i++) {
+    for(int i = 0; i<serverConfig.thread_workers; i++) {
+//        pthread_create(&threadPool[i], &tattr, &worker, NULL);
         pthread_create(&threadPool[i], NULL, &worker, NULL);
     }
 
@@ -51,10 +99,10 @@ int main(int argc, char *argv[]){
 
     /***** SOCKET INIT *****/
     int fd_server_skt;
-    int *fd_client_skt; //File descriptor per connessioni client
+    int fd_client_skt; //File descriptor per connessioni client
     struct sockaddr_un socketAddress;
 
-    strncpy(socketAddress.sun_path, serverConfig->socket_path,100);
+    strncpy(socketAddress.sun_path, serverConfig.socket_path,100);
     socketAddress.sun_family = AF_UNIX; // Socket di tipo AF_UNIX
 
     //Creazione socket
@@ -63,7 +111,7 @@ int main(int argc, char *argv[]){
         exit(-1);
     }
     // Unlink vecchio socket se esistente
-    unlink(serverConfig->socket_path);
+    unlink(serverConfig.socket_path);
 
     //Bind socket con address
     if ( (bind(fd_server_skt, (struct sockaddr*) &socketAddress, sizeof(socketAddress)) ) == -1 ){
@@ -75,30 +123,89 @@ int main(int argc, char *argv[]){
         printf("[MASTER] Errore listen socket, errno: %d, %s\n",errno, strerror(errno));
         exit(-1);
     }
+
+    /**** FD SET INIT *****/
+    fd_set master_set, working_set;
+    FD_ZERO(&master_set);
+    int max_sd = fd_server_skt;
+    // Imposto i descrittori di file che devo monitorare
+    FD_SET(fd_server_skt,&master_set);
+    FD_SET(handler_signal_pipe[0],&master_set);
+    int desc_ready;
+
     /****** MAIN SERVER LOOP *****/
-    printf("\n***** ATTENDO NUOVE CONNESSIONI *****\n");
+    printf("\n[MASTER] ATTENDO NUOVE CONNESSIONI...\n");
 
-    while(1) {
+    while(acceptNewConnection && !closeServer) {
 
-        fd_client_skt = malloc(sizeof(int)); //Alloco puntatore per nuovo id file descriptor
+        memcpy(&working_set, &master_set, sizeof(master_set));
 
-        if ((*fd_client_skt = accept(fd_server_skt, NULL, 0)) == -1) {
+        /* La select rimane in ascolto dei file descriptor e risveglia il thread quando uno dei fd è pronto */
+        printf("[MASTER] Waiting on select...\n");
+        if((desc_ready = select(max_sd+1, &working_set, NULL, NULL, NULL)) == -1){
+            perror("[MASTER] Error select");
+            exit(EXIT_FAILURE);
+        }
 
-            printf("[MASTER] Errore accept socket, errno: %d, %s\n", errno, strerror(errno));
-            break;
+        for(int i = 0; i <= max_sd && desc_ready > 0; i++){
 
-        } else {
+            if(!FD_ISSET(i, &working_set))
+                continue;
 
-            printf("[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",*fd_client_skt);
-            if( push(connectionQueue,fd_client_skt) != -1){
-                printf("[MASTER] File descriptor client socket inserito nella coda\n");
+            if( i == fd_server_skt ){
 
-            }else{
-                printf("[MASTER] Errore inserimento file descriptor client socket nella coda\n");
+                printf("Server socket is ready!\n");
+                if ((fd_client_skt = accept(fd_server_skt, NULL, 0)) == -1) {
+
+                    printf("[MASTER] Errore accept socket, errno: %d, %s\n", errno, strerror(errno));
+                    break;
+
+                } else {
+
+//                    FD_SET(fd_client_skt, &master_set);
+//                    if(fd_server_skt > max_sd)
+//                        max_sd = fd_client_skt;
+                    printf("\n[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",fd_client_skt);
+
+                    if( push(connectionQueue,&fd_client_skt) != -1)
+                        printf("[MASTER] File descriptor client socket inserito nella coda\n");
+                    else
+                        printf("[MASTER] Errore inserimento file descriptor client socket nella coda\n");
+
+
+                    printf("[MASTER] Sveglio un thread in attesa per avvertirlo della nuova connessione\n");
+
+                    pthread_mutex_lock(&mutex_workers);
+                    pthread_cond_signal(&cond_workers);
+                    pthread_mutex_unlock(&mutex_workers);
+
+                }
 
             }
+
+            if( i == handler_signal_pipe[0] ){
+                printf("[MASTER] Ricevuto segnale da pipe per terminare i processi\n");
+                break;
+            }
         }
+
     }
+
+    printf("[MASTER] Attendo che tutti i client chiudano la connessione\n");
+        for(int i = 0; i<serverConfig.thread_workers; i++)
+            pthread_join(threadPool[i], NULL);
+
+    printf("\n[MASTER] Tutte le connessioni sono chiuse\n");
+
+    printf("[MASTER] Attendo che il thread signal termini...\n");
+    pthread_join(tid_signal_thread, NULL);
+    printf("[MASTER] Signal thread terminato, chiudo il programma...\n");
+
+    /* Stampo le statistiche */
+    printStat(fileQueue);
+
+    deleteFileQueue(fileQueue);
+    deleteQueue(connectionQueue);
     close(fd_server_skt);
     return 0;
 }
@@ -107,176 +214,96 @@ static void *worker(void *arg){
 
     pthread_t self = pthread_self();
     int *fd_client_skt = NULL;
-    Request *request =  malloc(sizeof(Request));
-    Response *response = malloc(sizeof(Response));
-    void *buf;
-    size_t size;
+    Request request;
 
     printf("[%lu] Worker start\n", self);
 
+    /* Maschero i signal per i nuovi worker per evitare che vengano interrotti */
+//    sigset_t set;
+//    sigemptyset(&set);
+//    sigaddset(&set,SIGINT);
+//    sigaddset(&set,SIGQUIT);
+//    sigaddset(&set,SIGHUP);
+//    pthread_sigmask(SIG_SETMASK,&set,NULL);
+
     while(1){
+
         printf("[%lu] In attesa di nuova richiesta...\n",self);
+
+        pthread_mutex_lock(&mutex_workers);
+        pthread_cond_wait(&cond_workers, &mutex_workers);
+        pthread_mutex_unlock(&mutex_workers);
+
+        if(!acceptNewConnection || closeServer){
+            printf("[%lu] Mi termino...\n",self);
+            break;
+        }
+
         fd_client_skt = pop(connectionQueue);
+
+        addConnectionCont();
 
         if (*fd_client_skt != -1){
 
             /* Continuo a leggere dal socket del client fintanto che ci sono dati */
-            while( read(*fd_client_skt, request,sizeof(Request)) > 0 ) {
+            while( read(*fd_client_skt, &request,sizeof(Request)) > 0 ) {
+
+                if(closeServer) {
+                    printf("[%lu] Forcing connection close\n",self);
+                    break;
+                }
 
                 /* Leggo la richiesta del client */
-                printf("[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n", self,
-                       request->clientId, request->operation, request->filepath, request->flags);
+                printf("\n[%lu] Client Request:{CLIENT_ID: %d, OPERATION: %d, FILEPATH: %s, FLAGS: %d }\n", self,
+                       request.clientId, request.operation, request.filepath, request.flags);
 
-                switch (request->operation) {
+                switch (request.operation) {
 
                     case OP_OPEN_FILE:
-                        if (openVirtualFile(fileQueue,request->filepath, request->flags, request->clientId) == 0) {
-                            /* Preparo la risposta per il client */
-                            response->statusCode = 0;
-                            strcpy(response->message, "File opened!");
-
-                        }else{
-                            response->statusCode = -1;
-                            strcpy(response->message, "Impossibile aprire il file!");
-                        }
-
-                        printf("[%lu] Invio risposta al client...\n", self);
-                        if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
-                            printf("[%lu] Risposta inviata al client!\n", self);
-                        }
+                        open_file_controller(fd_client_skt, &request);
                         break;
-                    case OP_WRITE_FILE:
 
-                        /* Controllo prima che il client abbia il lock sul file */
-                        if (hasFileLock(fileQueue,request->filepath,request->clientId) == 0){
-                            strcpy(response->message, "Ready to receive file, client has lock");
-                            response->statusCode = 0;
+                    case OP_APPEND_FILE:
 
-                            if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
-
-                                size = request->fileSize;
-                                printf("[%lu] Il client sta per inviare un file di %zu byte\n",self,request->fileSize);
-                                buf = malloc(size); //Alloco il buffer per la ricezione del file
-
-                                if( read(*fd_client_skt,buf, size) != -1 ){
-                                    printf("[%lu] File %s ricevuto correttamente!\n",self,request->filepath);
-//                                    printf("buffer ricevuto: %s, dim: %zu\n",(char*)buf,size);
-
-                                    if ( writeVirtualFile(fileQueue,request->filepath,buf,size) != -1){
-                                        response->statusCode = 0;
-                                        strcpy(response->message, "File scritto correttamente!");
-                                    }else{
-                                        response->statusCode = -1;
-                                        strcpy(response->message, "Errore scrittura file");
-                                    }
-
-                                    printf("[%lu] Invio risposta al client...\n", self);
-                                    if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
-                                        printf("[%lu] Risposta inviata al client!\n", self);
-                                    }
-
-                                }else{
-                                    printf("[%lu] Errore ricezione file %s da client\n",self,request->filepath);
-                                }
-                            }
-
-                        }else{
-
-                            strcpy(response->message, "The client doesnt have lock, aborting");
-                            response->statusCode = -1;
-
-                            if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
-                                printf("[%lu] Risposta inviata al client!\n", self);
-                            }
-
-                        }
-//                        writeVirtualFile(request->filepath,"ciao",5);
+                        append_file_controller(fd_client_skt, &request);
                         break;
+
                     case OP_READ_FILE:
-//                        writeVirtualFile(fileQueue,request->filepath,"ciao",sizeof("ciao")); //test da togliere
 
-                        /* Leggo il file */
-                        if ( readVirtualFile(fileQueue,request->filepath,&buf,&size) == 0) {
-                            response->statusCode = 0;
-                            response->fileSize = size;
-                            strcpy(response->message, "Ready to send file");
-//                            printf("buffer letto: %s\n",(char*)buf);
-                            /* Invio al client la dimensione del file che sta per leggere */
-                            if (write(*fd_client_skt, response, sizeof(Response)) != -1){
-                                printf("[%lu] Risposta inviata al client con dimensione file!\n",self);
-
-                                /* Invio al client il file effettivo */
-                                if (write(*fd_client_skt, buf, size) != -1){
-                                    printf("[%lu] File %s inviato correttamente!\n",self, request->filepath);
-                                }
-
-                            }
-                        }else{ /* In caso di errore invio il messaggio di errore al client */
-
-                            response->statusCode = -1;
-                            strcpy(response->message,"Errore, impossibile leggere il file");
-
-                            if (write(*fd_client_skt, response, sizeof(Response)) != -1){
-                                printf("[%lu] Risposta inviata al client!\n",self);
-                            }
-                        }
-
+                        read_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_DELETE_FILE:
 
-                        if(deleteVirtualFile(fileQueue,request->filepath, request->clientId) == 0){
-                            response->statusCode = 0;
-                            strcpy(response->message, "File eliminato correttamente!");
-                        }else{
-                            response->statusCode = 0;
-                            strcpy(response->message, "Errore eliminazione file");
-                        }
-
-                        if (write(*fd_client_skt, response, sizeof(Response)) != -1){
-                            printf("[%lu] Risposta inviata al client!\n",self);
-                        }
+                        delete_file_controller(fd_client_skt, &request);
                         break;
 
-                    case OP_APPEND_FILE:
+                    case OP_WRITE_FILE:
+                        write_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_CLOSE_FILE:
+
+                        close_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_LOCK_FILE:
 
-                        /* Tento di acquisire il lock sul file */
-                        if(lockVirtualFile(fileQueue,request->filepath,request->clientId) == 0){
-                            response->statusCode = 0;
-                            strcpy(response->message, "Lock correttamente acquisito sul file!");
-                        }else{
-                            response->statusCode = -1;
-                            strcpy(response->message,"Impossible acquisire il lock sul file");
-                        }
-                        if (write(*fd_client_skt, response, sizeof(Response)) != -1){
-                            printf("[%lu] Risposta inviata al client!\n",self);
-                        }
-
+                        lock_file_controller(fd_client_skt, &request);
                         break;
 
                     case OP_UNLOCK_FILE:
 
-                        /* Tentativo di unlock sul file */
-                        if(unlockVirtualFile(fileQueue,request->filepath,request->clientId) == 0){
-                            response->statusCode = 0;
-                            strcpy(response->message, "Unlock eseguito con successo!");
-                        }else{
-                            response->statusCode = -1;
-                            strcpy(response->message,"Impossible effettuare unlock");
-                        }
-                        if (write(*fd_client_skt, response, sizeof(Response)) != -1){
-                            printf("[%lu] Risposta inviata al client!\n",self);
-                        }
+                        unlock_file_controller(fd_client_skt, &request);
+                        break;
+
+                    case OP_READ_N_FILES:
+
+                        readn_file_controller(fd_client_skt, &request);
                         break;
 
                     default:
-                        printf("Received unknown operation: %d\n", request->operation);
+                        printf("Received unknown operation: %d\n", request.operation);
 
                 }
 
@@ -290,12 +317,84 @@ static void *worker(void *arg){
 //                }
             }
 
+            printf("[%lu] Connessione con client chiusa\n", self);
+            if(!acceptNewConnection || closeServer){
+                printf("[%lu] Mi termino...\n",self);
+                break;
+            }
+
         }else{
             printf("[%lu] Errore pop coda: %d\n",self,*fd_client_skt);
             break;
         }
 
+        subConnectionCont();
+
     }
+//    close(*fd_client_skt);
     return 0;
 
+}
+
+static void *signalThreadHandler(void *arg){
+
+    printf("****** SIGNAL THREAD INIT *****\n");
+    printf("Avvio thread per la gestione dei signal\n");
+
+    sigset_t set; int sig;
+    sigemptyset(&set);
+    sigaddset(&set,SIGINT);
+    sigaddset(&set,SIGQUIT);
+    sigaddset(&set,SIGHUP);
+//    pthread_sigmask(SIG_SETMASK,&set,NULL);
+
+//    while(1) {
+        sigwait(&set, &sig); //Mi blocco in attesa di un segnale
+
+        switch (sig) {
+
+            /* Non accetto più connessioni, finisco di servire quelle attuali */
+            case SIGHUP:
+                printf("\n[SIGNAL-THREAD] Ricevuto segnale SIGHUP\n");
+                acceptNewConnection = false;
+
+//                printStat(fileQueue);
+                printf("[SIGNAL-THREAD] Blocco le nuove richieste di connessione al server\n");
+                close(handler_signal_pipe[1]);
+//                while (getNumConnections() != 0) {}
+                pthread_mutex_lock(&mutex_workers);
+                pthread_cond_broadcast(&cond_workers);
+                pthread_mutex_unlock(&mutex_workers);
+//                deleteQueue(fileQueue);
+//                deleteQueue(connectionQueue);
+
+//                exit(0);
+
+                break;
+
+            /* Non accetto più connessioni, termino il prima possibile */
+            case SIGINT:
+            case SIGQUIT:
+                printf("\n[SIGNAL-THREAD] Ricevuto segnale SIGINT o SIGQUIT\n");
+                closeServer = true;
+
+//                printStat(fileQueue);
+//                printf("[SIGNAL-THREAD] Blocco le nuove richieste di connessione al server\n");
+                close(handler_signal_pipe[1]);
+//                while (getNumConnections() != 0) {}
+                pthread_mutex_lock(&mutex_workers);
+                pthread_cond_broadcast(&cond_workers);
+                pthread_mutex_unlock(&mutex_workers);
+//                deleteQueue(fileQueue);
+//                deleteQueue(connectionQueue);
+
+//                exit(0);
+                break;
+
+            default:
+                printf("\nRicevuto segnale non gestito:%d\n", sig);
+        }
+//    }
+
+    return 0;
 }
