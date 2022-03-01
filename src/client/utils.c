@@ -34,13 +34,13 @@ int saveFile(const char* pathname, void *buf, size_t size){
 
     if (file == NULL) return -1;
 
-    if ( fwrite(buf,size,1,file) > 0 ){
+    if ( fwrite(buf,size,1,file) >= 0 ){
         printf("File %s salvato correttamente su disco\n",pathname);
         fclose(file);
         return 0;
     }
     else{
-        printf("Errore salvataggio file %s su disco\n",pathname);
+        printf("Errore salvataggio file %s su disco. %s\n",pathname, strerror(errno));
         fclose(file);
         return -1;
     }
@@ -49,11 +49,12 @@ int saveFile(const char* pathname, void *buf, size_t size){
 
 int saveFileDir(void *buf, size_t size,const char* dirname,const char* fileName){
 
+    //Todo attenzione il salvataggio viene fatto con il relpath e non abspath
     const char *name = getFileNameFromPath(fileName);
     char *path = malloc(strlen(dirname)+strlen(name)+1);
     strcpy(path,dirname);
     strcat(path,name);
-    printf("Salvataggio file %s in corso\n",path);
+    printf("Salvataggio file %s di %zu byte in corso\n",path,size);
     return saveFile(path,buf,size);
 
 }
@@ -154,7 +155,7 @@ const char* getFileNameFromPath(const char* path){
 
     realpath(path, absPath);
 
-    return absPath;
+    return strrchr(path, '/');
 
 }
 

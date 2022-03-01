@@ -25,7 +25,7 @@
 
 /* CODICI FLAGS FILE ESADECIMALE */
 #define O_CREATE    0x01
-#define O_LOCK      0x03
+#define O_LOCK      0x02
 
 //#define MAX_PATH_SIZE       100
 #define MAX_MESSAGE_SIZE    100
