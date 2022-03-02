@@ -147,6 +147,7 @@ void write_file_controller(int *fd_client_skt, Request *request){
     void *buf;
     size_t size;
     int freeSpace;
+    int rbyte;
 
     freeSpace = getFreeSpace(fileQueue);
 
@@ -192,15 +193,15 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
         if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
 
-            size = request->fileSize;
             printf("[%lu] Il client sta per inviare un file di %zu byte\n",self,request->fileSize);
-            buf = allocateMemory(1, size); //Alloco il buffer per la ricezione del file
+            buf = allocateMemory(1, request->fileSize); //Alloco il buffer per la ricezione del file
 
-            if( read(*fd_client_skt,buf, size) != -1 ){
-                printf("[%lu] File %s ricevuto correttamente!\n",self,request->filepath);
+            //todo per file di grandi dimensioni le read non legge tutti i byte ma ne rimangono un po che poi danno fastidio dopo
+            if( (rbyte = read(*fd_client_skt,buf, request->fileSize)) != -1 ){
+                printf("[%lu] File %s ricevuto correttamente! rbyte:%d\n",self,request->filepath,rbyte);
 //                                    printf("buffer ricevuto: %s, dim: %zu\n",(char*)buf,size);
 
-                if ( writeVirtualFile(fileQueue,request->filepath,buf,size) != -1){
+                if ( writeVirtualFile(fileQueue,request->filepath,buf,request->fileSize) != -1){
                     response->statusCode = 0;
                     strcpy(response->message, "File scritto correttamente!");
                 }else{

@@ -130,6 +130,7 @@ int writeFile(const char* pathname, const char* dirname){
     void *buf;
     int isServerFull = 0;
     char absPath[PATH_MAX];
+    int wbyte;
 
     if (pathname == NULL) return -1;
 
@@ -193,14 +194,15 @@ int writeFile(const char* pathname, const char* dirname){
 
             printf("Invio il file %s al server\n", absPath);
             /* Invio al server il file! */
-            if ( write(fd_socket,buf,request.fileSize) != -1){
+            if ( (wbyte = write(fd_socket,buf,request.fileSize)) != -1){
 
-                printf("File inviato correttamente al server!\n");
+                printf("File inviato correttamente al server!. wbyte: %d\n",wbyte);
 
                 /* Attendo risposta dal server con messaggio di successo */
                 if( read(fd_socket, &response, sizeof(Response)) )
                     printServerResponse(&response);
 
+//                fsync(fd_socket);
                 /* Faccio la unlock sul file */
                 unlockFile(absPath);
 
