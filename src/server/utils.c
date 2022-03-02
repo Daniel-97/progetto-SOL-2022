@@ -52,14 +52,14 @@ void sendBufferFileToClient(int fd_client_skt, FileNode *file, int statusCode){
 
     pthread_t self = pthread_self();
 
-    Response response;
-    response.statusCode = statusCode;
-    strcpy(response.message, "Ready to send file");
-    strcpy(response.fileName, file->pathname);
-    response.fileSize = file->size;
+    Response *response = allocateMemory(1, sizeof(Response));
+    response->statusCode = statusCode;
+    strcpy(response->message, "Ready to send file");
+    strcpy(response->fileName, file->pathname);
+    response->fileSize = file->size;
 
     /* Invio al client la dimensione del file che sta per leggere */
-    if (write(fd_client_skt, &response, sizeof(Response)) != -1){
+    if (write(fd_client_skt, response, sizeof(Response)) != -1){
         printf("[%lu] Risposta inviata al client con dimensione file!\n",self);
 
         /* Invio al client il file effettivo */
@@ -71,6 +71,8 @@ void sendBufferFileToClient(int fd_client_skt, FileNode *file, int statusCode){
         }
 
     }
+
+    free(response);
 }
 
 int getFreeSpace(Queue *queue){

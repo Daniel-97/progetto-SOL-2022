@@ -58,6 +58,7 @@ int openFile(const char* pathname, int flags){
 
     Request request;
     Response response;
+    int ret = 0;
 
     char absPath[PATH_MAX];
     realpath(pathname, absPath);
@@ -76,18 +77,18 @@ int openFile(const char* pathname, int flags){
         if ( read(fd_socket,&response,sizeof(Response)) != -1 ){
 
             printServerResponse(&response);
-            return response.statusCode;
+            ret = response.statusCode;
 
         }else{
             printf("Errore write socket, errno: %d\n",errno);
-            return -1;
+            ret =  -1;
         }
 
     }else{
         printf("Errore write socket, errno: %d\n",errno);
-        return -1;
+        ret = -1;
     }
-
+    return ret;
 }
 
 int readFile(const char* pathname, void** buf, size_t* size){
@@ -186,7 +187,7 @@ int writeFile(const char* pathname, const char* dirname){
             }
 
             /* Leggo il contenuto del nuovo file */
-            buf = malloc(request.fileSize); //Alloco buffer per lettura file
+            buf = allocateMemory(1, request.fileSize); //Alloco buffer per lettura file
             rewind(file); //Mi riposiziono all inizio del file
             fread(buf,request.fileSize,1,file);
 

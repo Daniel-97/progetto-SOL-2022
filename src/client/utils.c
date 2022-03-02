@@ -105,7 +105,7 @@ char* getFileListFromDir(const char* dirname, int maxFile){
     FILE *fp;
     char command[255];
     char output[1000];
-    strcat(command,"/bin/find ");
+    strcpy(command,"/bin/find ");
     strcat(command,dirname);
     strcat(command," -type f");
 
@@ -119,13 +119,14 @@ char* getFileListFromDir(const char* dirname, int maxFile){
             if(fileList == NULL){
 
                 fileList = malloc(strlen(output)-1);
-                strncpy(fileList, output, strlen(output)-1);
+                fileList = allocateMemory(1,strlen(output)+1);
+                strncpy(fileList, output, strlen(output));
 
             }else{
-                tmp = malloc(strlen(fileList));
+                tmp = allocateMemory(1, strlen(fileList)+1);
                 strcpy(tmp, fileList);
                 free(fileList);
-                fileList = malloc(strlen(tmp)+strlen(output));
+                fileList = allocateMemory(1, strlen(tmp)+strlen(output)+1);
                 strncpy(fileList, tmp, strlen(tmp));
                 strcat(fileList,",");
                 strncat(fileList, output, strlen(output)-1);

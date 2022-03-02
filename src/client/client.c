@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
                 exit(0);
 
             case 'f': {
-                socket_name = allocateMemory(1, strlen(optarg));
+                socket_name = allocateMemory(1, strlen(optarg)+1);
                 strcpy(socket_name, optarg);
 
                 /* Apro connessione con il server */
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]){
                         writeFile(token, expFileDir);
                     token = strtok(NULL, ",");
                 }
-
+                free(fileList);
                 break;
             }
 
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]){
             }
 
             case 'D': { /* Specifica cartella dove scrivere file rimossi per capacity miss*/
-                expFileDir = allocateMemory(1, strlen(optarg));
+                expFileDir = allocateMemory(1, strlen(optarg)+1);
                 strcpy(expFileDir, optarg);
                 break;
             }
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]){
             }
 
             case 'd': {/* Specifica cartella in cui salvare file lato client */
-                destFolder = allocateMemory(1, strlen(optarg));
+                destFolder = allocateMemory(1, strlen(optarg)+1);
                 strcpy(destFolder, optarg);
                 break;
             }

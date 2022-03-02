@@ -1,5 +1,5 @@
 socket-path:./connection.sk
 thread-workers:4
 max-mem-size:128000000
-max-file:9
+max-file:10000
 log-file:./log.txt
