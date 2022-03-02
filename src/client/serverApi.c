@@ -59,13 +59,13 @@ int openFile(const char* pathname, int flags){
     Request request;
     Response response;
 
-    const char *fileName;
-    fileName = getFileNameFromPath(pathname);
+    char absPath[PATH_MAX];
+    realpath(pathname, absPath);
 
     request.clientId = getpid();
     request.operation = OP_OPEN_FILE;
     request.flags = flags;
-    strncpy(request.filepath,fileName,PATH_MAX);
+    strncpy(request.filepath, absPath,PATH_MAX);
 
     printf("Invio richiesta apertura per filepath: %s\n",request.filepath);
 
@@ -95,9 +95,11 @@ int readFile(const char* pathname, void** buf, size_t* size){
     msleep(waitingTime);
 
     Request request;
+    char absPath[PATH_MAX];
+    realpath(pathname, absPath);
 
     request.operation = OP_READ_FILE;
-    strncpy(request.filepath,getFileNameFromPath(pathname),PATH_MAX);
+    strncpy(request.filepath,absPath,PATH_MAX);
     request.clientId = getpid();
     request.flags = 0;
 
@@ -126,27 +128,27 @@ int writeFile(const char* pathname, const char* dirname){
     FILE *file;
     void *buf;
     int isServerFull = 0;
-    const char *fileName;
+    char absPath[PATH_MAX];
 
     if (pathname == NULL) return -1;
 
-    fileName = getFileNameFromPath(pathname);
+    realpath(pathname, absPath);
 
     /* Apro il file locale che devo inviare al server */
     file = fopen(pathname, "r");
 
     if(file == NULL){
-        printf("Errore apertura file %s, errno: %s\n",pathname, strerror(errno));
+        printf("Errore apertura file %s, errno: %s\n",absPath, strerror(errno));
         return -1;
     }
     /* Mi posiziono all inizio del file */
     if ( fseek(file,0L, SEEK_END) != 0) {
-        printf("Errore fseek file %s\n", pathname);
+        printf("Errore fseek file %s\n", absPath);
         return -1;
     }
 
     request.operation = OP_WRITE_FILE;
-    strncpy(request.filepath, fileName, PATH_MAX);
+    strncpy(request.filepath, absPath, PATH_MAX);
     request.clientId = getpid();
     request.fileSize = ftell(file);
 
@@ -188,7 +190,7 @@ int writeFile(const char* pathname, const char* dirname){
             rewind(file); //Mi riposiziono all inizio del file
             fread(buf,request.fileSize,1,file);
 
-            printf("Invio il file %s al server\n", getFileNameFromPath(pathname));
+            printf("Invio il file %s al server\n", absPath);
             /* Invio al server il file! */
             if ( write(fd_socket,buf,request.fileSize) != -1){
 
@@ -199,7 +201,7 @@ int writeFile(const char* pathname, const char* dirname){
                     printServerResponse(&response);
 
                 /* Faccio la unlock sul file */
-                unlockFile(pathname);
+                unlockFile(absPath);
 
                 return response.statusCode;
 
@@ -247,11 +249,14 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
     Request request;
     Response response;
     void *buf2;
+    char absPath[PATH_MAX];
 
     if (pathname == NULL || buf == NULL) return -1;
 
+    realpath(pathname, absPath);
+
     request.operation = OP_APPEND_FILE;
-    strncpy(request.filepath, getFileNameFromPath(pathname), PATH_MAX);
+    strncpy(request.filepath, absPath, PATH_MAX);
     request.clientId = getpid();
     request.fileSize = size;
 
@@ -286,7 +291,7 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
             if(response.statusCode == -1)
                 return -1;
 
-            printf("Invio i dati per append file %s al server\n",pathname);
+            printf("Invio i dati per append file %s al server\n",absPath);
             /* Invio al server il file! */
             if ( write(fd_socket,buf,request.fileSize) != -1){
 
@@ -327,17 +332,17 @@ int lockFile(const char* pathname){
 
     Request request;
     Response response;
-    const char *fileName;
+    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
 
-    fileName = getFileNameFromPath(pathname);
+    realpath(pathname, absPath);
 
     request.operation = OP_LOCK_FILE;
-    strcpy(request.filepath, fileName);
+    strcpy(request.filepath, absPath);
     request.clientId = getpid();
 
-    printf("Invio richiesta di lock per file %s\n", pathname);
+    printf("Invio richiesta di lock per file %s\n", absPath);
 
     return sendRequest(&request,&response);
 
@@ -349,17 +354,17 @@ int unlockFile(const char* pathname){
 
     Request request;
     Response response;
-    const char *fileName;
+    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
 
-    fileName = getFileNameFromPath(pathname);
+    realpath(pathname, absPath);
 
     request.operation = OP_UNLOCK_FILE;
-    strcpy(request.filepath, fileName);
+    strcpy(request.filepath, absPath);
     request.clientId = getpid();
 
-    printf("Invio richiesta di unlock per file %s\n", fileName);
+    printf("Invio richiesta di unlock per file %s\n", absPath);
 
     return sendRequest(&request,&response);
 }
@@ -370,17 +375,17 @@ int removeFile(const char* pathname){
 
     Request request;
     Response response;
-    const char* fileName;
+    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
 
-    fileName = getFileNameFromPath(pathname);
+    realpath(pathname, absPath);
 
     request.operation = OP_DELETE_FILE;
-    strcpy(request.filepath, fileName);
+    strcpy(request.filepath, absPath);
     request.clientId = getpid();
 
-    printf("Invio richiesta di cancellazione per file %s\n", pathname);
+    printf("Invio richiesta di cancellazione per file %s\n", absPath);
 
     return sendRequest(&request, &response);
 }
@@ -391,14 +396,17 @@ int closeFile(const char* pathname){
 
     Request request;
     Response response;
+    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
 
+    realpath(pathname, absPath);
+
     request.operation = OP_CLOSE_FILE;
-    strcpy(request.filepath, getFileNameFromPath(pathname));
+    strcpy(request.filepath, absPath);
     request.clientId = getpid();
 
-    printf("Invio richiesta di chiusura per file %s\n", pathname);
+    printf("Invio richiesta di chiusura per file %s\n", absPath);
 
     return sendRequest(&request, &response);
 

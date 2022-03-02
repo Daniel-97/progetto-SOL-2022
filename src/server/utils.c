@@ -42,6 +42,10 @@ void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
         }
     }
 
+    free(response);
+    if(buf != NULL)
+        free(buf);
+
 }
 
 void sendBufferFileToClient(int fd_client_skt, FileNode *file, int statusCode){

@@ -151,6 +151,13 @@ void write_file_controller(int *fd_client_skt, Request *request){
     freeSpace = getFreeSpace(fileQueue);
 
     //Todo capire se questa parte di free space funziona
+    if( request->fileSize > serverConfig.max_mem_size ){
+        strcpy(response->message, "The file is too big for the server");
+        response->statusCode = -1;
+        write(*fd_client_skt, response, sizeof(Response));
+        free(response);
+        return;
+    }
 
     /* C'è bisogno di espellere un file per capacity miss. Informo il client di questa cosa */
     if(freeSpace < request->fileSize){

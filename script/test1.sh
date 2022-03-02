@@ -1,9 +1,9 @@
-CONFIG=./config/config1.txt
+CONFIG=./config/config.txt
 SERVER=./bin/server
 CLIENT=./bin/client
 SOCKET=./connection.sk
 
-N_WORKER=1
+N_WORKER=4
 N_FILE=10000
 STORAGE_SIZE=128000000
 
