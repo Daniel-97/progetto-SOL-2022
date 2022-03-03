@@ -11,6 +11,7 @@ void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
     size_t size;
     pthread_t self = pthread_self();
     Response *response = allocateMemory(1, sizeof(Response));
+    int wbyte;
 
     /* Leggo il file */
     if ( readVirtualFile(fileQueue,pathname,&buf,&size) == 0) {
@@ -24,8 +25,8 @@ void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
             printf("[%lu] Risposta inviata al client con dimensione file!\n",self);
 
             /* Invio al client il file effettivo */
-            if (write(fd_client_skt, buf, size) != -1){
-                printf("[%lu] File %s inviato correttamente!\n",self, pathname);
+            if ( (wbyte = write(fd_client_skt, buf, size)) != -1){
+                printf("[%lu] File %s inviato correttamente! wbyte:%d\n",self, pathname,wbyte);
             }else{
                 printf("[%lu] Errore invio file %s,%s \n",self, pathname, strerror(errno));
 

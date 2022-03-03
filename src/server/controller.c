@@ -145,7 +145,7 @@ void write_file_controller(int *fd_client_skt, Request *request){
 //    int serverIsFull = 0;
     FileNode *data;
     void *buf;
-    size_t size;
+//    size_t size;
     int freeSpace;
     int rbyte;
 
@@ -196,9 +196,18 @@ void write_file_controller(int *fd_client_skt, Request *request){
             printf("[%lu] Il client sta per inviare un file di %zu byte\n",self,request->fileSize);
             buf = allocateMemory(1, request->fileSize); //Alloco il buffer per la ricezione del file
 
-            //todo per file di grandi dimensioni le read non legge tutti i byte ma ne rimangono un po che poi danno fastidio dopo
-            if( (rbyte = read(*fd_client_skt,buf, request->fileSize)) != -1 ){
-                printf("[%lu] File %s ricevuto correttamente! rbyte:%d\n",self,request->filepath,rbyte);
+            /* Uso un while, la read può non leggere il numero di byte richiesti */
+            size_t left = request->fileSize;
+            char *tmpBuff = (char *)buf;
+
+            while(left > 0){
+                rbyte = read(*fd_client_skt, tmpBuff, left);
+                left -= rbyte;
+                tmpBuff += rbyte;
+            }
+
+            if( rbyte != -1 ){
+                printf("[%lu] File %s ricevuto correttamente!\n",self,request->filepath);
 //                                    printf("buffer ricevuto: %s, dim: %zu\n",(char*)buf,size);
 
                 if ( writeVirtualFile(fileQueue,request->filepath,buf,request->fileSize) != -1){
