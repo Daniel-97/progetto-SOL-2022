@@ -39,3 +39,7 @@ test_client:
 
 test1:
 	./script/test1.sh
+test2:
+		./script/test2.sh
+test3:
+		./script/test3.sh
