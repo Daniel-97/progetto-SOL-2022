@@ -18,7 +18,7 @@
 #define DEFAULT_SOCKET_NAME "./connection.sk"
 
 int main(int argc, char *argv[]){
-
+    print("test %d\n", 4);
     char *socket_name = NULL;
     char *expFileDir = NULL;
     char *destFolder = NULL;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
 
                 /* Apro connessione con il server */
                 if (openConnection(socket_name, 1000, time) == 0) {
-                    printf("CONNESSO CON SERVER SU SOCKET: %s\n", socket_name);
+                    print("CONNESSO CON SERVER SU SOCKET: %s\n", socket_name);
                 } else {
                     exit(-1);
                 }
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]){
                 long time = atoi(optarg);
 
                 if (time < 0) {
-                    printf("Errore, parametro -t deve essere un intero positivo\n");
+                    print("Errore, parametro -t deve essere un intero positivo\n");
                     exit(-1);
                 }
                 waitingTime = time;

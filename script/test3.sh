@@ -10,28 +10,27 @@ STORAGE_SIZE=32000000
 #Scrivo le configurazioni nel file
 echo -e "socket-path:${SOCKET}\nthread-workers:${N_WORKER}\nmax-mem-size:${STORAGE_SIZE}\nmax-file:${N_FILE}\nlog-file:./log.txt" > ${CONFIG}
 
-
+max_client=10
+num_client=0
 start_time=$(date +%s)
-echo $start_time
 
-#Loop for 30 sec
-while [ $(($(date +%s)-$start_time)) -lt 3 ]; do
-  echo "ciao"
-done
+#START THE SERVER
 #lancio server
-#${SERVER} &
-#PID_SERVER=$!
-#
-#${CLIENT} -h
-#
-##Lancio client 1
-#${CLIENT} -f ${SOCKET} -p -D test/test1/expelled -w test/test1/folder/
-#
-##Lancio client 2
-#${CLIENT} -f ${SOCKET} -p -D test/test1/expelled -W test/test1/folder/test1.txt,test/test1/folder/test2.txt
-#
-##Lancio client 3
-#${CLIENT} -f ${SOCKET} -p -d test/test1/read/ -r test/test1/folder/test1.txt,test/test1/folder/test2.txt
-#
+${SERVER} &
+PID_SERVER=$!
+
+#LOOP FOR 30 SEC
+while [ $(($(date +%s)-$start_time)) -lt 3 ]; do
+
+  if [ $num_client -lt $max_client ]; then
+
+    ${CLIENT} -f ${SOCKET} -t 500 -W test/test2/imgs/img0.jpg
+    echo "Starting new client with pid $!"
+    num_client=$((num_client+1))
+
+  fi
+
+done
+
 ##Chiudo il server
-#kill -SIGINT ${PID_SERVER}
+kill -SIGINT ${PID_SERVER}

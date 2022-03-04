@@ -21,10 +21,13 @@
 #include "../../common/common.h"
 #include "serverApi.h"
 #include <limits.h>
+#include <stdarg.h>
 
 void help();
 
 void printServerResponse(Response *response);
+
+void print(char *string,...);
 
 /* Salva il file su disco */
 int saveFile(const char* pathname, void *buf, size_t size);

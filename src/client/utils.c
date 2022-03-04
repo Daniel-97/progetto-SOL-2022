@@ -21,6 +21,18 @@ void help(){
     printf("-p\n");
 }
 
+void print(char *string,...){
+
+    va_list args;
+    va_start(args, string);
+
+    // Print only if enable
+    if(enablePrintDebug)
+        vprintf(string, args);
+
+    va_end(args);
+}
+
 void printServerResponse(Response *response){
 
     if(enablePrintDebug)
@@ -35,12 +47,12 @@ int saveFile(const char* pathname, void *buf, size_t size){
     if (file == NULL) return -1;
 
     if ( fwrite(buf,size,1,file) >= 0 ){
-        printf("File %s salvato correttamente su disco\n",pathname);
+        print("File %s salvato correttamente su disco\n",pathname);
         fclose(file);
         return 0;
     }
     else{
-        printf("Errore salvataggio file %s su disco. %s\n",pathname, strerror(errno));
+        print("Errore salvataggio file %s su disco. %s\n",pathname, strerror(errno));
         fclose(file);
         return -1;
     }
@@ -54,7 +66,7 @@ int saveFileDir(void *buf, size_t size,const char* dirname,const char* fileName)
     char *path = malloc(strlen(dirname)+strlen(name)+1);
     strcpy(path,dirname);
     strcat(path,name);
-    printf("Salvataggio file %s di %zu byte in corso\n",path,size);
+    print("Salvataggio file %s di %zu byte in corso\n",path,size);
     return saveFile(path,buf,size);
 
 }
@@ -78,19 +90,19 @@ int waitServerFile(void** buf, size_t* size){
         // Leggo effettivamente il file dal server
         if (read(fd_socket,*buf,*size) != -1){
 
-            printf("File ricevuto correttamente!\n");
+            print("File ricevuto correttamente!\n");
             return 0;
 
         }else{
 
-            printf("Errore ricezione file. errno: %d. %s", errno, strerror(errno));
+            print("Errore ricezione file. errno: %d. %s", errno, strerror(errno));
             return -1;
 
         }
 
 
     }else{
-        printf("Errore read socket, errno: %d, %s\n",errno, strerror(errno));
+        print("Errore read socket, errno: %d, %s\n",errno, strerror(errno));
         return -1;
     }
 
