@@ -223,7 +223,7 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
         return -1;
 
     }
-
+    /* Non esiste ed è stato passato solo il flag O_LOCK */
     if( (found == -1) && ( (flags & O_LOCK) == O_LOCK && (flags & O_CREATE) != O_CREATE) ){
 
         printf("[%lu] Il file %s non esiste, impossibile aprire\n",self, pathname);
@@ -231,17 +231,21 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
 
     }
 
+
     if (found == 0){
 
         printf("[%lu] Il file %s esiste gia!\n",self, pathname);
 
-        /* Se il client ha passato il flag di lock devo prendere il lock sul file */
+        /* Se il client ha passato il flag di lock provo prendere il lock sul file */
         if ( (flags & O_LOCK) == O_LOCK ) {
 
-            if (editFileNode(queue, pathname, NULL, 0, clientId) == 0) {
-                printf("[%lu] Lock acquisito sul file!\n", self);
-
+            if (lockVirtualFile(queue, pathname, clientId) == 0) {
+//                printf("[%lu] Lock acquisito sul file!\n", self);
                 return 0;
+
+            }else{
+//                printf("[%lu] Impossibile acquisire lock su file, in possesso da altro processo ");
+                return -1;
             }
         }
 
@@ -491,7 +495,7 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
     }else{
 
         if (!file->isOpen){
-            printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
+            printf("[%lu] Il file %s è chiuso, impossibile acquisire lock\n",self,pathname);
             signalQueue(queue);
             return -1;
         }

@@ -27,8 +27,10 @@ void print(char *string,...){
     va_start(args, string);
 
     // Print only if enable
-    if(enablePrintDebug)
+    if(enablePrintDebug) {
+        printf("[CLIENT %d] ", getpid());
         vprintf(string, args);
+    }
 
     va_end(args);
 }

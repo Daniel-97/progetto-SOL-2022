@@ -35,7 +35,7 @@ int main(int argc, char *argv[]){
     sigaddset(&set,SIGINT);
     sigaddset(&set,SIGQUIT);
     sigaddset(&set,SIGHUP);
-    sigaddset(&set,SIGPIPE);
+//    sigaddset(&set,SIGPIPE);
     pthread_sigmask(SIG_SETMASK,&set,NULL);
 
     /* Creo il thread per i segnali in modalità detached */
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]){
 static void *worker(void *arg){
 
     pthread_t self = pthread_self();
-    int *fd_client_skt = NULL;
+    int fd_client_skt;
     Request request;
 
     printf("[%lu] Worker start\n", self);
@@ -240,14 +240,15 @@ static void *worker(void *arg){
             break;
         }
 
-        fd_client_skt = pop(connectionQueue);
-
+        int *fd = pop(connectionQueue);
+        fd_client_skt = *fd;
+        printf("[%lu] Pop di fd: %d\n",self,fd_client_skt);
         addConnectionCont();
 
-        if (*fd_client_skt != -1){
+        if (fd_client_skt != -1){
 
             /* Continuo a leggere dal socket del client fintanto che ci sono dati */
-            while( read(*fd_client_skt, &request,sizeof(Request)) > 0 ) {
+            while( read(fd_client_skt, &request,sizeof(Request)) > 0 ) {
 
                 if(closeServer) {
                     printf("[%lu] Forcing connection close\n",self);
@@ -261,46 +262,46 @@ static void *worker(void *arg){
                 switch (request.operation) {
 
                     case OP_OPEN_FILE:
-                        open_file_controller(fd_client_skt, &request);
+                        open_file_controller(&fd_client_skt, &request);
                         break;
 
                     case OP_APPEND_FILE:
 
-                        append_file_controller(fd_client_skt, &request);
+                        append_file_controller(&fd_client_skt, &request);
                         break;
 
                     case OP_READ_FILE:
 
-                        read_file_controller(fd_client_skt, &request);
+                        read_file_controller(&fd_client_skt, &request);
                         break;
 
                     case OP_DELETE_FILE:
 
-                        delete_file_controller(fd_client_skt, &request);
+                        delete_file_controller(&fd_client_skt, &request);
                         break;
 
                     case OP_WRITE_FILE:
-                        write_file_controller(fd_client_skt, &request);
+                        write_file_controller(&fd_client_skt, &request);
                         break;
 
                     case OP_CLOSE_FILE:
 
-                        close_file_controller(fd_client_skt, &request);
+                        close_file_controller(&fd_client_skt, &request);
                         break;
 
                     case OP_LOCK_FILE:
 
-                        lock_file_controller(fd_client_skt, &request);
+                        lock_file_controller(&fd_client_skt, &request);
                         break;
 
                     case OP_UNLOCK_FILE:
 
-                        unlock_file_controller(fd_client_skt, &request);
+                        unlock_file_controller(&fd_client_skt, &request);
                         break;
 
                     case OP_READ_N_FILES:
 
-                        readn_file_controller(fd_client_skt, &request);
+                        readn_file_controller(&fd_client_skt, &request);
                         break;
 
                     default:
@@ -325,7 +326,7 @@ static void *worker(void *arg){
             }
 
         }else{
-            printf("[%lu] Errore pop coda: %d\n",self,*fd_client_skt);
+            printf("[%lu] Errore pop coda: %d\n",self,fd_client_skt);
             break;
         }
 

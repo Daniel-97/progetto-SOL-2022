@@ -21,7 +21,7 @@ void open_file_controller(int *fd_client_skt, Request *request){
         strcpy(response->message, "Impossibile aprire il file!");
     }
 
-    printf("[%lu] Invio risposta al client...\n", self);
+    printf("[%lu] Invio risposta al client con fd: %d\n", self,*fd_client_skt);
     if (write(*fd_client_skt, response, sizeof(Response)) != -1) {
         printf("[%lu] Risposta inviata al client!\n", self);
     }
