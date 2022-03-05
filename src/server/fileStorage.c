@@ -224,9 +224,9 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
 
     }
 
-    if( (found == -1) && ( (flags & O_LOCK) != O_LOCK ) ){
+    if( (found == -1) && ( (flags & O_LOCK) == O_LOCK && (flags & O_CREATE) != O_CREATE) ){
 
-        printf("[%lu] Il file %s non esiste, parametro O_LOCK mancante\n",self, pathname);
+        printf("[%lu] Il file %s non esiste, impossibile aprire\n",self, pathname);
         return -1;
 
     }

@@ -16,14 +16,11 @@ PID_SERVER=$!
 
 ${CLIENT} -h
 
-#Lancio client 1
-#${CLIENT} -f ${SOCKET} -p -t 200 -D test/test2/expelled -w test/test2/folder/
-
 #Lancio client 2
 ${CLIENT} -f ${SOCKET} -p -t 200 -D test/test2/expelled -w test/test2/imgs/
 
 #Lancio client 3
-${CLIENT} -f ${SOCKET} -p -t 200 -d test/test2/read/ -r test/test2/imgs/img1.jpg,test/test2/imgs/img1.jpg
+${CLIENT} -f ${SOCKET} -p -t 200 -d test/test2/read/ -r test/test2/imgs/img2.jpg,test/test2/imgs/img3.jpg
 
 #Chiudo il server
 kill -SIGHUP ${PID_SERVER}

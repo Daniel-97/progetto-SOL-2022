@@ -15,7 +15,7 @@ void printStat(Queue *queue){
     pthread_mutex_lock(&mutex_stats);
     printf("\n***** SERVER STATS *****\n");
     printf("- Num file max: %d\n",max_num_file);
-    printf("- Max file storage: %d bytes\n",max_file_storage_size);
+    printf("- Max file storage: %f MB\n",(float )max_file_storage_size/1000000);
     printf("- Num file replacement: %d\n",num_file_replacement);
     pthread_mutex_unlock(&mutex_stats);
 
