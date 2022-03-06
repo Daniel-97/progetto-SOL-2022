@@ -66,6 +66,8 @@ int main(int argc, char *argv[]){
 
     /***** FILE QUEUE INIT ******/
     fileQueue = initQueue();
+    pthread_mutex_init(&file_lock_mutex, NULL);
+    pthread_cond_init(&file_lock_cond, NULL);
 
     /***** CONNECTION QUEUE INIT *****/
     connectionQueue = initQueue();
@@ -367,6 +369,11 @@ static void *signalThreadHandler(void *arg){
                 pthread_mutex_lock(&mutex_workers);
                 pthread_cond_broadcast(&cond_workers);
                 pthread_mutex_unlock(&mutex_workers);
+
+                /* Sveglia eventuali thread che sono in attesa di mutex su file */
+                pthread_mutex_lock(&file_lock_mutex);
+                pthread_cond_broadcast(&file_lock_cond);
+                pthread_mutex_unlock(&file_lock_mutex);
 //                deleteQueue(fileQueue);
 //                deleteQueue(connectionQueue);
 
@@ -387,6 +394,11 @@ static void *signalThreadHandler(void *arg){
                 pthread_mutex_lock(&mutex_workers);
                 pthread_cond_broadcast(&cond_workers);
                 pthread_mutex_unlock(&mutex_workers);
+
+                /* Sveglia eventuali thread che sono in attesa di mutex su file */
+                pthread_mutex_lock(&file_lock_mutex);
+                pthread_cond_broadcast(&file_lock_cond);
+                pthread_mutex_unlock(&file_lock_mutex);
 //                deleteQueue(fileQueue);
 //                deleteQueue(connectionQueue);
 

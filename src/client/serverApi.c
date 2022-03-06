@@ -204,6 +204,7 @@ int writeFile(const char* pathname, const char* dirname){
 
 //                fsync(fd_socket);
                 /* Faccio la unlock sul file */
+                sleep(5);
                 unlockFile(absPath);
 
                 return response.statusCode;

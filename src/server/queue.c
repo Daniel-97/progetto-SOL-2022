@@ -18,6 +18,10 @@ Queue* initQueue(){
     q->tail = q->head;
     q->len = 0;
 
+    pthread_mutex_init(&q->qlock, NULL);
+    pthread_cond_init(&q->qcond, NULL);
+
+
     return q;
 }
 

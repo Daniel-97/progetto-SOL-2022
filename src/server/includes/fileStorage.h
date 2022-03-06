@@ -17,6 +17,8 @@
 #include "../../common/common.h"
 
 #define READ_CHUNK_SIZE 100
+pthread_mutex_t file_lock_mutex; /* Mutex su file per open */
+pthread_cond_t  file_lock_cond; /* CV su file per open */
 
 typedef struct FileNode{
 
