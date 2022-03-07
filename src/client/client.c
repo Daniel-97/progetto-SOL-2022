@@ -16,6 +16,11 @@
 #include "includes/serverApi.h"
 #include "../common/common.h"
 
+#define OPTIONAL_ARGUMENT_IS_PRESENT \
+    ((optarg == NULL && optind < argc && argv[optind][0] != '-') \
+     ? (bool) (optarg = argv[optind++]) \
+     : (optarg != NULL))
+
 #define DEFAULT_SOCKET_NAME "./connection.sk"
 
 int main(int argc, char *argv[]){
@@ -39,7 +44,7 @@ int main(int argc, char *argv[]){
     time.tv_sec = 3;
     time.tv_nsec = 0;
 
-    while( (opt = getopt(argc, argv, "hf:W:w:D:d:r:R:l:u:c:t:p")) != -1 ){
+    while( (opt = getopt(argc, argv, "hf:W:w:D:d:r:R::l:u:c:t:p")) != -1 ){
 
         switch (opt) {
 
@@ -131,12 +136,14 @@ int main(int argc, char *argv[]){
 
             case 'R': {/* Legge n file qualsiasi dal server */
 
-                numFiles = atoi(optarg);
-                if (numFiles == 0) {
+                if(optarg != NULL) {
+                    numFiles = atoi(optarg);
+                    if (numFiles == 0)
+                        readNFiles(-1, destFolder);
+                    else
+                        readNFiles(numFiles, destFolder);
+                }else
                     readNFiles(-1, destFolder);
-                } else {
-                    readNFiles(numFiles, destFolder);
-                }
 
                 break;
             }
