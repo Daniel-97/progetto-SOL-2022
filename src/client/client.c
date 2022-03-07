@@ -10,6 +10,7 @@
 #include <sys/un.h>
 #include <time.h>
 #include <stdbool.h>
+#include <limits.h>
 
 #include "includes/utils.h"
 #include "includes/serverApi.h"
@@ -28,6 +29,7 @@ int main(int argc, char *argv[]){
     size_t size;
     char *token;
     int numFiles;
+    char abspath[PATH_MAX];
 //    char *fileList;
 
     /* CONFIG INIT */
@@ -77,8 +79,11 @@ int main(int argc, char *argv[]){
 
                 while (token != NULL){
 
-                    if(openFile(token, O_CREATE | O_LOCK) != -1)
-                        writeFile(token, expFileDir);
+                    realpath(token, abspath);
+                    if(openFile(abspath, O_CREATE | O_LOCK) != -1) {
+                        writeFile(abspath, expFileDir);
+                        unlockFile(abspath);
+                    }
                     token = strtok(NULL, ",");
                 }
                 free(fileList);
@@ -90,14 +95,19 @@ int main(int argc, char *argv[]){
                 token = strtok(optarg, ",");
                 while (token != NULL) {
 
-                    if (openFile(token, O_CREATE | O_LOCK) != -1)
-                        writeFile(token, expFileDir);
+                    realpath(token, abspath);
+                    if (openFile(abspath, O_CREATE | O_LOCK) != -1) {
+                        writeFile(abspath, expFileDir);
+//                        sleep(10);
+                        unlockFile(abspath);
+                    }
                     token = strtok(NULL, ",");
                 }
                 break;
             }
 
             case 'D': { /* Specifica cartella dove scrivere file rimossi per capacity miss*/
+
                 expFileDir = allocateMemory(1, strlen(optarg)+1);
                 strcpy(expFileDir, optarg);
                 break;
@@ -107,9 +117,12 @@ int main(int argc, char *argv[]){
                 token = strtok(optarg, ",");
                 while (token != NULL) {
 
-                    if (openFile(token, O_LOCK) != -1)
-                        if (readFile(token, &buff, &size) != -1)
+                    realpath(token, abspath);
+                    if (openFile(abspath, O_LOCK) != -1) {
+                        if (readFile(abspath, &buff, &size) != -1)
                             saveFileDir(buff, size, destFolder, token);
+                        unlockFile(abspath);
+                    }
 
                     token = strtok(NULL, ",");
                 }
@@ -117,12 +130,14 @@ int main(int argc, char *argv[]){
             }
 
             case 'R': {/* Legge n file qualsiasi dal server */
+
                 numFiles = atoi(optarg);
                 if (numFiles == 0) {
                     readNFiles(-1, destFolder);
                 } else {
                     readNFiles(numFiles, destFolder);
                 }
+
                 break;
             }
 
@@ -147,7 +162,9 @@ int main(int argc, char *argv[]){
                 token = strtok(optarg, ",");
 
                 while (token != NULL) {
-                    lockFile(token);
+
+                    realpath(token, abspath);
+                    lockFile(abspath);
                     token = strtok(NULL, ",");
                 }
 
@@ -158,7 +175,9 @@ int main(int argc, char *argv[]){
                 token = strtok(optarg, ",");
 
                 while (token != NULL) {
-                    unlockFile(token);
+
+                    realpath(token, abspath);
+                    unlockFile(abspath);
                     token = strtok(NULL, ",");
                 }
                 break;
@@ -168,7 +187,9 @@ int main(int argc, char *argv[]){
                 token = strtok(optarg, ",");
 
                 while (token != NULL) {
-                    removeFile(token);
+                    realpath(token, abspath);
+                    lockFile(abspath);
+                    removeFile(abspath);
                     token = strtok(NULL, ",");
                 }
                 break;
@@ -180,34 +201,8 @@ int main(int argc, char *argv[]){
         }
 
     }
+
     closeConnection(socket_name);
     return 0;
 
-    openFile("./prova.txt",O_CREATE | O_LOCK);
-    openFile("./test.txt",O_CREATE | O_LOCK);
-//    closeFile("./prova.txt");
-//    lockFile("./prova.txt");
-//    writeFile("./prova.txt", "./tmp");
-
-    appendToFile("./prova.txt","file1",sizeof("file1"),"./tmp/");
-    appendToFile("./test.txt","file2",sizeof("file2"),"./tmp/");
-//    readNFiles(10, "./tmp/");
-//    appendToFile("./prova.txt","123",sizeof("123"),"./tmp");
-
-//    removeFile("./prova.txt");
-//    unlockFile("./prova.txt");
-//    writeFile("./prova.txt","/tmp");
-//    writeFile("./prova.txt","/tmp");
-
-//    if (readFile("./prova.txt", &buff,&size) == 0 ) {
-//        printf("%s\n",(char*)buff);
-////        for(int i = 0; i < size; i++)
-////            printf("%s\n",(char*)buff);
-//        saveFile("./tmp/prova.txt", buff, size);
-//    }
-
-//    unlockFile("./prova.txt");
-    closeConnection(socket_name);
-
-    return 0;
 }

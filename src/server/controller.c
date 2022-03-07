@@ -136,6 +136,8 @@ void delete_file_controller(int *fd_client_skt, Request *request){
         printf("[%lu] Risposta inviata al client!\n",self);
     }
 
+    free(response);
+
 }
 
 void write_file_controller(int *fd_client_skt, Request *request){
@@ -286,6 +288,8 @@ void lock_file_controller(int *fd_client_skt, Request *request){
     if (write(*fd_client_skt, response, sizeof(Response)) != -1){
         printf("[%lu] Risposta inviata al client!\n",self);
     }
+
+    free(response);
 }
 
 void unlock_file_controller(int *fd_client_skt, Request *request){
@@ -342,6 +346,8 @@ void readn_file_controller(int *fd_client_skt, Request *request){
         printf("[%lu] Risposta inviata al client!\n",self);
     }
 
+    free(fileList);
+    free(response);
     //todo al momento è il client che richiedei files mediante delle re
 
 }

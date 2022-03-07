@@ -198,7 +198,7 @@ int removeNode(Queue *queue, FileNode *node){
             prec->next = tmp->next;
             free(tmp2);
             free(node->file);
-//            free(node);
+            free(node);
             queue->len--;
             return 0;
         }
@@ -487,7 +487,7 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
     file = getFileNode(queue,pathname);
 
-    pthread_mutex_unlock(&queue->qlock);
+    signalQueue(queue);
 
     if (file == NULL){
 
@@ -510,11 +510,10 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
         }
 
-        //todo da testare
         /* Attendo che venga rilasciato il lock del file se non è libero */
-        printf("Cerco di prendere mutex dentro lock()\n");
+//        printf("Cerco di prendere mutex dentro lock()\n");
         pthread_mutex_lock(&file_lock_mutex);
-        printf("Mutex dentro lock() acquisito. clientid:%d\n",file->client_id);
+//        printf("Mutex dentro lock() acquisito. clientid:%d\n",file->client_id);
 
         while(file->client_id != 0 && !closeServer) {
             printf("[%lu] Il file %s è in lock da un altro client, attendo...", self, pathname);
@@ -554,9 +553,8 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
     pthread_t self = pthread_self();
     FileNode *file;
     int status;
-    printf("Eccomi222!!\n");
+
     pthread_mutex_lock(&queue->qlock);
-    printf("Eccomi333!!!\n");
 
     file = getFileNode(queue,pathname);
 
@@ -573,9 +571,9 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
             return -1;
         }
 
-        printf("Prendo mutex lock dentro unlock()\n");
+//        printf("Prendo mutex lock dentro unlock()\n");
         pthread_mutex_lock(&file_lock_mutex);
-        printf("Mutex preso dentro unlock()\n");
+//        printf("Mutex preso dentro unlock()\n");
 
         if(file->client_id == clientId){
 
@@ -772,7 +770,7 @@ char* getNFileList(Queue *queue, size_t *size, int N){
         /* concat file list */
 
         if(fileList != NULL) {
-            s = strlen(fileList)+1+strlen(fileNode->pathname);
+            s = strlen(fileList)+1+strlen(fileNode->pathname)+1;
             tmp = malloc(s);
             strcpy(tmp, fileList);
             strcat(tmp, ",");
@@ -782,7 +780,7 @@ char* getNFileList(Queue *queue, size_t *size, int N){
             strcpy(fileList, tmp);
             free(tmp);
         }else{
-            fileList = malloc(strlen(fileNode->pathname));
+            fileList = malloc(strlen(fileNode->pathname)+1);
             strcpy(fileList, fileNode->pathname);
         }
 

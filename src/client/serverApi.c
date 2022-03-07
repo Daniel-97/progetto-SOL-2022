@@ -60,13 +60,13 @@ int openFile(const char* pathname, int flags){
     Response response;
     int ret = 0;
 
-    char absPath[PATH_MAX];
-    realpath(pathname, absPath);
+//    char absPath[PATH_MAX];
+//    realpath(pathname, absPath);
 
     request.clientId = getpid();
     request.operation = OP_OPEN_FILE;
     request.flags = flags;
-    strncpy(request.filepath, absPath,PATH_MAX);
+    strncpy(request.filepath, pathname,PATH_MAX);
 
     print("Invio richiesta apertura per filepath: %s\n",request.filepath);
 
@@ -96,11 +96,11 @@ int readFile(const char* pathname, void** buf, size_t* size){
     msleep(waitingTime);
 
     Request request;
-    char absPath[PATH_MAX];
-    realpath(pathname, absPath);
+//    char absPath[PATH_MAX];
+//    realpath(pathname, absPath);
 
     request.operation = OP_READ_FILE;
-    strncpy(request.filepath,absPath,PATH_MAX);
+    strncpy(request.filepath,pathname,PATH_MAX);
     request.clientId = getpid();
     request.flags = 0;
 
@@ -111,7 +111,7 @@ int readFile(const char* pathname, void** buf, size_t* size){
     if ( write(fd_socket,&request,sizeof(Request)) != -1 ){
 
 //        print("Attendo dimensione del file dal server...\n");
-        return waitServerFile(buf, size);
+        return  waitServerFile(buf, size);
 
     }else{
         print("Errore write socket, errno: %d, %s\n",errno, strerror(errno));
@@ -129,28 +129,28 @@ int writeFile(const char* pathname, const char* dirname){
     FILE *file;
     void *buf;
     int isServerFull = 0;
-    char absPath[PATH_MAX];
+//    char absPath[PATH_MAX];
     int wbyte;
 
     if (pathname == NULL) return -1;
 
-    realpath(pathname, absPath);
+//    realpath(pathname, absPath);
 
     /* Apro il file locale che devo inviare al server */
     file = fopen(pathname, "r");
 
     if(file == NULL){
-        print("Errore apertura file %s, errno: %s\n",absPath, strerror(errno));
+        print("Errore apertura file %s, errno: %s\n",pathname, strerror(errno));
         return -1;
     }
     /* Mi posiziono all inizio del file */
     if ( fseek(file,0L, SEEK_END) != 0) {
-        print("Errore fseek file %s\n", absPath);
+        print("Errore fseek file %s\n", pathname);
         return -1;
     }
 
     request.operation = OP_WRITE_FILE;
-    strncpy(request.filepath, absPath, PATH_MAX);
+    strncpy(request.filepath, pathname, PATH_MAX);
     request.clientId = getpid();
     request.fileSize = ftell(file);
 
@@ -192,7 +192,7 @@ int writeFile(const char* pathname, const char* dirname){
             rewind(file); //Mi riposiziono all inizio del file
             fread(buf,request.fileSize,1,file);
 
-            print("Invio il file %s al server\n", absPath);
+            print("Invio il file %s al server\n", pathname);
             /* Invio al server il file! */
             if ( (wbyte = write(fd_socket,buf,request.fileSize)) != -1){
 
@@ -204,8 +204,8 @@ int writeFile(const char* pathname, const char* dirname){
 
 //                fsync(fd_socket);
                 /* Faccio la unlock sul file */
-                sleep(5);
-                unlockFile(absPath);
+//                sleep(10);
+//                unlockFile(absPath);
 
                 return response.statusCode;
 
@@ -253,14 +253,14 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
     Request request;
     Response response;
     void *buf2;
-    char absPath[PATH_MAX];
+//    char absPath[PATH_MAX];
 
     if (pathname == NULL || buf == NULL) return -1;
 
-    realpath(pathname, absPath);
+//    realpath(pathname, absPath);
 
     request.operation = OP_APPEND_FILE;
-    strncpy(request.filepath, absPath, PATH_MAX);
+    strncpy(request.filepath, pathname, PATH_MAX);
     request.clientId = getpid();
     request.fileSize = size;
 
@@ -295,7 +295,7 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
             if(response.statusCode == -1)
                 return -1;
 
-            print("Invio i dati per append file %s al server\n",absPath);
+            print("Invio i dati per append file %s al server\n",pathname);
             /* Invio al server il file! */
             if ( write(fd_socket,buf,request.fileSize) != -1){
 
@@ -336,17 +336,17 @@ int lockFile(const char* pathname){
 
     Request request;
     Response response;
-    char absPath[PATH_MAX];
+//    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
 
-    realpath(pathname, absPath);
+//    realpath(pathname, absPath);
 
     request.operation = OP_LOCK_FILE;
-    strcpy(request.filepath, absPath);
+    strcpy(request.filepath, pathname);
     request.clientId = getpid();
 
-    print("Invio richiesta di lock per file %s\n", absPath);
+    print("Invio richiesta di lock per file %s\n", pathname);
 
     return sendRequest(&request,&response);
 
@@ -358,17 +358,17 @@ int unlockFile(const char* pathname){
 
     Request request;
     Response response;
-    char absPath[PATH_MAX];
+//    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
 
-    realpath(pathname, absPath);
+//    realpath(pathname, absPath);
 
     request.operation = OP_UNLOCK_FILE;
-    strcpy(request.filepath, absPath);
+    strcpy(request.filepath, pathname);
     request.clientId = getpid();
 
-    print("Invio richiesta di unlock per file %s\n", absPath);
+    print("Invio richiesta di unlock per file %s\n", pathname);
 
     return sendRequest(&request,&response);
 }
@@ -379,17 +379,17 @@ int removeFile(const char* pathname){
 
     Request request;
     Response response;
-    char absPath[PATH_MAX];
+//    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
 
-    realpath(pathname, absPath);
+//    realpath(pathname, absPath);
 
     request.operation = OP_DELETE_FILE;
-    strcpy(request.filepath, absPath);
+    strcpy(request.filepath, pathname);
     request.clientId = getpid();
 
-    print("Invio richiesta di cancellazione per file %s\n", absPath);
+    print("Invio richiesta di cancellazione per file %s\n", pathname);
 
     return sendRequest(&request, &response);
 }
@@ -400,17 +400,17 @@ int closeFile(const char* pathname){
 
     Request request;
     Response response;
-    char absPath[PATH_MAX];
+//    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
 
-    realpath(pathname, absPath);
+//    realpath(pathname, absPath);
 
     request.operation = OP_CLOSE_FILE;
-    strcpy(request.filepath, absPath);
+    strcpy(request.filepath, pathname);
     request.clientId = getpid();
 
-    print("Invio richiesta di chiusura per file %s\n", absPath);
+    print("Invio richiesta di chiusura per file %s\n", pathname);
 
     return sendRequest(&request, &response);
 
