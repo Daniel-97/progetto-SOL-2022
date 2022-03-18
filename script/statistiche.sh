@@ -17,8 +17,7 @@ total_byte_write=0
 
 i=0
 
-while r
-ead line; do
+while read line; do
   i=$((i+1))
   if [ $i == 1 ]; then
     continue
@@ -48,7 +47,7 @@ done < $1
 
 echo "****** STATISTICHE SERVER *****"
 echo "- cont read: $cont_read"
-echo "- cont read: $cont_n_read"
+echo "- cont n_read: $cont_n_read"
 echo "- cont write: $cont_write"
 echo "- cont lock: $cont_lock"
 echo "- cont unlock: $cont_unlock"

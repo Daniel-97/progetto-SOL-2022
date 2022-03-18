@@ -180,7 +180,6 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
             incNumFileReplacement();
 
-            free(data);
         }
 
     }else{

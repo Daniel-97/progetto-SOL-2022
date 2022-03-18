@@ -130,20 +130,21 @@ char* getFileListFromDir(const char* dirname, int maxFile){
         /* Read the output a line at a time - output it. */
         while (fgets(output, sizeof(output), fp) != NULL) {
 
+            output[strcspn(output, "\n")] = 0; //Remove \n from string
+
             if(fileList == NULL){
 
-                fileList = malloc(strlen(output)-1);
                 fileList = allocateMemory(1,strlen(output)+1);
                 strncpy(fileList, output, strlen(output));
 
             }else{
                 tmp = allocateMemory(1, strlen(fileList)+1);
-                strcpy(tmp, fileList);
+                strncpy(tmp, fileList, strlen(fileList));
                 free(fileList);
-                fileList = allocateMemory(1, strlen(tmp)+strlen(output)+1);
+                fileList = allocateMemory(1, strlen(tmp)+strlen(output)+2);
                 strncpy(fileList, tmp, strlen(tmp));
                 strcat(fileList,",");
-                strncat(fileList, output, strlen(output)-1);
+                strncat(fileList, output, strlen(output));
                 free(tmp);
 
             }

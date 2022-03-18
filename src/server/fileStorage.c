@@ -187,7 +187,7 @@ int removeNode(Queue *queue, FileNode *node){
     tmp = queue->head;
     prec = queue->head;
 
-    while( (tmp = tmp->next) != NULL){
+    while( (tmp = tmp->next) != NULL ){
 
         if(tmp->data == node){
             /* Se è l ultimo elemento aggiorno il puntatore di coda*/
