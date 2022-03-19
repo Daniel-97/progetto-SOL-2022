@@ -22,6 +22,7 @@ static void *worker(void *arg);
 static void *signalThreadHandler(void *arg);
 
 int handler_signal_pipe[2];
+int worker_signal_pipe[2];
 
 pthread_mutex_t mutex_workers;
 pthread_cond_t cond_workers;
@@ -35,7 +36,7 @@ int main(int argc, char *argv[]){
     sigaddset(&set,SIGINT);
     sigaddset(&set,SIGQUIT);
     sigaddset(&set,SIGHUP);
-//    sigaddset(&set,SIGPIPE);
+    sigaddset(&set,SIGPIPE);
     pthread_sigmask(SIG_SETMASK,&set,NULL);
 
     /* Creo il thread per i segnali in modalità detached */
@@ -79,8 +80,16 @@ int main(int argc, char *argv[]){
     /**** PIPE INIT ****/
     handler_signal_pipe[0] = -1;
     handler_signal_pipe[1] = -1;
+
     if (pipe(handler_signal_pipe) == -1){
-        perror("Error creazione pipe\n");
+        perror("Error creazione pipe handler\n");
+        exit(EXIT_FAILURE);
+    }
+
+    worker_signal_pipe[0] = -1;
+    worker_signal_pipe[1] = -1;
+    if (pipe(worker_signal_pipe) == -1){
+        perror("Error creazione pipe worker\n");
         exit(EXIT_FAILURE);
     }
 
@@ -234,7 +243,8 @@ static void *worker(void *arg){
         printf("[%lu] In attesa di nuova richiesta...\n",self);
 
         pthread_mutex_lock(&mutex_workers);
-        pthread_cond_wait(&cond_workers, &mutex_workers);
+        if(!closeServer && !acceptNewConnection && connectionQueue->len == 0)
+            pthread_cond_wait(&cond_workers, &mutex_workers);
         pthread_mutex_unlock(&mutex_workers);
 
         if(!acceptNewConnection || closeServer){
@@ -244,7 +254,7 @@ static void *worker(void *arg){
 
         int *fd = pop(connectionQueue);
         fd_client_skt = *fd;
-        printf("[%lu] Pop di fd: %d\n",self,fd_client_skt);
+        printf("[%lu] Pop di fd: %d, queue len: %lu\n",self,fd_client_skt,connectionQueue->len);
         addConnectionCont();
 
         if (fd_client_skt != -1){
@@ -311,14 +321,6 @@ static void *worker(void *arg){
 
                 }
 
-                /* Preparo la risposta per il client */
-//                response->statusCode = 0;
-//                strcpy(response->message, "All ok!");
-//                printf("[%lu] Invio risposta al client...\n", self);
-//
-//                if (write(*fd_client_skt, response, sizeof(Response)) != -1){
-//                    printf("[%lu] Risposta inviata al client!\n",self);
-//                }
             }
 
             printf("[%lu] Connessione con client chiusa\n", self);

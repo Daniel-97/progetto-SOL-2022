@@ -27,7 +27,7 @@ Queue* initQueue(){
 
 int push(Queue *q, void *data){
 
-    if( (q == NULL) || (data == NULL))
+    if( (q == NULL) || (data == NULL) )
         return -1;
 
     Node *n = allocateMemory(1, sizeof(Node));
@@ -62,22 +62,23 @@ void *pop(Queue *q){
     pthread_mutex_lock(&q->qlock);
 
     //Attendo fino a che non ci sono dei nuovi elementi nella coda
-//    while(q->head == q->tail)
-//        pthread_cond_wait(&q->qcond, &q->qlock);
+    while(q->head == q->tail)
+        pthread_cond_wait(&q->qcond, &q->qlock);
 
-    if(q->head == q->tail)
-        return (void *)-1;
+    Node *n = q->head->next;
+    data = n->data;
+    q->head->next = n->next;
 
-    Node *n = q->head;
-    data = q->head->next->data;
-    q->head = n->next;
+    if(q->head->next == NULL)
+        q->tail = q->head;
+
     q->len--;
 
     pthread_mutex_unlock(&q->qlock);
     //Fine sezione critica
 
     //Libero la memoria del nodo rimosso
-    free(n);
+    safeFree(n);
 
     return data;
 }
@@ -99,12 +100,12 @@ void deleteQueue(Queue *queue){
 
         tmp = queue->head;
         queue->head = queue->head->next;
-        free(tmp);
+        safeFree(tmp);
 
     }
 
     pthread_mutex_unlock(&queue->qlock);
 
-    free(queue);
+    safeFree(queue);
 
 }

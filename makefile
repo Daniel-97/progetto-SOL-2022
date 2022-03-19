@@ -31,12 +31,6 @@ clean:
 	rm -rf build/server/*
 	rm -rf build/client/*
 
-test_server:
-	./bin/server
-
-test_client:
-	./bin/client
-
 test1:
 	./script/test1.sh
 test2:

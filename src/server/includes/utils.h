@@ -32,4 +32,6 @@ int getNumConnections();
 
 void *allocateMemory(size_t n, size_t size);
 
+void safeFree(void *pointer);
+
 #endif //PROGETTO_SOL_2022_UTILS_H

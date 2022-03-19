@@ -141,10 +141,10 @@ char* getFileList(Queue *queue){
             strcpy(s, fileList);
             strcat(s, ",");
             strcat(s, fileNode->pathname);
-            free(fileList);
+            safeFree(fileList);
             fileList = allocateMemory(1, strlen(s) + 1);
             strncpy(fileList, s, strlen(s) + 1);
-            free(s);
+            safeFree(s);
         }
     }
 
@@ -196,9 +196,9 @@ int removeNode(Queue *queue, FileNode *node){
 
             tmp2 = prec->next;
             prec->next = tmp->next;
-            free(tmp2);
-            free(node->file);
-            free(node);
+            safeFree(tmp2);
+            safeFree(node->file);
+            safeFree(node);
             queue->len--;
             return 0;
         }
@@ -317,7 +317,7 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
         }
 
         printf("[%lu] Tento di leggere file %s dim: %zu byte\n",self,pathname,file->size);
-        *buf = malloc(file->size); //Alloco spazio buffer file da leggere
+        *buf = allocateMemory(1, file->size); //Alloco spazio buffer file da leggere
 
         if(*buf) {
 
@@ -368,7 +368,7 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
         /* Devo liberare la memoria */
         if (file->file != NULL){
 
-            free(file->file);
+            safeFree(file->file);
         }
 
         file->file = allocateMemory(1, size);
@@ -428,7 +428,7 @@ int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size
 
         if(file->file == NULL) { //Prima scrittura
 
-            file->file = malloc(size);
+            file->file = allocateMemory(1, size);
 
             if (file->file) {
 
@@ -446,14 +446,14 @@ int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size
 
         }else{ //Il buffer contiene già dei dati
 
-            char *tmp = malloc(file->size+size); //Alloco un buffer con la nuova dimensione
+            char *tmp = allocateMemory(1, file->size+size); //Alloco un buffer con la nuova dimensione
 
             if (tmp) {
 
                 memcpy(tmp, file->file, file->size); //Copio il vecchio contenuto del file nel buffer
                 memcpy((tmp + size), buf, size); //Copio in append il nuovo contenuto del file
                 file->size += size;
-                free(file->file);
+                safeFree(file->file);
                 file->file = tmp;
                 printf("[%lu] File scritto correttamente in buffer!\n",self);
                 status = 0;
@@ -771,16 +771,16 @@ char* getNFileList(Queue *queue, size_t *size, int N){
 
         if(fileList != NULL) {
             s = strlen(fileList)+1+strlen(fileNode->pathname)+1;
-            tmp = malloc(s);
+            tmp = allocateMemory(1, s);
             strcpy(tmp, fileList);
             strcat(tmp, ",");
             strcat(tmp, fileNode->pathname);
-            free(fileList);
-            fileList = malloc(s);
+            safeFree(fileList);
+            fileList = allocateMemory(1, s);
             strcpy(fileList, tmp);
-            free(tmp);
+            safeFree(tmp);
         }else{
-            fileList = malloc(strlen(fileNode->pathname)+1);
+            fileList = allocateMemory(1, strlen(fileNode->pathname)+1);
             strcpy(fileList, fileNode->pathname);
         }
 
@@ -808,15 +808,15 @@ void deleteFileQueue(Queue *queue){
 
         fileNode = tmp->data;
         if(fileNode != NULL && fileNode->file != NULL)
-            free(fileNode->file);
-        free(fileNode);
+            safeFree(fileNode->file);
+        safeFree(fileNode);
 
         queue->head = queue->head->next;
-        free(tmp);
+        safeFree(tmp);
 
     }
 
     pthread_mutex_unlock(&queue->qlock);
 
-    free(queue);
+    safeFree(queue);
 }

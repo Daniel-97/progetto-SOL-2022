@@ -26,7 +26,7 @@ void open_file_controller(int *fd_client_skt, Request *request){
         printf("[%lu] Risposta inviata al client!\n", self);
     }
 
-    free(response);
+    safeFree(response);
 
 }
 
@@ -55,7 +55,7 @@ void append_file_controller(int *fd_client_skt, Request *request){
 
         logRequest(*request, 0,request->fileSize,data->pathname);
         if( removeNode(fileQueue, data) != -1 ){
-            free(data);
+//            free(data); leave comment
         }
 
     }else{
@@ -136,7 +136,7 @@ void delete_file_controller(int *fd_client_skt, Request *request){
         printf("[%lu] Risposta inviata al client!\n",self);
     }
 
-    free(response);
+    safeFree(response);
 
 }
 
@@ -158,7 +158,7 @@ void write_file_controller(int *fd_client_skt, Request *request){
         strcpy(response->message, "The file is too big for the server");
         response->statusCode = -1;
         write(*fd_client_skt, response, sizeof(Response));
-        free(response);
+        safeFree(response);
         return;
     }
 
@@ -228,7 +228,7 @@ void write_file_controller(int *fd_client_skt, Request *request){
                 printf("[%lu] Errore ricezione file %s da client\n",self,request->filepath);
             }
 
-            free(buf);
+            safeFree(buf);
         }
 
     }else{
@@ -242,7 +242,7 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
     }
 
-    free(response);
+    safeFree(response);
 
 }
 
@@ -288,7 +288,7 @@ void lock_file_controller(int *fd_client_skt, Request *request){
         printf("[%lu] Risposta inviata al client!\n",self);
     }
 
-    free(response);
+    safeFree(response);
 }
 
 void unlock_file_controller(int *fd_client_skt, Request *request){
@@ -310,7 +310,7 @@ void unlock_file_controller(int *fd_client_skt, Request *request){
         printf("[%lu] Risposta inviata al client!\n",self);
     }
 
-    free(response);
+    safeFree(response);
 }
 
 void readn_file_controller(int *fd_client_skt, Request *request){
@@ -345,8 +345,8 @@ void readn_file_controller(int *fd_client_skt, Request *request){
         printf("[%lu] Risposta inviata al client!\n",self);
     }
 
-    free(fileList);
-    free(response);
+    safeFree(fileList);
+    safeFree(response);
     //todo al momento è il client che richiedei files mediante delle re
 
 }

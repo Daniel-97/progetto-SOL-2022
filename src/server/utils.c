@@ -33,6 +33,9 @@ void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
             }
 
         }
+
+        safeFree(buf);
+
     }else{ /* In caso di errore invio il messaggio di errore al client */
 
         response->statusCode = -1;
@@ -43,9 +46,7 @@ void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
         }
     }
 
-    free(response);
-    if(buf != NULL)
-        free(buf);
+    safeFree(response);
 
 }
 
@@ -73,7 +74,7 @@ void sendBufferFileToClient(int fd_client_skt, FileNode *file, int statusCode){
 
     }
 
-    free(response);
+    safeFree(response);
 }
 
 int getFreeSpace(Queue *queue){
@@ -157,6 +158,15 @@ void *allocateMemory(size_t n, size_t size){
         exit(EXIT_FAILURE);
     }
     return mem;
+}
+
+void safeFree(void *pointer){
+
+    if(pointer != NULL){
+        free(pointer);
+        pointer = NULL;
+    }
+
 }
 
 

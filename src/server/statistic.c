@@ -3,6 +3,7 @@
 //
 
 #include "includes/statistic.h"
+#include "includes/utils.h"
 
 void statInit(){
     max_num_file = 0;
@@ -31,7 +32,7 @@ void printStat(Queue *queue){
         }
     }
 
-    free(fileList);
+    safeFree(fileList);
 
 }
 
