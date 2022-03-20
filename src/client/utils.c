@@ -119,7 +119,7 @@ char* getFileListFromDir(const char* dirname, int maxFile){
     FILE *fp;
     char command[255];
     char output[1000];
-    strcpy(command,"/bin/find ");
+    strcpy(command,"find ");
     strcat(command,dirname);
     strcat(command," -type f");
 
