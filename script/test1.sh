@@ -1,3 +1,5 @@
+#!/bin/bash
+
 CONFIG=./config/config.txt
 SERVER=./bin/server
 CLIENT=./bin/client
@@ -25,5 +27,6 @@ ${CLIENT} -f ${SOCKET} -p -t 200 -D test/test1/expelled -W test/test1/folder/tes
 #Lancio client 3
 ${CLIENT} -f ${SOCKET} -p -t 200 -d test/test1/read/ -r test/test1/folder/test1.txt,test/test1/folder/test2.txt
 
+# -1 = SIGHUP
 #Chiudo il server
-kill -SIGHUP ${PID_SERVER}
+kill -1 ${PID_SERVER}

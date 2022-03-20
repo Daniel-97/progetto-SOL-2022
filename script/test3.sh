@@ -1,3 +1,5 @@
+#!/bin/bash
+
 CONFIG=./config/config.txt
 SERVER=./bin/server
 CLIENT=./bin/client
@@ -12,7 +14,8 @@ echo -e "socket-path:${SOCKET}\nthread-workers:${N_WORKER}\nmax-mem-size:${STORA
 
 start_time=$(date +%s)
 clients_pid=(-1 -1 -1 -1 -1 -1 -1 -1 -1 -1)
-client_args=("-W test/test2/imgs/img2.jpg" "-W test/test2/imgs/img3.jpg" "-W test/test2/imgs/img4.jpg") #Ok funziona
+#client_args="-W test/test2/imgs/img2.jpg -r test/test2/imgs/img3.jpg -r test/test2/imgs/img4.jpg -r test/test2/imgs/img5.jpg -r test/test2/imgs/img6.jpg"
+client_args=("-W test/test2/imgs/img2.jpg" "-r test/test2/imgs/img3.jpg" "-r test/test2/imgs/img4.jpg" "-r test/test2/imgs/img5.jpg" "-r test/test2/imgs/img6.jpg") #Ok funziona
 #client_args=("-r test/test2/imgs/img2.jpg" "-W test/test2/test1.txt" "-W test/test2/imgs/img2.jpg")
 #client_args=("-W test/test2/imgs/img2.jpg -l test/test2/imgs/img2.jpg -u test/test2/imgs/img3.jpg")
 
@@ -55,5 +58,6 @@ done
 #Force close all clients
 #pkill -f ./bin/client
 
+# -2 = SIGINT
 ##Chiudo il server
-kill -SIGINT ${PID_SERVER}
+kill -2 ${PID_SERVER}

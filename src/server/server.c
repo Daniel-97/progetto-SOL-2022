@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
     sigaddset(&set,SIGINT);
     sigaddset(&set,SIGQUIT);
     sigaddset(&set,SIGHUP);
-    sigaddset(&set,SIGPIPE);
+//    sigaddset(&set,SIGPIPE);
     pthread_sigmask(SIG_SETMASK,&set,NULL);
 
     /* Creo il thread per i segnali in modalità detached */
@@ -243,7 +243,7 @@ static void *worker(void *arg){
         printf("[%lu] In attesa di nuova richiesta...\n",self);
 
         pthread_mutex_lock(&mutex_workers);
-        if(!closeServer && !acceptNewConnection && connectionQueue->len == 0)
+//        if(!closeServer && !acceptNewConnection && connectionQueue->len == 0)
             pthread_cond_wait(&cond_workers, &mutex_workers);
         pthread_mutex_unlock(&mutex_workers);
 
