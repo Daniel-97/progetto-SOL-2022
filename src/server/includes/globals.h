@@ -16,6 +16,12 @@ Config serverConfig;
 Queue *connectionQueue; /* Coda per le connessioni in arrivo */
 Queue *fileQueue; /* Coda per i file dei client */
 
+pthread_mutex_t connection_queue_mutex;
+pthread_cond_t connection_queue_cond;
+
+pthread_mutex_t file_queue_mutex;
+pthread_cond_t  file_queue_cond;
+
 pthread_mutex_t mutex_n_connections;
 int n_connections;
 

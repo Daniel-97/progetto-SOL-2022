@@ -512,18 +512,18 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
         /* Attendo che venga rilasciato il lock del file se non è libero */
 //        printf("Cerco di prendere mutex dentro lock()\n");
-        pthread_mutex_lock(&file_lock_mutex);
+        pthread_mutex_lock(&file_queue_mutex);
 //        printf("Mutex dentro lock() acquisito. clientid:%d\n",file->client_id);
 
         while(file->client_id != 0 && !closeServer) {
             printf("[%lu] Il file %s è in lock da un altro client, attendo...", self, pathname);
-            pthread_cond_wait(&file_lock_cond, &file_lock_mutex);
+            pthread_cond_wait(&file_queue_cond, &file_queue_mutex);
         }
 
         pthread_mutex_lock(&queue->qlock);
 
         file->client_id = clientId;
-        pthread_mutex_unlock(&file_lock_mutex);
+        pthread_mutex_unlock(&file_queue_mutex);
 
         printf("[%lu] Lock acquisito sul file %s\n",self,pathname);
         status = 0;
@@ -572,7 +572,7 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
         }
 
 //        printf("Prendo mutex lock dentro unlock()\n");
-        pthread_mutex_lock(&file_lock_mutex);
+        pthread_mutex_lock(&file_queue_mutex);
 //        printf("Mutex preso dentro unlock()\n");
 
         if(file->client_id == clientId){
@@ -581,7 +581,7 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
             printf("[%lu] Unlock sul file eseguito correttamente %s\n",self,pathname);
             status = 0;
             //todo testare meglio
-            pthread_cond_signal(&file_lock_cond); //Signal to the other worker
+            pthread_cond_signal(&file_queue_cond); //Signal to the other worker
 
         }else if (file->client_id == 0){
 
@@ -595,7 +595,7 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
         }
 
-        pthread_mutex_unlock(&file_lock_mutex);
+        pthread_mutex_unlock(&file_queue_mutex);
 
     }
 

@@ -41,7 +41,7 @@ int push(Queue *q, void *data){
     q->tail = n;
     q->len++;
     //Segnalo l inserimento di un nuovo elemento nella coda agli altri thread
-    pthread_cond_signal(&q->qcond);
+//    pthread_cond_signal(&q->qcond);
     pthread_mutex_unlock(&q->qlock);
     /* Qui finisce la sezione critica */
 
@@ -62,8 +62,8 @@ void *pop(Queue *q){
     pthread_mutex_lock(&q->qlock);
 
     //Attendo fino a che non ci sono dei nuovi elementi nella coda
-    while(q->head == q->tail)
-        pthread_cond_wait(&q->qcond, &q->qlock);
+//    while(q->head == q->tail)
+//        pthread_cond_wait(&q->qcond, &q->qlock);
 
     Node *n = q->head->next;
     data = n->data;

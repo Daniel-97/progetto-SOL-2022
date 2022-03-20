@@ -24,9 +24,6 @@ static void *signalThreadHandler(void *arg);
 int handler_signal_pipe[2];
 int worker_signal_pipe[2];
 
-pthread_mutex_t mutex_workers;
-pthread_cond_t cond_workers;
-
 int main(int argc, char *argv[]){
 
     /***** SIGNAL HANDLER INIT *****/
@@ -67,15 +64,18 @@ int main(int argc, char *argv[]){
 
     /***** FILE QUEUE INIT ******/
     fileQueue = initQueue();
-    pthread_mutex_init(&file_lock_mutex, NULL);
-    pthread_cond_init(&file_lock_cond, NULL);
+    pthread_mutex_init(&file_queue_mutex, NULL);
+    pthread_cond_init(&file_queue_cond, NULL);
 
     /***** CONNECTION QUEUE INIT *****/
     connectionQueue = initQueue();
-    if (connectionQueue == NULL){
-        printf("Errore init queue, aborting...");
-        exit(-1);
-    }
+    pthread_mutex_init(&connection_queue_mutex, NULL);
+    pthread_cond_init(&connection_queue_cond, NULL);
+
+//    if (connectionQueue == NULL){
+//        printf("Errore init queue, aborting...");
+//        exit(-1);
+//    }
 
     /**** PIPE INIT ****/
     handler_signal_pipe[0] = -1;
@@ -187,9 +187,10 @@ int main(int argc, char *argv[]){
 
                     printf("[MASTER] Sveglio un thread in attesa per avvertirlo della nuova connessione\n");
 
-                    pthread_mutex_lock(&mutex_workers);
-                    pthread_cond_signal(&cond_workers);
-                    pthread_mutex_unlock(&mutex_workers);
+                    /* Avverto uno dei worker che è presente un nuovo fd nella coda */
+                    pthread_mutex_lock(&connection_queue_mutex);
+                    pthread_cond_signal(&connection_queue_cond);
+                    pthread_mutex_unlock(&connection_queue_mutex);
 
                 }
 
@@ -242,10 +243,10 @@ static void *worker(void *arg){
 
         printf("[%lu] In attesa di nuova richiesta...\n",self);
 
-        pthread_mutex_lock(&mutex_workers);
-//        if(!closeServer && !acceptNewConnection && connectionQueue->len == 0)
-            pthread_cond_wait(&cond_workers, &mutex_workers);
-        pthread_mutex_unlock(&mutex_workers);
+        pthread_mutex_lock(&connection_queue_mutex);
+        while(!closeServer && acceptNewConnection && connectionQueue->len == 0)
+            pthread_cond_wait(&connection_queue_cond, &connection_queue_mutex);
+        pthread_mutex_unlock(&connection_queue_mutex);
 
         if(!acceptNewConnection || closeServer){
             printf("[%lu] Mi termino...\n",self);
@@ -368,14 +369,14 @@ static void *signalThreadHandler(void *arg){
                 printf("[SIGNAL-THREAD] Blocco le nuove richieste di connessione al server\n");
                 close(handler_signal_pipe[1]);
 //                while (getNumConnections() != 0) {}
-                pthread_mutex_lock(&mutex_workers);
-                pthread_cond_broadcast(&cond_workers);
-                pthread_mutex_unlock(&mutex_workers);
+                pthread_mutex_lock(&connection_queue_mutex);
+                pthread_cond_broadcast(&connection_queue_cond);
+                pthread_mutex_unlock(&connection_queue_mutex);
 
                 /* Sveglia eventuali thread che sono in attesa di mutex su file */
-                pthread_mutex_lock(&file_lock_mutex);
-                pthread_cond_broadcast(&file_lock_cond);
-                pthread_mutex_unlock(&file_lock_mutex);
+                pthread_mutex_lock(&file_queue_mutex);
+                pthread_cond_broadcast(&file_queue_cond);
+                pthread_mutex_unlock(&file_queue_mutex);
 //                deleteQueue(fileQueue);
 //                deleteQueue(connectionQueue);
 
@@ -393,14 +394,14 @@ static void *signalThreadHandler(void *arg){
 //                printf("[SIGNAL-THREAD] Blocco le nuove richieste di connessione al server\n");
                 close(handler_signal_pipe[1]);
 //                while (getNumConnections() != 0) {}
-                pthread_mutex_lock(&mutex_workers);
-                pthread_cond_broadcast(&cond_workers);
-                pthread_mutex_unlock(&mutex_workers);
+                pthread_mutex_lock(&connection_queue_mutex);
+                pthread_cond_broadcast(&connection_queue_cond);
+                pthread_mutex_unlock(&connection_queue_mutex);
 
                 /* Sveglia eventuali thread che sono in attesa di mutex su file */
-                pthread_mutex_lock(&file_lock_mutex);
-                pthread_cond_broadcast(&file_lock_cond);
-                pthread_mutex_unlock(&file_lock_mutex);
+                pthread_mutex_lock(&file_queue_mutex);
+                pthread_cond_broadcast(&file_queue_cond);
+                pthread_mutex_unlock(&file_queue_mutex);
 //                deleteQueue(fileQueue);
 //                deleteQueue(connectionQueue);
 
