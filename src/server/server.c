@@ -179,6 +179,8 @@ int main(int argc, char *argv[]){
 //                        max_sd = fd_client_skt;
                     printf("\n[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",fd_client_skt);
 
+                    pthread_mutex_lock(&connection_queue_mutex);
+
                     if( push(connectionQueue,&fd_client_skt) != -1)
                         printf("[MASTER] File descriptor client socket inserito nella coda\n");
                     else
@@ -188,7 +190,6 @@ int main(int argc, char *argv[]){
                     printf("[MASTER] Sveglio un thread in attesa per avvertirlo della nuova connessione\n");
 
                     /* Avverto uno dei worker che è presente un nuovo fd nella coda */
-                    pthread_mutex_lock(&connection_queue_mutex);
                     pthread_cond_signal(&connection_queue_cond);
                     pthread_mutex_unlock(&connection_queue_mutex);
 
@@ -217,9 +218,18 @@ int main(int argc, char *argv[]){
     /* Stampo le statistiche */
     printStat(fileQueue);
 
+    pthread_mutex_lock(&file_queue_mutex);
     deleteFileQueue(fileQueue);
+    pthread_mutex_unlock(&file_queue_mutex);
+
+    pthread_mutex_lock(&connection_queue_mutex);
     deleteQueue(connectionQueue);
+    pthread_mutex_unlock(&connection_queue_mutex);
+
     close(fd_server_skt);
+
+    loggerEnd();
+
     return 0;
 }
 
@@ -246,15 +256,17 @@ static void *worker(void *arg){
         pthread_mutex_lock(&connection_queue_mutex);
         while(!closeServer && acceptNewConnection && connectionQueue->len == 0)
             pthread_cond_wait(&connection_queue_cond, &connection_queue_mutex);
-        pthread_mutex_unlock(&connection_queue_mutex);
 
         if(!acceptNewConnection || closeServer){
             printf("[%lu] Mi termino...\n",self);
+            pthread_mutex_unlock(&connection_queue_mutex); //Release mutex
             break;
         }
 
         int *fd = pop(connectionQueue);
         fd_client_skt = *fd;
+        pthread_mutex_unlock(&connection_queue_mutex); //Release mutex
+
         printf("[%lu] Pop di fd: %d, queue len: %lu\n",self,fd_client_skt,connectionQueue->len);
         addConnectionCont();
 
@@ -338,7 +350,7 @@ static void *worker(void *arg){
         subConnectionCont();
 
     }
-//    close(*fd_client_skt);
+    close(fd_client_skt);
     return 0;
 
 }

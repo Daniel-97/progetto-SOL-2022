@@ -18,8 +18,8 @@ Queue* initQueue(){
     q->tail = q->head;
     q->len = 0;
 
-    pthread_mutex_init(&q->qlock, NULL);
-    pthread_cond_init(&q->qcond, NULL);
+//    pthread_mutex_init(&q->qlock, NULL);
+//    pthread_cond_init(&q->qcond, NULL);
 
 
     return q;
@@ -36,13 +36,13 @@ int push(Queue *q, void *data){
     n->next = NULL;
 
     /* Qui inizia la sezione critica */
-    pthread_mutex_lock(&q->qlock);
+//    pthread_mutex_lock(&q->qlock);
     q->tail->next = n;
     q->tail = n;
     q->len++;
     //Segnalo l inserimento di un nuovo elemento nella coda agli altri thread
 //    pthread_cond_signal(&q->qcond);
-    pthread_mutex_unlock(&q->qlock);
+//    pthread_mutex_unlock(&q->qlock);
     /* Qui finisce la sezione critica */
 
     return(q->len);
@@ -59,7 +59,7 @@ void *pop(Queue *q){
     }
 
     //Inizio sezione critica
-    pthread_mutex_lock(&q->qlock);
+//    pthread_mutex_lock(&q->qlock);
 
     //Attendo fino a che non ci sono dei nuovi elementi nella coda
 //    while(q->head == q->tail)
@@ -74,7 +74,7 @@ void *pop(Queue *q){
 
     q->len--;
 
-    pthread_mutex_unlock(&q->qlock);
+//    pthread_mutex_unlock(&q->qlock);
     //Fine sezione critica
 
     //Libero la memoria del nodo rimosso
@@ -85,8 +85,8 @@ void *pop(Queue *q){
 
 void signalQueue(Queue *queue){
 
-    pthread_cond_signal(&queue->qcond);
-    pthread_mutex_unlock(&queue->qlock);
+//    pthread_cond_signal(&queue->qcond);
+//    pthread_mutex_unlock(&queue->qlock);
 
 }
 
@@ -94,7 +94,7 @@ void deleteQueue(Queue *queue){
 
     Node *tmp;
 
-    pthread_mutex_lock(&queue->qlock);
+//    pthread_mutex_lock(&queue->qlock);
 
     while( queue->head != NULL){
 
@@ -104,7 +104,7 @@ void deleteQueue(Queue *queue){
 
     }
 
-    pthread_mutex_unlock(&queue->qlock);
+//    pthread_mutex_unlock(&queue->qlock);
 
     safeFree(queue);
 

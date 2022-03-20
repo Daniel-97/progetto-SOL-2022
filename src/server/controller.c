@@ -11,6 +11,8 @@ void open_file_controller(int *fd_client_skt, Request *request){
 
     logRequest(*request,0,0,NULL);
 
+    safeMutexLock(&file_queue_mutex);
+
     if (openVirtualFile(fileQueue,request->filepath, request->flags, request->clientId) == 0) {
         /* Preparo la risposta per il client */
         response->statusCode = 0;
@@ -28,6 +30,8 @@ void open_file_controller(int *fd_client_skt, Request *request){
 
     safeFree(response);
 
+    safeMutexUnlock(&file_queue_mutex);
+
 }
 
 void append_file_controller(int *fd_client_skt, Request *request){
@@ -38,6 +42,8 @@ void append_file_controller(int *fd_client_skt, Request *request){
     size_t size;
     FileNode *data;
     int freeSpace;
+
+    safeMutexLock(&file_queue_mutex);
 
     freeSpace = getFreeSpace(fileQueue);
 
@@ -107,12 +113,17 @@ void append_file_controller(int *fd_client_skt, Request *request){
 
     }
 
+    safeMutexUnlock(&file_queue_mutex);
+
 }
 
 void read_file_controller(int *fd_client_skt, Request *request){
 
     //todo qui manca il logging
+    safeMutexLock(&file_queue_mutex);
     sendFileToClient(*fd_client_skt, request->filepath,0);
+    safeMutexUnlock(&file_queue_mutex);
+
 
 }
 
@@ -123,6 +134,7 @@ void delete_file_controller(int *fd_client_skt, Request *request){
 
     logRequest(*request, 0,0,NULL);
 
+    safeMutexLock(&file_queue_mutex);
 
     if(deleteVirtualFile(fileQueue,request->filepath, request->clientId) == 0){
         response->statusCode = 0;
@@ -138,6 +150,8 @@ void delete_file_controller(int *fd_client_skt, Request *request){
 
     safeFree(response);
 
+    safeMutexUnlock(&file_queue_mutex);
+
 }
 
 void write_file_controller(int *fd_client_skt, Request *request){
@@ -150,6 +164,8 @@ void write_file_controller(int *fd_client_skt, Request *request){
 //    size_t size;
     int freeSpace;
     int rbyte;
+
+    safeMutexLock(&file_queue_mutex);
 
     freeSpace = getFreeSpace(fileQueue);
 
@@ -244,6 +260,8 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
     safeFree(response);
 
+    safeMutexUnlock(&file_queue_mutex);
+
 }
 
 void close_file_controller(int *fd_client_skt, Request *request){
@@ -252,6 +270,8 @@ void close_file_controller(int *fd_client_skt, Request *request){
     pthread_t self = pthread_self();
 
     logRequest(*request,0,0, NULL);
+
+    safeMutexLock(&file_queue_mutex);
 
     if(closeVirtualFile(fileQueue,request->filepath, request->clientId) == 0){
         response->statusCode = 0;
@@ -267,6 +287,8 @@ void close_file_controller(int *fd_client_skt, Request *request){
         printf("[%lu] Risposta inviata al client!\n",self);
     }
 
+    safeMutexUnlock(&file_queue_mutex);
+
 }
 
 void lock_file_controller(int *fd_client_skt, Request *request){
@@ -275,6 +297,8 @@ void lock_file_controller(int *fd_client_skt, Request *request){
     pthread_t self = pthread_self();
 
     logRequest(*request,0,0, NULL);
+
+    safeMutexLock(&file_queue_mutex);
 
     /* Tento di acquisire il lock sul file */
     if(lockVirtualFile(fileQueue,request->filepath,request->clientId) == 0){
@@ -289,6 +313,9 @@ void lock_file_controller(int *fd_client_skt, Request *request){
     }
 
     safeFree(response);
+
+    safeMutexUnlock(&file_queue_mutex);
+
 }
 
 void unlock_file_controller(int *fd_client_skt, Request *request){
@@ -297,6 +324,8 @@ void unlock_file_controller(int *fd_client_skt, Request *request){
     pthread_t self = pthread_self();
 
     logRequest(*request,0,0, NULL);
+
+    safeMutexLock(&file_queue_mutex);
 
     /* Tentativo di unlock sul file */
     if(unlockVirtualFile(fileQueue,request->filepath,request->clientId) == 0){
@@ -311,6 +340,9 @@ void unlock_file_controller(int *fd_client_skt, Request *request){
     }
 
     safeFree(response);
+
+    safeMutexUnlock(&file_queue_mutex);
+
 }
 
 void readn_file_controller(int *fd_client_skt, Request *request){
@@ -323,6 +355,8 @@ void readn_file_controller(int *fd_client_skt, Request *request){
 
     //todo qui devo loggare tutti i byte effettivamente letti
     logRequest(*request,0,0,NULL);
+
+    safeMutexLock(&file_queue_mutex);
 
     /* The flag in the request contains the number of requested files */
     fileList = getNFileList(fileQueue, &size, request->flags);
@@ -348,6 +382,7 @@ void readn_file_controller(int *fd_client_skt, Request *request){
     safeFree(fileList);
     safeFree(response);
     //todo al momento è il client che richiedei files mediante delle re
+    safeMutexUnlock(&file_queue_mutex);
 
 }
 

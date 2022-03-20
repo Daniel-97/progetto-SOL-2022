@@ -85,7 +85,7 @@ int getFreeSpace(Queue *queue){
     int size = 0;
     int available = 0;
 
-    pthread_mutex_lock(&queue->qlock);
+//    pthread_mutex_lock(&queue->qlock);
 
     while( (node = node->next) != NULL){
 
@@ -94,7 +94,7 @@ int getFreeSpace(Queue *queue){
 
     }
 
-    pthread_mutex_unlock(&queue->qlock);
+//    pthread_mutex_unlock(&queue->qlock);
 
     available = serverConfig.max_mem_size - size;
 //    printf("Current available space: %d bytes\n",available);
@@ -110,7 +110,7 @@ FileNode* expelFile(Queue  *queue, int requiredSpace){
     FileNode *expelFile;
     int freeSpace = getFreeSpace(queue);
 
-    pthread_mutex_lock(&queue->qlock);
+//    pthread_mutex_lock(&queue->qlock);
 
     while( (node = node->next) != NULL){
 
@@ -122,7 +122,7 @@ FileNode* expelFile(Queue  *queue, int requiredSpace){
 
     }
 
-    pthread_mutex_unlock(&queue->qlock);
+//    pthread_mutex_unlock(&queue->qlock);
 
     return expelFile;
 
@@ -166,6 +166,31 @@ void safeFree(void *pointer){
         free(pointer);
         pointer = NULL;
     }
+
+}
+
+void safeMutexLock(pthread_mutex_t *mutex){
+
+    pthread_t self = pthread_self();
+
+    printf("[%lu] Acquiring mutex...\n", self);
+    if(pthread_mutex_lock(mutex) != 0){
+        perror("Error in mutex lock\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("[%lu] Mutex acquired!\n",self);
+
+}
+void safeMutexUnlock(pthread_mutex_t *mutex){
+
+    pthread_t self = pthread_self();
+
+    printf("[%lu] Releasing mutex...\n", self);
+    if(pthread_mutex_unlock(mutex) != 0){
+        perror("Error in mutex unlock\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("[%lu] Mutex released!\n",self);
 
 }
 

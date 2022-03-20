@@ -10,12 +10,18 @@ void loggerInit(){
     printf("\n***** INIZIALIZZAZIONE LOGGER ****\n");
     printf("Log file: %s\n",serverConfig.log_file);
 
+    /* Clear the log file */
     if( (logFile = fopen(serverConfig.log_file, "w")) == NULL){
         printf("ERRORE APERTURA FILE DI LOG\n");
     }
 
     fprintf(logFile,"%s","datetime,client-id,thread-id,operation,file-target,read-byte,write-byte,replaced-file,connections\n");
     fclose(logFile);
+
+    /* Open log file in append */
+    if((logFile = fopen(serverConfig.log_file, "a")) == NULL){
+        printf("ERRORE APERTURA FILE DI LOG\n");
+    }
 
 //    Request r;
 //    r.fileSize = 100;
@@ -36,7 +42,7 @@ void logRequest(Request request,int readByte, int writeByte, char *replacedFile)
     struct tm *t = localtime(&now);
     strftime(s, sizeof(s)-1,"%d/%m/%Y-%H:%M:%S",t);
 
-    if( (logFile = fopen(serverConfig.log_file, "a")) != NULL ){
+    if( logFile != NULL ){
 
         fprintf(logFile, "%s",s);
 
@@ -83,8 +89,10 @@ void logRequest(Request request,int readByte, int writeByte, char *replacedFile)
         /* Save current connection */
         fprintf(logFile,",%d\n",getNumConnections());
 
-        fclose(logFile);
-
     }
 
+}
+
+void loggerEnd(){
+    fclose(logFile);
 }

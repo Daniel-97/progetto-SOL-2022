@@ -20,8 +20,8 @@ typedef struct Queue {
     Node *head;
     Node *tail;
     unsigned long len;
-    pthread_mutex_t qlock; //Mutex per la coda
-    pthread_cond_t qcond; // Conditional variable per la coda
+//    pthread_mutex_t qlock; //Mutex per la coda
+//    pthread_cond_t qcond; // Conditional variable per la coda
 
 }Queue;
 

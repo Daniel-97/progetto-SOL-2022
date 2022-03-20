@@ -34,4 +34,7 @@ void *allocateMemory(size_t n, size_t size);
 
 void safeFree(void *pointer);
 
+void safeMutexLock(pthread_mutex_t *mutex);
+void safeMutexUnlock(pthread_mutex_t *mutex);
+
 #endif //PROGETTO_SOL_2022_UTILS_H
