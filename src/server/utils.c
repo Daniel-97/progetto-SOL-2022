@@ -202,5 +202,20 @@ void safeMutexUnlock(pthread_mutex_t *mutex){
 
 }
 
+int readData(int fd, void *buf, size_t size){
+
+    char *tmpBuff = (char *)buf;
+    size_t left = size;
+    int rbyte;
+
+    while(left > 0){
+        rbyte = read(fd, tmpBuff, left);
+        left -= rbyte;
+        tmpBuff += rbyte;
+    }
+
+    return  rbyte;
+}
+
 
 

@@ -45,4 +45,6 @@ void *allocateMemory(size_t n, size_t size);
 
 void msleep(long millis);
 
+int readData(int fd, void *buf, size_t size);
+
 #endif //PROGETTO_SOL_2022_UTILS_H

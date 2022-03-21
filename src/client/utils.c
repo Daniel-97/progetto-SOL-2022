@@ -89,7 +89,8 @@ int waitServerFile(void** buf, size_t* size){
         *size = response.fileSize;
         *buf = malloc(response.fileSize); //Alloco il buffer per la lettura del file
         // Leggo effettivamente il file dal server
-        if (read(fd_socket,*buf,*size) != -1){
+//        if (read(fd_socket,*buf,*size) != -1){
+        if (readData(fd_socket, *buf,response.fileSize) != -1){
 
             print("File ricevuto correttamente!\n");
             return 0;
@@ -188,4 +189,19 @@ void msleep(long millis){
 
     usleep(millis*1000);
 
+}
+
+int readData(int fd, void *buf, size_t size){
+
+    char *tmpBuff = (char *)buf;
+    size_t left = size;
+    int rbyte;
+
+    while(left > 0){
+        rbyte = read(fd, tmpBuff, left);
+        left -= rbyte;
+        tmpBuff += rbyte;
+    }
+
+    return  rbyte;
 }

@@ -171,7 +171,9 @@ int writeFile(const char* pathname, const char* dirname){
                 print("Il server sta per inviare il file che ha espulso\n");
                 buf = malloc(response.fileSize);
 
-                if ((rbyte = read(fd_socket,buf,response.fileSize)) == -1) {
+                rbyte = readData(fd_socket, buf, response.fileSize);
+
+                if (rbyte == -1) {
                     printf("Errore ricezione file espulso dal server\n");
                     return -1;
                 }

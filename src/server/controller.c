@@ -224,15 +224,7 @@ void write_file_controller(int *fd_client_skt, Request *request){
             printf("[%lu] Il client sta per inviare un file di %zu byte\n",self,request->fileSize);
             buf = allocateMemory(1, request->fileSize); //Alloco il buffer per la ricezione del file
 
-            /* Uso un while, la read può non leggere il numero di byte richiesti */
-            size_t left = request->fileSize;
-            char *tmpBuff = (char *)buf;
-
-            while(left > 0){
-                rbyte = read(*fd_client_skt, tmpBuff, left);
-                left -= rbyte;
-                tmpBuff += rbyte;
-            }
+            rbyte = readData(*fd_client_skt, buf, request->fileSize);
 
             if( rbyte != -1 ){
                 printf("[%lu] File %s ricevuto correttamente! rbyte:%d\n",self,request->filepath,rbyte);

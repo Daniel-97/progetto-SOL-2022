@@ -37,4 +37,6 @@ void safeFree(void *pointer);
 void safeMutexLock(pthread_mutex_t *mutex);
 void safeMutexUnlock(pthread_mutex_t *mutex);
 
+int readData(int fd, void *buf, size_t size);
+
 #endif //PROGETTO_SOL_2022_UTILS_H
