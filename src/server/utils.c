@@ -28,7 +28,7 @@ int sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
             /* Invio al client il file effettivo */
             if ( (wbyte = write(fd_client_skt, buf, size)) != -1){
                 printf("[%lu] File %s inviato correttamente! wbyte:%d\n",self, pathname,wbyte);
-                status = 0;
+                status = size;
             }else{
                 printf("[%lu] Errore invio file %s,%s \n",self, pathname, strerror(errno));
                 status = -1;
