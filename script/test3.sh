@@ -14,11 +14,7 @@ echo -e "socket-path:${SOCKET}\nthread-workers:${N_WORKER}\nmax-mem-size:${STORA
 
 start_time=$(date +%s)
 clients_pid=(-1 -1 -1 -1 -1 -1 -1 -1 -1 -1)
-#client_args=("-r test/test2/imgs/img2.jpg" )
 client_args=("-W test/test2/imgs/img2.jpg -r test/test2/imgs/img2.jpg -W test/test2/imgs/img3.jpg -r test/test2/imgs/img4.jpg -r test/test2/imgs/img5.jpg" )
-#client_args=("-W test/test2/imgs/img2.jpg" "-r test/test2/imgs/img3.jpg" "-r test/test2/imgs/img4.jpg" "-r test/test2/imgs/img5.jpg" "-r test/test2/imgs/img6.jpg") #Ok funziona
-#client_args=("-r test/test2/imgs/img2.jpg" "-W test/test2/test1.txt" "-W test/test2/imgs/img2.jpg")
-#client_args=("-W test/test2/imgs/img2.jpg -l test/test2/imgs/img2.jpg -u test/test2/imgs/img3.jpg")
 
 #START THE SERVER
 ${SERVER} &
@@ -34,9 +30,6 @@ while [ $(($(date +%s)-$start_time)) -lt 30 ]; do
     # else i need to check if the old client is still running
     if [ "${clients_pid[$i]}" -eq -1 ];
     then
-        #Get a random arguments for the client
-        rand=$(($RANDOM % ${#client_args[@]}))
-#        ${CLIENT} -p -f ${SOCKET} -t 0 -D test/test3/expelled -d test/test3/read ${client_args[$rand]} &
         ${CLIENT} -f ${SOCKET} -t 0 -D test/test3/expelled -d test/test3/read ${client_args} &
         echo "Starting new client with pid $!"
         clients_pid[$i]=$(($!))

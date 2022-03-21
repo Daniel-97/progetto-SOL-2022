@@ -63,7 +63,6 @@ int saveFile(const char* pathname, void *buf, size_t size){
 
 int saveFileDir(void *buf, size_t size,const char* dirname,const char* fileName){
 
-    //Todo attenzione il salvataggio viene fatto con il relpath e non abspath
     const char *name = getFileNameFromPath(fileName);
     char *path = malloc(strlen(dirname)+strlen(name)+1);
     strcpy(path,dirname);

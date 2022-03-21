@@ -38,10 +38,6 @@ int main(int argc, char *argv[]){
 
     /* Creo il thread per i segnali in modalità detached */
     pthread_t tid_signal_thread;
-//    pthread_attr_t tattr;
-//    pthread_attr_init(&tattr);
-//    pthread_attr_setdetachstate(&tattr,PTHREAD_CREATE_DETACHED);
-//    pthread_create(&tid_signal_thread, &tattr, &signalThreadHandler, NULL);
     pthread_create(&tid_signal_thread, NULL, &signalThreadHandler, NULL);
 
     /****** CONFIG INIT *******/
@@ -75,11 +71,6 @@ int main(int argc, char *argv[]){
     pthread_mutex_init(&connection_queue_mutex, NULL);
     pthread_cond_init(&connection_queue_cond, NULL);
 
-//    if (connectionQueue == NULL){
-//        printf("Errore init queue, aborting...");
-//        exit(-1);
-//    }
-
     /**** PIPE INIT ****/
     handler_signal_pipe[0] = -1;
     handler_signal_pipe[1] = -1;
@@ -97,20 +88,10 @@ int main(int argc, char *argv[]){
     }
 
     /******* THREAD INIT *****/
-//    pthread_t threadPool[MAX_THREAD];
-//    int *threadPoolStatus;
-    // Alloco un array per i descrittori di processo
-//    threadPool = (pthread_t*)malloc(serverConfig->thread_workers * sizeof(pthread_t) );
-//    threadPoolStatus = (int*) malloc(serverConfig->thread_workers * sizeof(int));
 
     for(int i = 0; i<serverConfig.thread_workers; i++) {
-//        pthread_create(&threadPool[i], &tattr, &worker, NULL);
         pthread_create(&threadPool[i], NULL, &worker, NULL);
     }
-
-//    for(int i = 0; i<serverConfig->thread_workers; i++) {
-//        pthread_join(threadPool[i], (void *) &threadPoolStatus[i]);
-//    }
 
     /***** SOCKET INIT *****/
     int fd_server_skt;
@@ -177,9 +158,6 @@ int main(int argc, char *argv[]){
 
                 } else {
 
-//                    FD_SET(fd_client_skt, &master_set);
-//                    if(fd_server_skt > max_sd)
-//                        max_sd = fd_client_skt;
                     printf("\n[MASTER] Nuova connessione ricevuta, fd_skt:%d\n",fd_client_skt);
 
                     pthread_mutex_lock(&connection_queue_mutex);
@@ -243,14 +221,6 @@ static void *worker(void *arg){
     Request request;
 
     printf("[%lu] Worker start\n", self);
-
-    /* Maschero i signal per i nuovi worker per evitare che vengano interrotti */
-//    sigset_t set;
-//    sigemptyset(&set);
-//    sigaddset(&set,SIGINT);
-//    sigaddset(&set,SIGQUIT);
-//    sigaddset(&set,SIGHUP);
-//    pthread_sigmask(SIG_SETMASK,&set,NULL);
 
     while(1){
 
@@ -339,6 +309,8 @@ static void *worker(void *arg){
 
             }
 
+            close(fd_client_skt);
+
             printf("[%lu] Connessione con client chiusa\n", self);
             if(!acceptNewConnection || closeServer){
                 printf("[%lu] Mi termino...\n",self);
@@ -353,7 +325,7 @@ static void *worker(void *arg){
         subConnectionCont();
 
     }
-//    close(fd_client_skt);
+
     return 0;
 
 }
@@ -368,65 +340,50 @@ static void *signalThreadHandler(void *arg){
     sigaddset(&set,SIGINT);
     sigaddset(&set,SIGQUIT);
     sigaddset(&set,SIGHUP);
-//    pthread_sigmask(SIG_SETMASK,&set,NULL);
 
-//    while(1) {
-        sigwait(&set, &sig); //Mi blocco in attesa di un segnale
+    sigwait(&set, &sig); //Mi blocco in attesa di un segnale
 
-        switch (sig) {
+    switch (sig) {
 
-            /* Non accetto più connessioni, finisco di servire quelle attuali */
-            case SIGHUP:
-                printf("\n[SIGNAL-THREAD] Ricevuto segnale SIGHUP\n");
-                acceptNewConnection = false;
+        /* Non accetto più connessioni, finisco di servire quelle attuali */
+        case SIGHUP:
+            printf("\n[SIGNAL-THREAD] Ricevuto segnale SIGHUP\n");
+            acceptNewConnection = false;
 
-//                printStat(fileQueue);
-                printf("[SIGNAL-THREAD] Blocco le nuove richieste di connessione al server\n");
-                close(handler_signal_pipe[1]);
-//                while (getNumConnections() != 0) {}
-                pthread_mutex_lock(&connection_queue_mutex);
-                pthread_cond_broadcast(&connection_queue_cond);
-                pthread_mutex_unlock(&connection_queue_mutex);
+            printf("[SIGNAL-THREAD] Blocco le nuove richieste di connessione al server\n");
+            close(handler_signal_pipe[1]);
+            pthread_mutex_lock(&connection_queue_mutex);
+            pthread_cond_broadcast(&connection_queue_cond);
+            pthread_mutex_unlock(&connection_queue_mutex);
 
-                /* Sveglia eventuali thread che sono in attesa di mutex su file */
-                pthread_mutex_lock(&file_queue_mutex);
-                pthread_cond_broadcast(&file_queue_cond);
-                pthread_mutex_unlock(&file_queue_mutex);
-//                deleteQueue(fileQueue);
-//                deleteQueue(connectionQueue);
+            /* Sveglia eventuali thread che sono in attesa di mutex su file */
+            pthread_mutex_lock(&file_queue_mutex);
+            pthread_cond_broadcast(&file_queue_cond);
+            pthread_mutex_unlock(&file_queue_mutex);
 
-//                exit(0);
+            break;
 
-                break;
+        /* Non accetto più connessioni, termino il prima possibile */
+        case SIGINT:
+        case SIGQUIT:
+            printf("\n[SIGNAL-THREAD] Ricevuto segnale SIGINT o SIGQUIT\n");
+            closeServer = true;
 
-            /* Non accetto più connessioni, termino il prima possibile */
-            case SIGINT:
-            case SIGQUIT:
-                printf("\n[SIGNAL-THREAD] Ricevuto segnale SIGINT o SIGQUIT\n");
-                closeServer = true;
+            close(handler_signal_pipe[1]);
+            pthread_mutex_lock(&connection_queue_mutex);
+            pthread_cond_broadcast(&connection_queue_cond);
+            pthread_mutex_unlock(&connection_queue_mutex);
 
-//                printStat(fileQueue);
-//                printf("[SIGNAL-THREAD] Blocco le nuove richieste di connessione al server\n");
-                close(handler_signal_pipe[1]);
-//                while (getNumConnections() != 0) {}
-                pthread_mutex_lock(&connection_queue_mutex);
-                pthread_cond_broadcast(&connection_queue_cond);
-                pthread_mutex_unlock(&connection_queue_mutex);
+            /* Sveglia eventuali thread che sono in attesa di mutex su file */
+            pthread_mutex_lock(&file_queue_mutex);
+            pthread_cond_broadcast(&file_queue_cond);
+            pthread_mutex_unlock(&file_queue_mutex);
 
-                /* Sveglia eventuali thread che sono in attesa di mutex su file */
-                pthread_mutex_lock(&file_queue_mutex);
-                pthread_cond_broadcast(&file_queue_cond);
-                pthread_mutex_unlock(&file_queue_mutex);
-//                deleteQueue(fileQueue);
-//                deleteQueue(connectionQueue);
+            break;
 
-//                exit(0);
-                break;
-
-            default:
-                printf("\nRicevuto segnale non gestito:%d\n", sig);
-        }
-//    }
+        default:
+            printf("\nRicevuto segnale non gestito:%d\n", sig);
+    }
 
     return 0;
 }

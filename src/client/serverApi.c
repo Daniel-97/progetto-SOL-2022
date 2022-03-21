@@ -273,7 +273,7 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
         if ( read(fd_socket, &response, sizeof(Response)) != -1){
 
             printServerResponse(&response);
-            //todo da controllare se questa parte funziona effettivamente
+
             //Il server è pieno, mi invierà il file che è stato espulso
             if(response.statusCode == 1){
 
@@ -459,14 +459,9 @@ int readNFiles(int N, const char *dirname){
 
                 print("Richiedo al server il file %s\n",token);
 
-                //todo Capire se richiedere i file tramite la readFile va bene
                 if( readFile(token,&buff,&size) != -1 ) {
                     saveFileDir(buff, size, dirname, token);
                 }
-//                char *path = malloc(sizeof(dirname)+sizeof(token)+1);
-//                strcat(path, dirname);
-//                strcat(path, token);
-//                saveFile(path, buff, size);
 
                 token = strtok(NULL, ",");
             }

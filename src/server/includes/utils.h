@@ -16,7 +16,7 @@
 #include "fileStorage.h"
 #include "globals.h"
 
-void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode);
+int sendFileToClient(int fd_client_skt, const char* pathname, int statusCode);
 
 void sendBufferFileToClient(int fd_client_skt, FileNode *file, int statusCode);
 

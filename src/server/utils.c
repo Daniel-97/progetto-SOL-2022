@@ -5,13 +5,14 @@
 #include "includes/utils.h"
 #include "includes/globals.h"
 
-void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
+int sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
 
     void *buf;
     size_t size;
     pthread_t self = pthread_self();
     Response *response = allocateMemory(1, sizeof(Response));
     int wbyte;
+    int status;
 
     /* Leggo il file */
     if ( readVirtualFile(fileQueue,pathname,&buf,&size) == 0) {
@@ -27,11 +28,15 @@ void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
             /* Invio al client il file effettivo */
             if ( (wbyte = write(fd_client_skt, buf, size)) != -1){
                 printf("[%lu] File %s inviato correttamente! wbyte:%d\n",self, pathname,wbyte);
+                status = size;
             }else{
                 printf("[%lu] Errore invio file %s,%s \n",self, pathname, strerror(errno));
-
+                status = -1;
             }
 
+        }else{
+            printf("[%lu] Errore invio dimensione file %s,%s \n",self, pathname, strerror(errno));
+            status = -1;
         }
 
         safeFree(buf);
@@ -43,10 +48,13 @@ void sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
 
         if (write(fd_client_skt, response, sizeof(Response)) != -1){
             printf("[%lu] Risposta inviata al client!\n",self);
+            status = -1;
         }
     }
 
     safeFree(response);
+
+    return status;
 
 }
 

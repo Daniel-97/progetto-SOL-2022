@@ -4,7 +4,6 @@
 
 #include "includes/config.h"
 
-/* TODO convert to strtok_r(), convert to int function (return err) */
 int readConfig(struct Config* serverConfig){
 
     char buf[1000]; /*buffer for read line */

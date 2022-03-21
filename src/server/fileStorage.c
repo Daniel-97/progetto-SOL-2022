@@ -335,7 +335,6 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
 
 }
 
-// todo: Attenzione da testare! (non sono sicuro che funzioni bene
 int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size){
 
     pthread_t self = pthread_self();
@@ -489,7 +488,6 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
     }else{
 
-        //todo rivedere questa condizione
         if (!file->isOpen){
             printf("[%lu] Il file %s è chiuso, impossibile acquisire lock\n",self,pathname);
             signalQueue(queue);
@@ -573,7 +571,6 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
             file->client_id = 0; //Tolgo il lock sul file
             printf("[%lu] Unlock sul file eseguito correttamente %s\n",self,pathname);
             status = 0;
-            //todo testare meglio
 //            pthread_cond_signal(&file_queue_cond); //Signal to the other worker
 
         }else if (file->client_id == 0){

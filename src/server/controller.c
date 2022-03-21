@@ -129,9 +129,11 @@ void append_file_controller(int *fd_client_skt, Request *request){
 
 void read_file_controller(int *fd_client_skt, Request *request){
 
-    //todo qui manca il logging
+    int rbyte = 0;
     safeMutexLock(&file_queue_mutex);
-    sendFileToClient(*fd_client_skt, request->filepath,0);
+    if ((rbyte = sendFileToClient(*fd_client_skt, request->filepath,0)) == 0)
+        logRequest(*request, rbyte,0,NULL);
+
     safeMutexUnlock(&file_queue_mutex);
 
 
@@ -179,7 +181,6 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
     freeSpace = getFreeSpace(fileQueue);
 
-    //Todo capire se questa parte di free space funziona
     if( request->fileSize > serverConfig.max_mem_size ){
         strcpy(response->message, "The file is too big for the server");
         response->statusCode = -1;
@@ -383,7 +384,6 @@ void readn_file_controller(int *fd_client_skt, Request *request){
     char *fileList;
     size_t size;
 
-    //todo qui devo loggare tutti i byte effettivamente letti
     logRequest(*request,0,0,NULL);
 
     safeMutexLock(&file_queue_mutex);
@@ -411,7 +411,6 @@ void readn_file_controller(int *fd_client_skt, Request *request){
 
     safeFree(fileList);
     safeFree(response);
-    //todo al momento è il client che richiedei files mediante delle re
     safeMutexUnlock(&file_queue_mutex);
 
 }
