@@ -235,7 +235,7 @@ void write_file_controller(int *fd_client_skt, Request *request){
             }
 
             if( rbyte != -1 ){
-                printf("[%lu] File %s ricevuto correttamente!\n",self,request->filepath);
+                printf("[%lu] File %s ricevuto correttamente! rbyte:%d\n",self,request->filepath,rbyte);
 //                                    printf("buffer ricevuto: %s, dim: %zu\n",(char*)buf,size);
 
                 if ( writeVirtualFile(fileQueue,request->filepath,buf,request->fileSize) != -1){
