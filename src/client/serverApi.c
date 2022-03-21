@@ -131,6 +131,7 @@ int writeFile(const char* pathname, const char* dirname){
     int isServerFull = 0;
 //    char absPath[PATH_MAX];
     int wbyte;
+    int rbyte;
 
     if (pathname == NULL) return -1;
 
@@ -169,8 +170,13 @@ int writeFile(const char* pathname, const char* dirname){
                 printServerResponse(&response);
                 print("Il server sta per inviare il file che ha espulso\n");
                 buf = malloc(response.fileSize);
-                if (read(fd_socket,buf,response.fileSize) != -1)
-                    print("Ricevuto file espulso dal server\n");
+
+                if ((rbyte = read(fd_socket,buf,response.fileSize)) == -1) {
+                    printf("Errore ricezione file espulso dal server\n");
+                    return -1;
+                }
+
+                print("Ricevuto file espulso dal server. rbyte: %d\n",rbyte);
 
                 if(dirname != NULL){ //save the file on disk
                     saveFileDir(buf, response.fileSize, dirname,response.fileName);
