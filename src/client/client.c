@@ -66,7 +66,7 @@ int main(int argc, char *argv[]){
                 break;
             }
 
-            case 'w': { /* Scriver sul server i file nella directory specificata */
+            case 'w': { /* Scrive sul server i file nella directory specificata */
 
                 char *fileList;
                 char *dir = strtok(optarg,",");

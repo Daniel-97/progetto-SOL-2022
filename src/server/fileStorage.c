@@ -239,14 +239,7 @@ int openVirtualFile(Queue *queue, const char* pathname, int flags, int clientId)
         /* Se il client ha passato il flag di lock provo prendere il lock sul file */
         if ( (flags & O_LOCK) == O_LOCK ) {
 
-            if (lockVirtualFile(queue, pathname, clientId) == 0) {
-//                printf("[%lu] Lock acquisito sul file!\n", self);
-                return 0;
-
-            }else{
-//                printf("[%lu] Impossibile acquisire lock su file, in possesso da altro processo ");
-                return -1;
-            }
+            return lockVirtualFile(queue, pathname, clientId);
         }
 
     }else{
@@ -522,24 +515,24 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
 //        pthread_mutex_lock(&queue->qlock);
 
-        file->client_id = clientId;
+//        file->client_id = clientId;
 //        pthread_mutex_unlock(&file_queue_mutex);
 
-        printf("[%lu] Lock acquisito sul file %s\n",self,pathname);
-        status = 0;
+//        printf("[%lu] Lock acquisito sul file %s\n",self,pathname);
+//        status = 0;
 
-//        else if (file->client_id == 0){
-//
-//            file->client_id = clientId; //Acquisisco il lock sul file
-//            printf("[%lu] Lock acquisito sul file %s\n",self,pathname);
-//            status = 0;
-//
-//        }else{
-//
-//            printf("[%lu] File %s in lock da un altro client\n",self,pathname);
-//            status = -1;
-//
-//        }
+        else if (file->client_id == 0){
+
+            file->client_id = clientId; //Acquisisco il lock sul file
+            printf("[%lu] Lock acquisito sul file %s\n",self,pathname);
+            status = 0;
+
+        }else{
+
+            printf("[%lu] File %s in lock da un altro client\n",self,pathname);
+            status = -2;
+
+        }
 
     }
 
@@ -595,7 +588,7 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
         }
 
-        pthread_mutex_unlock(&file_queue_mutex);
+//        pthread_mutex_unlock(&file_queue_mutex);
 
     }
 

@@ -28,8 +28,6 @@ all: $(TARGETS)
 
 clean:
 	rm -rf bin/*
-	rm -rf build/server/*
-	rm -rf build/client/*
 
 test1:
 	./script/test1.sh

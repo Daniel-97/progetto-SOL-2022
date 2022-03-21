@@ -8,12 +8,22 @@ void open_file_controller(int *fd_client_skt, Request *request){
 
     Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
+    int status;
 
     logRequest(*request,0,0,NULL);
 
     safeMutexLock(&file_queue_mutex);
 
-    if (openVirtualFile(fileQueue,request->filepath, request->flags, request->clientId) == 0) {
+    safeMutexLock(&file_lock_mutex);
+    while ( (status = openVirtualFile(fileQueue,request->filepath, request->flags, request->clientId)) == -2) {
+        /* We need to wait on the lock for the file but release the mutex on the queue */
+        printf("[%lu] Waiting for other client to release lock on file\n",self);
+        safeMutexUnlock(&file_queue_mutex);
+        pthread_cond_wait(&file_lock_cond, &file_lock_mutex);
+    }
+    safeMutexUnlock(&file_lock_mutex);
+
+    if(status == 0){
         /* Preparo la risposta per il client */
         response->statusCode = 0;
         strcpy(response->message, "File opened!");
@@ -295,22 +305,36 @@ void lock_file_controller(int *fd_client_skt, Request *request){
 
     Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
+    int status;
 
     logRequest(*request,0,0, NULL);
 
     safeMutexLock(&file_queue_mutex);
 
     /* Tento di acquisire il lock sul file */
-    if(lockVirtualFile(fileQueue,request->filepath,request->clientId) == 0){
+    safeMutexLock(&file_lock_mutex);
+    while((status = lockVirtualFile(fileQueue,request->filepath,request->clientId)) == -2) {
+        /* We need to wait on the lock for the file but release the mutex on the queue */
+        printf("[%lu] Waiting for other client to release lock on file\n",self);
+        safeMutexUnlock(&file_queue_mutex);
+        pthread_cond_wait(&file_lock_cond, &file_lock_mutex);
+
+    }
+    safeMutexUnlock(&file_lock_mutex);
+
+    if(status == 0){ //Ok lock acquisito
         response->statusCode = 0;
         strcpy(response->message, "Lock correttamente acquisito sul file!");
-    }else{
+
+    }
+    else{ //Impossibile acquisire lcok
         response->statusCode = -1;
         strcpy(response->message,"Impossible acquisire il lock sul file");
     }
-    if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+
+    if (write(*fd_client_skt, response, sizeof(Response)) != -1)
         printf("[%lu] Risposta inviata al client!\n",self);
-    }
+
 
     safeFree(response);
 
@@ -331,6 +355,12 @@ void unlock_file_controller(int *fd_client_skt, Request *request){
     if(unlockVirtualFile(fileQueue,request->filepath,request->clientId) == 0){
         response->statusCode = 0;
         strcpy(response->message, "Unlock eseguito con successo!");
+
+        /* Wake up all the worker waiting for the mutex on the file */
+        safeMutexLock(&file_lock_mutex);
+        pthread_cond_broadcast(&file_lock_cond);
+        safeMutexUnlock(&file_lock_mutex);
+
     }else{
         response->statusCode = -1;
         strcpy(response->message,"Impossible effettuare unlock");

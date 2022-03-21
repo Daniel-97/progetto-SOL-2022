@@ -67,6 +67,9 @@ int main(int argc, char *argv[]){
     pthread_mutex_init(&file_queue_mutex, NULL);
     pthread_cond_init(&file_queue_cond, NULL);
 
+    pthread_mutex_init(&file_lock_mutex, NULL);
+    pthread_cond_init(&file_lock_cond, NULL);
+
     /***** CONNECTION QUEUE INIT *****/
     connectionQueue = initQueue();
     pthread_mutex_init(&connection_queue_mutex, NULL);
@@ -350,7 +353,7 @@ static void *worker(void *arg){
         subConnectionCont();
 
     }
-    close(fd_client_skt);
+//    close(fd_client_skt);
     return 0;
 
 }

@@ -171,26 +171,26 @@ void safeFree(void *pointer){
 
 void safeMutexLock(pthread_mutex_t *mutex){
 
-    pthread_t self = pthread_self();
+//    pthread_t self = pthread_self();
 
-    printf("[%lu] Acquiring mutex...\n", self);
+//    printf("[%lu] Acquiring mutex...\n", self);
     if(pthread_mutex_lock(mutex) != 0){
         perror("Error in mutex lock\n");
         exit(EXIT_FAILURE);
     }
-    printf("[%lu] Mutex acquired!\n",self);
+//    printf("[%lu] Mutex acquired!\n",self);
 
 }
 void safeMutexUnlock(pthread_mutex_t *mutex){
 
-    pthread_t self = pthread_self();
+//    pthread_t self = pthread_self();
 
-    printf("[%lu] Releasing mutex...\n", self);
+//    printf("[%lu] Releasing mutex...\n", self);
     if(pthread_mutex_unlock(mutex) != 0){
         perror("Error in mutex unlock\n");
         exit(EXIT_FAILURE);
     }
-    printf("[%lu] Mutex released!\n",self);
+//    printf("[%lu] Mutex released!\n",self);
 
 }
 
