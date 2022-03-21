@@ -393,7 +393,6 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
 
 }
 
-//todo aggiungere ritorno di file elimianto se coda piena
 int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size){
 
     pthread_t self = pthread_self();
