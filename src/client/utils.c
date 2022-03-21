@@ -38,7 +38,7 @@ void print(char *string,...){
 void printServerResponse(Response *response){
 
     if(enablePrintDebug)
-        printf("Server response: {STATUS_CODE: %d, MESSAGE: %s, FILE_SIZE: %zu , FILE_NAME: %s }\n",response->statusCode, response->message,response->fileSize,response->fileName);
+        printf("[CLIENT %d] Server response: {STATUS_CODE: %d, MESSAGE: %s, FILE_SIZE: %zu , FILE_NAME: %s }\n",getpid(),response->statusCode, response->message,response->fileSize,response->fileName);
 
 }
 
