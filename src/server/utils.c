@@ -28,7 +28,7 @@ int sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
             /* Invio al client il file effettivo */
             if ( (wbyte = write(fd_client_skt, buf, size)) != -1){
                 printf("[%lu] File %s inviato correttamente! wbyte:%d\n",self, pathname,wbyte);
-                status = size;
+                status = 0;
             }else{
                 printf("[%lu] Errore invio file %s,%s \n",self, pathname, strerror(errno));
                 status = -1;
@@ -43,12 +43,12 @@ int sendFileToClient(int fd_client_skt, const char* pathname, int statusCode){
 
     }else{ /* In caso di errore invio il messaggio di errore al client */
 
+        status = -1;
         response->statusCode = -1;
         strcpy(response->message,"Errore, impossibile leggere il file");
 
         if (write(fd_client_skt, response, sizeof(Response)) != -1){
             printf("[%lu] Risposta inviata al client!\n",self);
-            status = -1;
         }
     }
 
