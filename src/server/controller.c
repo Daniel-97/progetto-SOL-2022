@@ -226,13 +226,15 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
             /* Uso un while, la read può non leggere il numero di byte richiesti */
             size_t left = request->fileSize;
-            char *tmpBuff = (char *)buf;
+//            char *tmpBuff = (char *)buf;
+//
+//            while(left > 0){
+//                rbyte = read(*fd_client_skt, tmpBuff, left);
+//                left -= rbyte;
+//                tmpBuff += rbyte;
+//            }
 
-            while(left > 0){
-                rbyte = read(*fd_client_skt, tmpBuff, left);
-                left -= rbyte;
-                tmpBuff += rbyte;
-            }
+            rbyte = read(*fd_client_skt, buf, left);
 
             if( rbyte != -1 ){
                 printf("[%lu] File %s ricevuto correttamente! rbyte:%d\n",self,request->filepath,rbyte);
