@@ -26,7 +26,7 @@ while read line; do
   fi
 
   IFS=','
-  read -a array <<< $line
+  read -a array <<< "$line"
 
   b_read="${array[5]}"
   b_write="${array[6]}"
