@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #SCRIPT PER LE STATISTICHE DEL SERVER A PARTIRE DAL FILE DI LOG
 echo "Reading log file from: $1"
 
@@ -39,6 +41,7 @@ while read line; do
 
   #Conta il numero di file espulsi
   replaced="${array[7]}"
+  echo $replaced
   if [ "$replaced" != "null" ]; then
     cont_expelled=$((cont_expelled+1))
   fi
