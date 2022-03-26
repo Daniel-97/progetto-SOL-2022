@@ -170,10 +170,8 @@ void write_file_controller(int *fd_client_skt, Request *request){
 
     Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
-//    int serverIsFull = 0;
     FileNode *data;
     void *buf;
-//    size_t size;
     int freeSpace;
     int rbyte;
 
@@ -199,23 +197,19 @@ void write_file_controller(int *fd_client_skt, Request *request){
         if(data == NULL){ }
 
         //1 è lo status code
-//        sendFileToClient(*fd_client_skt, data->pathname,1);
         sendBufferFileToClient(*fd_client_skt, data, 1);
 
         logRequest(*request, 0,request->fileSize,data->pathname);
-        if( removeNode(fileQueue, data) != -1 ){
-
+        if( removeNode(fileQueue, data) != -1 )
             incNumFileReplacement();
 
-        }
 
-    }else{
-
+    }else
         logRequest(*request,0, request->fileSize, NULL);
-    }
 
     /* Controllo prima che il client abbia il lock sul file */
     if (hasFileLock(fileQueue,request->filepath,request->clientId) == 0){
+
         strcpy(response->message, "Ready to receive file, client has lock");
         response->statusCode = 0;
 
@@ -286,9 +280,8 @@ void close_file_controller(int *fd_client_skt, Request *request){
 
     }
 
-    if (write(*fd_client_skt, response, sizeof(Response)) != -1){
+    if (write(*fd_client_skt, response, sizeof(Response)) != -1)
         printf("[%lu] Risposta inviata al client!\n",self);
-    }
 
     safeMutexUnlock(&file_queue_mutex);
 
@@ -307,6 +300,7 @@ void lock_file_controller(int *fd_client_skt, Request *request){
     /* Tento di acquisire il lock sul file */
     safeMutexLock(&file_lock_mutex);
     while((status = lockVirtualFile(fileQueue,request->filepath,request->clientId)) == -2) {
+
         /* We need to wait on the lock for the file but release the mutex on the queue */
         printf("[%lu] Waiting for other client to release lock on file\n",self);
         safeMutexUnlock(&file_queue_mutex);
@@ -372,7 +366,6 @@ void readn_file_controller(int *fd_client_skt, Request *request){
 
     Response *response = allocateMemory(1, sizeof(Response));
     pthread_t self = pthread_self();
-//    char **arr = NULL;
     char *fileList;
     size_t size;
 

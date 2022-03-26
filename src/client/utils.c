@@ -89,7 +89,6 @@ int waitServerFile(void** buf, size_t* size){
         *size = response.fileSize;
         *buf = malloc(response.fileSize); //Alloco il buffer per la lettura del file
         // Leggo effettivamente il file dal server
-//        if (read(fd_socket,*buf,*size) != -1){
         if (readData(fd_socket, *buf,response.fileSize) != -1){
 
             print("File ricevuto correttamente!\n");
@@ -123,7 +122,6 @@ char* getFileListFromDir(const char* dirname, int maxFile){
     strcat(command,dirname);
     strcat(command," -type f");
 
-//    printf("%s\n",command);
     fp = popen(command,"r");
 
     if(fp != NULL){

@@ -16,15 +16,8 @@
 #include "includes/serverApi.h"
 #include "../common/common.h"
 
-#define OPTIONAL_ARGUMENT_IS_PRESENT \
-    ((optarg == NULL && optind < argc && argv[optind][0] != '-') \
-     ? (bool) (optarg = argv[optind++]) \
-     : (optarg != NULL))
-
-#define DEFAULT_SOCKET_NAME "./connection.sk"
-
 int main(int argc, char *argv[]){
-    print("test %d\n", 4);
+
     char *socket_name = NULL;
     char *expFileDir = NULL;
     char *destFolder = NULL;
@@ -35,7 +28,6 @@ int main(int argc, char *argv[]){
     char *token;
     int numFiles;
     char abspath[PATH_MAX];
-//    char *fileList;
 
     /* CONFIG INIT */
     enablePrintDebug = false;

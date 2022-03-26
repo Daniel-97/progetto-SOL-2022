@@ -11,24 +11,15 @@ void loggerInit(){
     printf("Log file: %s\n",serverConfig.log_file);
 
     /* Clear the log file */
-    if( (logFile = fopen(serverConfig.log_file, "w")) == NULL){
+    if( (logFile = fopen(serverConfig.log_file, "w")) == NULL)
         printf("ERRORE APERTURA FILE DI LOG\n");
-    }
 
     fprintf(logFile,"%s","datetime,client-id,thread-id,operation,file-target,read-byte,write-byte,replaced-file,connections\n");
     fclose(logFile);
 
     /* Open log file in append */
-    if((logFile = fopen(serverConfig.log_file, "a")) == NULL){
+    if((logFile = fopen(serverConfig.log_file, "a")) == NULL)
         printf("ERRORE APERTURA FILE DI LOG\n");
-    }
-
-//    Request r;
-//    r.fileSize = 100;
-//    r.operation = 1;
-//    r.clientId = 4535353;
-//    strcpy(r.filepath,"prova.txt");
-//    logRequest(r, NULL);
 
 }
 /* FORMATO LOG

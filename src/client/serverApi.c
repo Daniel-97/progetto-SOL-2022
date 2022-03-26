@@ -60,9 +60,6 @@ int openFile(const char* pathname, int flags){
     Response response;
     int ret = 0;
 
-//    char absPath[PATH_MAX];
-//    realpath(pathname, absPath);
-
     request.clientId = getpid();
     request.operation = OP_OPEN_FILE;
     request.flags = flags;
@@ -96,8 +93,6 @@ int readFile(const char* pathname, void** buf, size_t* size){
     msleep(waitingTime);
 
     Request request;
-//    char absPath[PATH_MAX];
-//    realpath(pathname, absPath);
 
     request.operation = OP_READ_FILE;
     strncpy(request.filepath,pathname,PATH_MAX);
@@ -128,14 +123,10 @@ int writeFile(const char* pathname, const char* dirname){
     Response response;
     FILE *file;
     void *buf;
-    int isServerFull = 0;
-//    char absPath[PATH_MAX];
     int wbyte;
     int rbyte;
 
     if (pathname == NULL) return -1;
-
-//    realpath(pathname, absPath);
 
     /* Apro il file locale che devo inviare al server */
     file = fopen(pathname, "r");
@@ -210,11 +201,6 @@ int writeFile(const char* pathname, const char* dirname){
                 if( read(fd_socket, &response, sizeof(Response)) )
                     printServerResponse(&response);
 
-//                fsync(fd_socket);
-                /* Faccio la unlock sul file */
-//                sleep(10);
-//                unlockFile(absPath);
-
                 return response.statusCode;
 
             }else{
@@ -233,22 +219,6 @@ int writeFile(const char* pathname, const char* dirname){
         return -1;
     }
 
-    /* Il server è pieno, deve inviarmi il file meno recente */
-    if(isServerFull){
-
-        void **buf1 = NULL;
-        size_t size;
-        waitServerFile(buf1,&size);
-
-        /* If the dirname path is not null save the ejected file from the server */
-        if(dirname != NULL){
-            char *path = malloc(sizeof(dirname)+sizeof("ejected.txt")+1);
-            strcat(path, dirname);
-            strcat(path, "ejected.txt");
-            saveFile(path, buf1, size);
-        }
-
-    }
     return 0;
 
 
@@ -261,11 +231,8 @@ int appendToFile(const char* pathname, void *buf, size_t size, const char* dirna
     Request request;
     Response response;
     void *buf2;
-//    char absPath[PATH_MAX];
 
     if (pathname == NULL || buf == NULL) return -1;
-
-//    realpath(pathname, absPath);
 
     request.operation = OP_APPEND_FILE;
     strncpy(request.filepath, pathname, PATH_MAX);
@@ -344,11 +311,8 @@ int lockFile(const char* pathname){
 
     Request request;
     Response response;
-//    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
-
-//    realpath(pathname, absPath);
 
     request.operation = OP_LOCK_FILE;
     strcpy(request.filepath, pathname);
@@ -366,11 +330,8 @@ int unlockFile(const char* pathname){
 
     Request request;
     Response response;
-//    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
-
-//    realpath(pathname, absPath);
 
     request.operation = OP_UNLOCK_FILE;
     strcpy(request.filepath, pathname);
@@ -387,11 +348,8 @@ int removeFile(const char* pathname){
 
     Request request;
     Response response;
-//    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
-
-//    realpath(pathname, absPath);
 
     request.operation = OP_DELETE_FILE;
     strcpy(request.filepath, pathname);
@@ -408,11 +366,8 @@ int closeFile(const char* pathname){
 
     Request request;
     Response response;
-//    char absPath[PATH_MAX];
 
     if(pathname == NULL) return -1;
-
-//    realpath(pathname, absPath);
 
     request.operation = OP_CLOSE_FILE;
     strcpy(request.filepath, pathname);
@@ -441,7 +396,6 @@ int readNFiles(int N, const char *dirname){
     }
 
     request.operation = OP_READ_N_FILES;
-//    strncpy(request.filepath, pathname,MAX_PATH_SIZE);
     request.clientId = getpid();
     request.flags = N; /* Uso il campo flag per comunicare al server quanti file voglio */
 

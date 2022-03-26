@@ -93,8 +93,6 @@ int getFreeSpace(Queue *queue){
     int size = 0;
     int available = 0;
 
-//    pthread_mutex_lock(&queue->qlock);
-
     while( (node = node->next) != NULL){
 
         fileNode = node->data;
@@ -102,10 +100,7 @@ int getFreeSpace(Queue *queue){
 
     }
 
-//    pthread_mutex_unlock(&queue->qlock);
-
     available = serverConfig.max_mem_size - size;
-//    printf("Current available space: %d bytes\n",available);
 
     return available;
 
@@ -118,8 +113,6 @@ FileNode* expelFile(Queue  *queue, int requiredSpace){
     FileNode *expelFile;
     int freeSpace = getFreeSpace(queue);
 
-//    pthread_mutex_lock(&queue->qlock);
-
     while( (node = node->next) != NULL){
 
         fileNode = node->data;
@@ -129,8 +122,6 @@ FileNode* expelFile(Queue  *queue, int requiredSpace){
         }
 
     }
-
-//    pthread_mutex_unlock(&queue->qlock);
 
     return expelFile;
 

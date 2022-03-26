@@ -11,15 +11,17 @@ int readConfig(struct Config* serverConfig){
     char value[50];
     char *token;
     int i;
-    //serverConfig = malloc(sizeof(Config));
-    //printf("serverConfig: %lu",sizeof(serverConfig));
 
     if( (fp = fopen("./config/config.txt","r")) != NULL ){
+
         while( !feof(fp) ){
+
             fgets(buf,1000, fp);
             i = 0;
             token = strtok(buf,":");
+
             while(token){
+
                 if(i == 0)
                     strcpy(key, token);
                 else if (i == 1)
@@ -29,29 +31,24 @@ int readConfig(struct Config* serverConfig){
                 i++;
             }
 
-            //printf("key: %s, value: %s",key,value);
-            if(strcmp(key,"socket-path") == 0){
-                /* Copia il valore fino al new line (non copia il new line nel setting)*/
+            /* Copia il valore fino al new line (non copia il new line nel setting)*/
+            if(strcmp(key,"socket-path") == 0)
                 strncpy(serverConfig->socket_path,value, strcspn(value,"\n"));
 
-            }else if(strcmp(key,"thread-workers") == 0){
+            else if(strcmp(key,"thread-workers") == 0)
                 serverConfig->thread_workers = strtol(value, NULL,10);
 
-            }else if(strcmp(key,"max-mem-size") == 0){
+            else if(strcmp(key,"max-mem-size") == 0)
                 serverConfig->max_mem_size = strtol(value, NULL,10);
 
-            }
-            else if(strcmp(key,"max-file") == 0){
+            else if(strcmp(key,"max-file") == 0)
                 serverConfig->max_file = strtol(value, NULL,10);
 
-            }
-            else if(strcmp(key, "log-file") == 0){
+            else if(strcmp(key, "log-file") == 0)
                 strncpy(serverConfig->log_file, value, strcspn(value,"\n"));
 
-            }
-            else{
+            else
                 printf("Setting not recognized: %s",key);
-            }
 
         }
 

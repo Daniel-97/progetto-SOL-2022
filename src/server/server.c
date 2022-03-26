@@ -106,7 +106,7 @@ int main(int argc, char *argv[]){
         printf("[MASTER] Errore creazione socket, errno: %d, %s\n",errno, strerror(errno));
         exit(-1);
     }
-    // Unlink vecchio socket se esistente
+    // Unlink vecchio socket se esistente. unlink() - elimina un nome e se possibile il file a cui si riferisce
     unlink(serverConfig.socket_path);
 
     //Bind socket con address
@@ -335,6 +335,7 @@ static void *signalThreadHandler(void *arg){
     printf("****** SIGNAL THREAD INIT *****\n");
     printf("Avvio thread per la gestione dei signal\n");
 
+    /* Maschero i segnali */
     sigset_t set; int sig;
     sigemptyset(&set);
     sigaddset(&set,SIGINT);

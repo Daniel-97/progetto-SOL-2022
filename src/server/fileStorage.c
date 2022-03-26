@@ -14,8 +14,6 @@ int findFileNode(Queue *queue,const char *pathname){
 
     if( queue == NULL || pathname == NULL ) return -1;
 
-//    pthread_mutex_lock(&queue->qlock);
-
     node = queue->head;
 
     while( (node = node->next) != NULL){
@@ -25,9 +23,6 @@ int findFileNode(Queue *queue,const char *pathname){
             break;
         }
     }
-
-//    pthread_cond_signal(&queue->qcond);
-//    pthread_mutex_unlock(&queue->qlock);
 
     if(data)
         return 0;
@@ -43,8 +38,6 @@ int editFileNode(Queue *queue, const char *pathname, char *file,int size, int cl
     int status;
 
     if (queue == NULL) return -1;
-
-//    pthread_mutex_lock(&queue->qlock);
 
     node = queue->head;
 
@@ -70,9 +63,6 @@ int editFileNode(Queue *queue, const char *pathname, char *file,int size, int cl
         status = -1;
     }
 
-//    pthread_cond_signal(&queue->qcond);
-//    pthread_mutex_unlock(&queue->qlock);
-
     return status;
 
 }
@@ -86,8 +76,6 @@ FileNode *getFileNode(Queue *queue, const char *pathname){
 
     if( queue == NULL || pathname == NULL ) return NULL;
 
-//    pthread_mutex_lock(&queue->qlock);
-
     node = queue->head;
 
     while( (node = node->next) != NULL){
@@ -97,9 +85,6 @@ FileNode *getFileNode(Queue *queue, const char *pathname){
             break;
         }
     }
-
-//    pthread_cond_signal(&queue->qcond);
-//    pthread_mutex_unlock(&queue->qlock);
 
     if(data)
         return data;
@@ -126,7 +111,6 @@ char* getFileList(Queue *queue){
     char *fileList = NULL;
     char *s;
 
-//    pthread_mutex_lock(&queue->qlock);
     tmp = queue->head;
 
     while( (tmp = tmp->next) != NULL ){
@@ -148,9 +132,6 @@ char* getFileList(Queue *queue){
         }
     }
 
-//    pthread_cond_signal(&queue->qcond);
-//    pthread_mutex_unlock(&queue->qlock);
-
     return fileList;
 
 }
@@ -161,16 +142,12 @@ int getStorageSize(Queue *queue) {
     FileNode *fileNode;
     int size = 0;
 
-//    pthread_mutex_lock(&queue->qlock);
     tmp = queue->head;
 
     while ((tmp = tmp->next) != NULL) {
         fileNode = tmp->data;
         size = size + fileNode->size;
     }
-
-//    pthread_cond_signal(&queue->qcond);
-//    pthread_mutex_unlock(&queue->qlock);
 
     return size;
 }
@@ -292,8 +269,6 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
     FileNode *file;
     int status;
 
-//    pthread_mutex_lock(&queue->qlock);
-
     file = getFileNode(queue, pathname);
 
     if( file == NULL ){
@@ -305,7 +280,6 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
 
         if (!file->isOpen){
             printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
-            signalQueue(queue);
             return -1;
         }
 
@@ -328,9 +302,6 @@ int readVirtualFile(Queue *queue, const char* pathname, void **buf, size_t *size
 
     }
 
-//    pthread_cond_signal(&queue->qcond);
-//    pthread_mutex_unlock(&queue->qlock);
-
     return status;
 
 }
@@ -341,7 +312,6 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
     FileNode *file;
     int status;
 
-//    pthread_mutex_lock(&queue->qlock);
     file = getFileNode(queue, pathname);
 
     if(file == NULL){
@@ -353,7 +323,6 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
 
         if (!file->isOpen){
             printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
-            signalQueue(queue);
             return -1;
         }
 
@@ -382,8 +351,6 @@ int writeVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size)
 
     }
 
-    signalQueue(queue);
-
     int max_size = getMaxFileStorageSize();
     int actual_size = getStorageSize(queue);
     if(actual_size > max_size)
@@ -399,7 +366,6 @@ int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size
     FileNode *file;
     int status;
 
-//    pthread_mutex_lock(&queue->qlock);
     file = getFileNode(queue, pathname);
 
     if(file == NULL){
@@ -411,7 +377,6 @@ int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size
 
         if (!file->isOpen){
             printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
-            signalQueue(queue);
             return -1;
         }
 
@@ -457,7 +422,6 @@ int appendVirtualFile(Queue *queue, const char* pathname, void *buf, size_t size
         }
 
     }
-//    signalQueue(queue);
 
     int max_size = getMaxFileStorageSize();
     int actual_size = getStorageSize(queue);
@@ -474,11 +438,7 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
     FileNode *file;
     int status;
 
-//    pthread_mutex_lock(&queue->qlock);
-
     file = getFileNode(queue,pathname);
-
-//    signalQueue(queue);
 
     if (file == NULL){
 
@@ -489,7 +449,6 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
         if (!file->isOpen){
             printf("[%lu] Il file %s è chiuso, impossibile acquisire lock\n",self,pathname);
-            signalQueue(queue);
             return -1;
         }
 
@@ -499,24 +458,6 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
             status = 0;
 
         }
-
-        /* Attendo che venga rilasciato il lock del file se non è libero */
-//        printf("Cerco di prendere mutex dentro lock()\n");
-//        pthread_mutex_lock(&file_queue_mutex);
-//        printf("Mutex dentro lock() acquisito. clientid:%d\n",file->client_id);
-
-//        while(file->client_id != 0 && !closeServer) {
-//            printf("[%lu] Il file %s è in lock da un altro client, attendo...", self, pathname);
-//            pthread_cond_wait(&file_queue_cond, &file_queue_mutex);
-//        }
-
-//        pthread_mutex_lock(&queue->qlock);
-
-//        file->client_id = clientId;
-//        pthread_mutex_unlock(&file_queue_mutex);
-
-//        printf("[%lu] Lock acquisito sul file %s\n",self,pathname);
-//        status = 0;
 
         else if (file->client_id == 0){
 
@@ -533,8 +474,6 @@ int lockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
     }
 
-//    signalQueue(queue);
-
     return status;
 }
 
@@ -543,8 +482,6 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
     pthread_t self = pthread_self();
     FileNode *file;
     int status;
-
-//    pthread_mutex_lock(&queue->qlock);
 
     file = getFileNode(queue,pathname);
 
@@ -557,20 +494,14 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
         if (!file->isOpen){
             printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
-            signalQueue(queue);
             return -1;
         }
-
-//        printf("Prendo mutex lock dentro unlock()\n");
-//        pthread_mutex_lock(&file_queue_mutex);
-//        printf("Mutex preso dentro unlock()\n");
 
         if(file->client_id == clientId){
 
             file->client_id = 0; //Tolgo il lock sul file
             printf("[%lu] Unlock sul file eseguito correttamente %s\n",self,pathname);
             status = 0;
-//            pthread_cond_signal(&file_queue_cond); //Signal to the other worker
 
         }else if (file->client_id == 0){
 
@@ -584,11 +515,7 @@ int unlockVirtualFile(Queue *queue, const char* pathname, int clientId){
 
         }
 
-//        pthread_mutex_unlock(&file_queue_mutex);
-
     }
-
-//    signalQueue(queue);
 
     return status;
 }
@@ -598,8 +525,6 @@ int deleteVirtualFile(Queue *queue, const char* pathname, int clientId){
     pthread_t self = pthread_self();
     FileNode *file;
     int status;
-
-//    pthread_mutex_lock(&queue->qlock);
 
     file = getFileNode(queue,pathname);
 
@@ -612,7 +537,6 @@ int deleteVirtualFile(Queue *queue, const char* pathname, int clientId){
 
         if (!file->isOpen){
             printf("[%lu] Il file %s è chiuso, impossibile leggere\n",self,pathname);
-            signalQueue(queue);
             return -1;
         }
 
@@ -641,8 +565,6 @@ int deleteVirtualFile(Queue *queue, const char* pathname, int clientId){
 
     }
 
-//    signalQueue(queue);
-
     return status;
 }
 
@@ -652,8 +574,6 @@ int closeVirtualFile(Queue *queue, const char* pathname, int clientId){
     pthread_t self = pthread_self();
     FileNode *file;
     int status;
-
-//    pthread_mutex_lock(&queue->qlock);
 
     file = getFileNode(queue,pathname);
 
@@ -666,7 +586,6 @@ int closeVirtualFile(Queue *queue, const char* pathname, int clientId){
 
         if (!file->isOpen){
             printf("[%lu] Il file %s è già chiuso\n",self,pathname);
-            signalQueue(queue);
             return 0;
         }
 
@@ -689,8 +608,6 @@ int closeVirtualFile(Queue *queue, const char* pathname, int clientId){
 
     }
 
-//    signalQueue(queue);
-
     return status;
 
 }
@@ -701,8 +618,6 @@ int hasFileLock(Queue *queue, const char *pathname, int clientId){
     pthread_t self = pthread_self();
     FileNode *fileNode;
     int status;
-
-//    pthread_mutex_lock(&queue->qlock);
 
     fileNode = getFileNode(queue,pathname);
 
@@ -720,15 +635,12 @@ int hasFileLock(Queue *queue, const char *pathname, int clientId){
         }
     }
 
-//    signalQueue(queue);
-
     return status;
 
 }
 
 char* getNFileList(Queue *queue, size_t *size, int N){
 
-//    pthread_t self = pthread_self();
     FileNode *fileNode;
     Node *node;
     int cont = 0;
@@ -738,22 +650,14 @@ char* getNFileList(Queue *queue, size_t *size, int N){
 
     if (queue == NULL) return NULL;
 
-//    pthread_mutex_lock(&queue->qlock);
-//    printf("FILE LIST\n");
 
     if( N == -1 || N > queue->len) N = queue->len;
     *size = N;
-
-    // Alloco un array con la stessa dimensione della mia coda
-//    *files = malloc(N * sizeof(char *));
 
     node = queue->head;
     while( cont < N && ((node = node->next) != NULL)){
 
         fileNode = node->data;
-        //Alloco lo spazio per il nome del file dentro l array
-//        *files[cont] = malloc(strlen(fileNode->pathname));
-//        strcpy(*files[cont], fileNode->pathname); //Copio il nome del file nell array
         printf("- %s\n", fileNode->pathname);
 
         /* concat file list */
@@ -777,8 +681,6 @@ char* getNFileList(Queue *queue, size_t *size, int N){
 
     }
 
-    signalQueue(queue);
-
     printf("CONCAT FILE LIST %s\n", fileList);
     return fileList;
 
@@ -788,8 +690,6 @@ void deleteFileQueue(Queue *queue){
 
     Node *tmp;
     FileNode *fileNode;
-
-//    pthread_mutex_lock(&queue->qlock);
 
     while( queue->head != NULL){
 
@@ -804,8 +704,6 @@ void deleteFileQueue(Queue *queue){
         safeFree(tmp);
 
     }
-
-//    pthread_mutex_unlock(&queue->qlock);
 
     safeFree(queue);
 }
