@@ -41,7 +41,6 @@ while read line; do
 
   #Conta il numero di file espulsi
   replaced="${array[7]}"
-  echo $replaced
   if [ "$replaced" != "null" ]; then
     cont_expelled=$((cont_expelled+1))
   fi
