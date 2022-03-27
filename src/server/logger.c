@@ -5,6 +5,7 @@
 #include "includes/logger.h"
 #include "includes/utils.h"
 
+/* Open the log file in append */
 void loggerInit(){
 
     printf("\n***** INIZIALIZZAZIONE LOGGER ****\n");
@@ -84,6 +85,7 @@ void logRequest(Request request,int readByte, int writeByte, char *replacedFile)
 
 }
 
+/* Close the file */
 void loggerEnd(){
     fclose(logFile);
 }

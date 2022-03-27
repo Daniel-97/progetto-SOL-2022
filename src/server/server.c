@@ -33,7 +33,6 @@ int main(int argc, char *argv[]){
     sigaddset(&set,SIGINT);
     sigaddset(&set,SIGQUIT);
     sigaddset(&set,SIGHUP);
-//    sigaddset(&set,SIGPIPE);
     pthread_sigmask(SIG_SETMASK,&set,NULL);
 
     /* Creo il thread per i segnali in modalità detached */
