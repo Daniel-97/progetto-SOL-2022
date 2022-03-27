@@ -1,7 +1,7 @@
 
 CC = gcc
+#D_POSIX_C_SOURCE server per timespec, -lm per linkare math.h
 CFLAGS = -std=c99 -Wall -pedantic -g -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE
-#CFLAGS = -Wall -pedantic -g
 LIBS = -lpthread
 
 SERVER_INCLUDE = src/server/includes
@@ -13,16 +13,14 @@ TARGETS = 	bin/server	\
 .PHONY: all clean test1 test2 test3
 .SUFFIXES: .c .h #Necessario per notazione %.c
 
-#### SERVER ####
 
 bin/server: src/server/*.c
 		$(CC) $(CFLAGS) src/server/*.c -o bin/server $(LIBS)
 
-#### CLIENT ####
-
-#D_POSIX_C_SOURCE server per timespec, -lm per linkare math.h
 bin/client: src/client/*.c
 		$(CC) $(CFLAGS) src/client/*.c -o bin/client -lm
+
+.DEFAULT_GOAL := all
 
 all: $(TARGETS)
 
