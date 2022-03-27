@@ -20,6 +20,8 @@ client_args=("-W test/test2/imgs/img2.jpg -r test/test2/imgs/img2.jpg -W test/te
 ${SERVER} &
 PID_SERVER=$!
 
+sleep 1
+
 #LOOP FOR 30 SEC
 while [ $(($(date +%s)-$start_time)) -lt 30 ]; do
 
