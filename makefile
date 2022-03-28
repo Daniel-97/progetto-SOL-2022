@@ -27,9 +27,12 @@ all: $(TARGETS)
 clean:
 	rm -rf bin/*
 
-test1:
+test1: all
 	./script/test1.sh
-test2:
+test2: all
 	./script/test2.sh
-test3:
+test3: all
 	./script/test3.sh
+
+statistiche:
+	./script/statistiche.sh ./log.txt
